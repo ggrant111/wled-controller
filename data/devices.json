@@ -1,0 +1,77 @@
+[
+  {
+    "id": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+    "name": "fireplace",
+    "ip": "192.168.1.71",
+    "port": 4048,
+    "ledCount": 480,
+    "segments": [
+      {
+        "id": "ebea118b-e0cd-41ac-acde-8dfdd9d66cf1",
+        "start": 0,
+        "length": 120,
+        "color": "#ffffff",
+        "brightness": 1
+      },
+      {
+        "id": "26067dac-4ae7-4850-a23d-c2c43762920b",
+        "start": 120,
+        "length": 120,
+        "color": "#ffffff",
+        "brightness": 1
+      },
+      {
+        "id": "14e63742-0d8c-43ff-8088-a8a3180dd89a",
+        "start": 240,
+        "length": 120,
+        "color": "#ffffff",
+        "brightness": 1
+      },
+      {
+        "id": "3ee77e6e-8802-4cf6-8ae4-abfaed5cb1a9",
+        "start": 360,
+        "length": 120,
+        "color": "#ffffff",
+        "brightness": 1
+      }
+    ],
+    "isOnline": true,
+    "lastSeen": "2025-10-27T00:20:58.654Z"
+  },
+  {
+    "id": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+    "name": "Chromance",
+    "ip": "192.168.1.30",
+    "port": 4048,
+    "ledCount": 590,
+    "segments": [
+      {
+        "id": "85a45f33-bfa2-489e-9963-cbe8b91625be",
+        "start": 0,
+        "length": 590,
+        "color": "#ffffff",
+        "brightness": 1
+      }
+    ],
+    "isOnline": true,
+    "lastSeen": "2025-10-27T01:49:41.747Z"
+  },
+  {
+    "id": "55364947-fba5-4ee0-9bd2-afc276eaf9fc",
+    "name": "House ",
+    "ip": "192.168.1.223",
+    "port": 4048,
+    "ledCount": 400,
+    "segments": [
+      {
+        "id": "79310cbb-ae5d-414d-beb3-d4398081f15a",
+        "start": 0,
+        "length": 400,
+        "color": "#ffffff",
+        "brightness": 1
+      }
+    ],
+    "isOnline": true,
+    "lastSeen": "2025-10-27T01:53:11.659Z"
+  }
+]

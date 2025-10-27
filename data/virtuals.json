@@ -1,0 +1,36 @@
+[
+  {
+    "id": "3e4ea555-aed0-403a-ba1c-d709a851f718",
+    "name": "test",
+    "ledRanges": [
+      {
+        "id": "dcc14039-bdf7-42bf-a119-23ce6177b52d",
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+        "startLed": 0,
+        "endLed": 169
+      },
+      {
+        "id": "003d0361-7c64-49d5-bcd8-652224ed3c5b",
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+        "startLed": 368,
+        "endLed": 479
+      }
+    ],
+    "brightness": 1,
+    "isStreaming": false
+  },
+  {
+    "id": "a52a0cd6-7000-4722-9536-e12525ea13d7",
+    "name": "fp",
+    "ledRanges": [
+      {
+        "id": "60283651-f454-4164-89aa-bf65a2b0e324",
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+        "startLed": 360,
+        "endLed": 479
+      }
+    ],
+    "brightness": 1,
+    "isStreaming": false
+  }
+]

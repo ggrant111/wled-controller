@@ -103,6 +103,18 @@ function SocketListener({ children, setIsStreaming, setStreamingSessionId, setCu
       });
     };
 
+    const handleStreamingSessionUpdated = (session: any) => {
+      // Update session without resetting streaming state
+      setCurrentSession(session);
+      setLastStreamConfig({
+        targets: session.targets,
+        effect: session.effect,
+        fps: session.fps,
+        blendMode: session.blendMode,
+        selectedTargets: session.selectedTargets || []
+      });
+    };
+
     const handleStreamingStopped = () => {
       setIsStreaming(false);
       setStreamingSessionId(null);
@@ -134,6 +146,7 @@ function SocketListener({ children, setIsStreaming, setStreamingSessionId, setCu
     };
 
     on('streaming-started', handleStreamingStarted);
+    on('streaming-session-updated', handleStreamingSessionUpdated);
     on('streaming-stopped', handleStreamingStopped);
     on('streaming-stopped-all', handleStreamingStoppedAll);
     on('streaming-state-changed', handleStreamingStateChanged);

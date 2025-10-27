@@ -391,7 +391,7 @@ export class EffectEngine {
     // Get current cycle color if in cycle mode
     let currentCycleColor;
     if (colorMode === 'cycle') {
-      const cycleIndex = Math.floor((this.time * speed * 100) / 500) % colors.length;
+      const cycleIndex = Math.floor((this.time * speed * 20) / colors.length) % colors.length;
       currentCycleColor = colors[cycleIndex];
     }
     
@@ -506,7 +506,7 @@ export class EffectEngine {
     // Get current cycle color if in cycle mode
     let currentCycleColor;
     if (colorMode === 'cycle') {
-      const cycleIndex = Math.floor((this.time * speed * 100) / 500) % colors.length;
+      const cycleIndex = Math.floor((this.time * speed * 20) / colors.length) % colors.length;
       currentCycleColor = colors[cycleIndex];
     }
     

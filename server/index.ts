@@ -390,7 +390,15 @@ app.post('/api/stream/start', async (req, res) => {
       startStreamingLoop();
     }
     
-    io.emit('streaming-started', session);
+    // Only emit streaming-started for new sessions, not updates
+    if (sessionId) {
+      // This is an update to an existing session
+      io.emit('streaming-session-updated', session);
+    } else {
+      // This is a new session
+      io.emit('streaming-started', session);
+    }
+    
     res.json(session);
   } catch (error) {
     console.error('Failed to start streaming:', error);

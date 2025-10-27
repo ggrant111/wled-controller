@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Play, Pause, Settings, Palette, Zap, Trash2 } from 'lucide-react';
 import { Effect, EffectParameter } from '../types';
 import { useStreaming } from '../contexts/StreamingContext';
+import { useSocket } from '../hooks/useSocket';
 import LEDPreviewCanvas from './LEDPreviewCanvas';
 
 interface EffectPanelProps {
@@ -18,6 +19,7 @@ interface EffectPanelProps {
 
 export default function EffectPanel({ effects, selectedEffect, onEffectSelect, devices, groups, virtuals }: EffectPanelProps) {
   const { isStreaming, setIsStreaming, streamingSessionId, setStreamingSessionId, lastStreamConfig, setLastStreamConfig, selectedTargets, setSelectedTargets } = useStreaming();
+  const { emit } = useSocket();
   const [effectParameters, setEffectParameters] = useState<Map<string, Map<string, any>>>(new Map());
   const [activeEffect, setActiveEffect] = useState<Effect | null>(null);
 
@@ -65,18 +67,14 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
       };
       setActiveEffect(updatedEffect);
       
-      // Send parameter update to server via API
-      fetch(`/api/stream/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: streamingSessionId,
-          targets: selectedTargets.map(deviceId => ({ type: 'device', id: deviceId })),
-          effect: updatedEffect,
-          fps: 30,
-          blendMode: 'overwrite'
-        })
-      }).catch(err => console.error('Failed to update parameters:', err));
+      // Hot-reload parameter update via Socket.IO - instant effect
+      emit('update-effect-parameter', {
+        sessionId: streamingSessionId,
+        parameterName: paramName,
+        value: value
+      });
+      
+      console.log('Hot-reloaded parameter:', paramName, '=', value);
     }
     
     console.log('Parameter updated:', paramName, value);
@@ -385,10 +383,19 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                           sessionId: streamingSessionId,
-                          targets: selectedTargets.map(deviceId => ({ type: 'device', id: deviceId })),
+                          targets: lastStreamConfig?.targets || selectedTargets.map(targetId => {
+                            if (targetId.startsWith('group-')) {
+                              return { type: 'group', id: targetId.replace('group-', '') };
+                            } else if (targetId.startsWith('virtual-')) {
+                              return { type: 'virtual', id: targetId.replace('virtual-', '') };
+                            } else {
+                              return { type: 'device', id: targetId };
+                            }
+                          }),
                           effect: effectWithParams,
                           fps: 30,
-                          blendMode: 'overwrite'
+                          blendMode: 'overwrite',
+                          selectedTargets: selectedTargets
                         })
                       });
                     } catch (error) {

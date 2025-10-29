@@ -7,6 +7,7 @@ import { Effect, EffectParameter } from '../types';
 import { useStreaming } from '../contexts/StreamingContext';
 import { useSocket } from '../hooks/useSocket';
 import LEDPreviewCanvas from './LEDPreviewCanvas';
+import PaletteSelector from './PaletteSelector';
 
 interface EffectPanelProps {
   effects: Effect[];
@@ -332,6 +333,17 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
           );
         }
         return null;
+
+      case 'palette':
+        return (
+          <div key={param.name} className="space-y-2">
+            <label className="block text-sm font-medium">{param.name}</label>
+            <PaletteSelector
+              value={parameters.get(param.name) || param.value || 'rainbow'}
+              onChange={(paletteId) => handleParameterChange(param.name, paletteId)}
+            />
+          </div>
+        );
 
       default:
         return null;

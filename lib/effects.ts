@@ -1,4 +1,5 @@
-import { Effect, EffectType, EffectParameter } from '../types';
+import { Effect, EffectType, EffectParameter, Palette } from '../types';
+import { paletteManager } from './palettes';
 
 export class EffectEngine {
   private time: number = 0;
@@ -41,6 +42,10 @@ export class EffectEngine {
         return this.generateConfetti(params, ledCount);
       case 'glitter':
         return this.generateGlitter(params, ledCount);
+      case 'cylon':
+        return this.generateCylon(params, ledCount);
+      case 'color-twinkle':
+        return this.generateColorTwinkle(params, ledCount);
       default:
         return Buffer.alloc(ledCount * 3);
     }
@@ -121,15 +126,39 @@ export class EffectEngine {
     return params.get('colorMode') || 'palette';
   }
 
+  private getPalette(params: Map<string, any>): Palette | null {
+    const paletteId = params.get('palette');
+    if (!paletteId) return null;
+    
+    return paletteManager.getPaletteById(paletteId) || null;
+  }
+
+  private getColorFromPalette(palette: Palette, colorIndex: number, brightness: number = 255): { r: number; g: number; b: number } {
+    return paletteManager.getColorFromPalette(palette, colorIndex, brightness, 'linear');
+  }
+
+  private rgbToHex(color: { r: number; g: number; b: number }): string {
+    const toHex = (n: number) => {
+      const hex = Math.floor(n).toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+    return `#${toHex(color.r)}${toHex(color.g)}${toHex(color.b)}`;
+  }
+
   private generateColorWipe(params: Map<string, any>, ledCount: number): Buffer {
     const speed = params.get('speed') || 0.1;
     const colorsParam = params.get('colors');
     const reverse = params.get('reverse') || false;
     const mirror = params.get('mirror') || false;
+    const palette = this.getPalette(params);
+    const usePalette = palette !== null;
 
     // Parse colors - support array or single colors
     let colors: Array<{r: number, g: number, b: number}> = [];
-    if (Array.isArray(colorsParam)) {
+    if (usePalette && palette) {
+      // Use palette colors
+      colors = palette.colors.map(c => this.parseColor(c));
+    } else if (Array.isArray(colorsParam)) {
       colors = colorsParam.map(c => this.parseColor(c));
     } else if (colorsParam) {
       colors = [this.parseColor(colorsParam)];
@@ -202,6 +231,8 @@ export class EffectEngine {
     const intensity = params.get('intensity') || 0.8;
     const cooling = params.get('cooling') || 0.1;
     const sparking = params.get('sparking') || 0.3;
+    const palette = this.getPalette(params);
+    const usePalette = palette !== null;
 
     const buffer = Buffer.alloc(ledCount * 3);
     const heat = new Array(ledCount).fill(0);
@@ -224,25 +255,33 @@ export class EffectEngine {
       const pixelIndex = i * 3;
       const temp = heat[i] * intensity;
       
-      // Heat to color mapping
-      let r, g, b;
-      if (temp < 85) {
-        r = temp * 3;
-        g = 0;
-        b = 0;
-      } else if (temp < 170) {
-        r = 255;
-        g = (temp - 85) * 3;
-        b = 0;
+      let color;
+      if (usePalette && palette) {
+        // Use palette-based fire colors
+        const colorPosition = temp / 255;
+        color = paletteManager.interpolateColor(palette, colorPosition);
       } else {
-        r = 255;
-        g = 255;
-        b = (temp - 170) * 3;
+        // Use traditional fire colors
+        let r, g, b;
+        if (temp < 85) {
+          r = temp * 3;
+          g = 0;
+          b = 0;
+        } else if (temp < 170) {
+          r = 255;
+          g = (temp - 85) * 3;
+          b = 0;
+        } else {
+          r = 255;
+          g = 255;
+          b = (temp - 170) * 3;
+        }
+        color = { r: Math.min(255, r), g: Math.min(255, g), b: Math.min(255, b) };
       }
       
-      buffer[pixelIndex] = Math.min(255, Math.floor(r));
-      buffer[pixelIndex + 1] = Math.min(255, Math.floor(g));
-      buffer[pixelIndex + 2] = Math.min(255, Math.floor(b));
+      buffer[pixelIndex] = color.r;
+      buffer[pixelIndex + 1] = color.g;
+      buffer[pixelIndex + 2] = color.b;
     }
     
     return buffer;
@@ -254,6 +293,8 @@ export class EffectEngine {
     const brightness = params.get('brightness') || 1.0;
     const reverse = params.get('reverse') || false;
     const mirror = params.get('mirror') || false;
+    const palette = this.getPalette(params);
+    const usePalette = params.get('usePalette') || (palette !== null);
 
     const buffer = Buffer.alloc(ledCount * 3);
     const hueOffset = (this.time * speed * 100) % 360;
@@ -271,8 +312,26 @@ export class EffectEngine {
         effectiveI = ledCount - 1 - effectiveI;
       }
       
-      const hue = (hueOffset + (effectiveI * 360 / ledCount)) % 360;
-      const color = this.hsvToRgb(hue, saturation, brightness);
+      let color;
+      if (usePalette && palette) {
+        // Use palette instead of HSV - create smooth transitions
+        const palettePosition = (effectiveI / ledCount + hueOffset / 360) % 1;
+        color = paletteManager.interpolateColor(palette, palettePosition);
+        color = {
+          r: Math.floor(color.r * brightness),
+          g: Math.floor(color.g * brightness),
+          b: Math.floor(color.b * brightness)
+        };
+      } else {
+        // Use traditional HSV rainbow
+        const hue = (hueOffset + (effectiveI * 360 / ledCount)) % 360;
+        const hsvColor = this.hsvToRgb(hue, saturation, brightness);
+        color = {
+          r: Math.floor(hsvColor.r * 255),
+          g: Math.floor(hsvColor.g * 255),
+          b: Math.floor(hsvColor.b * 255)
+        };
+      }
       
       const pixelIndex = i * 3;
       buffer[pixelIndex] = color.r;
@@ -286,7 +345,16 @@ export class EffectEngine {
   private generateTwinkle(params: Map<string, any>, ledCount: number): Buffer {
     const speed = params.get('speed') || 0.1;
     const density = params.get('density') || 0.1;
-    const colors = this.getColorArray(params, '#ffffff');
+    const palette = this.getPalette(params);
+    const usePalette = palette !== null;
+    
+    // Get colors from palette or color array
+    let colors: Array<{r: number, g: number, b: number}> = [];
+    if (usePalette && palette) {
+      colors = palette.colors.map(c => this.parseColor(c));
+    } else {
+      colors = this.getColorArray(params, '#ffffff');
+    }
 
     const buffer = Buffer.alloc(ledCount * 3);
     
@@ -296,8 +364,16 @@ export class EffectEngine {
       
       if (Math.random() < density) {
         const intensity = Math.sin(twinklePhase * Math.PI / 50) * 0.5 + 0.5;
-        const colorIndex = i % colors.length;
-        const color = colors[colorIndex];
+        let color;
+        if (usePalette && palette) {
+          // Use smooth palette interpolation
+          const colorPosition = (i / ledCount + this.time * speed * 0.1) % 1;
+          color = paletteManager.interpolateColor(palette, colorPosition);
+        } else {
+          // Use discrete color selection
+          const colorIndex = i % colors.length;
+          color = colors[colorIndex];
+        }
         buffer[pixelIndex] = Math.floor(color.r * intensity);
         buffer[pixelIndex + 1] = Math.floor(color.g * intensity);
         buffer[pixelIndex + 2] = Math.floor(color.b * intensity);
@@ -356,16 +432,34 @@ export class EffectEngine {
 
   private generateBreathing(params: Map<string, any>, ledCount: number): Buffer {
     const speed = params.get('speed') || 0.1;
-    const colors = this.getColorArray(params, '#ff0000');
     const minBrightness = params.get('minBrightness') || 0.1;
+    const palette = this.getPalette(params);
+    const usePalette = palette !== null;
+
+    // Get colors from palette or color array
+    let colors: Array<{r: number, g: number, b: number}> = [];
+    if (usePalette && palette) {
+      colors = palette.colors.map(c => this.parseColor(c));
+    } else {
+      colors = this.getColorArray(params, '#ff0000');
+    }
 
     const buffer = Buffer.alloc(ledCount * 3);
     const intensity = (Math.sin(this.time * speed * 10) + 1) / 2;
     const brightness = minBrightness + (1 - minBrightness) * intensity;
     
     for (let i = 0; i < ledCount; i++) {
-      const colorIndex = i % colors.length;
-      const color = colors[colorIndex];
+      let color;
+      if (usePalette && palette) {
+        // Use smooth palette interpolation
+        const colorPosition = (i / ledCount + this.time * speed * 0.1) % 1;
+        color = paletteManager.interpolateColor(palette, colorPosition);
+      } else {
+        // Use discrete color selection
+        const colorIndex = i % colors.length;
+        color = colors[colorIndex];
+      }
+      
       const pixelIndex = i * 3;
       buffer[pixelIndex] = Math.floor(color.r * brightness);
       buffer[pixelIndex + 1] = Math.floor(color.g * brightness);
@@ -379,11 +473,20 @@ export class EffectEngine {
     const speed = params.get('speed') || 0.1;
     const length = params.get('length') || 5;
     const count = params.get('count') || 1;
-    const colors = this.getColorArray(params, '#ff0000');
     const backgroundColor = this.parseColor(params.get('backgroundColor') || '#000000');
     const reverse = params.get('reverse') || false;
     const mirror = params.get('mirror') || false;
     const colorMode = this.getColorMode(params);
+    const palette = this.getPalette(params);
+    const usePalette = palette !== null;
+
+    // Get colors from palette or color array
+    let colors: Array<{r: number, g: number, b: number}> = [];
+    if (usePalette && palette) {
+      colors = palette.colors.map(c => this.parseColor(c));
+    } else {
+      colors = this.getColorArray(params, '#ff0000');
+    }
 
     const buffer = Buffer.alloc(ledCount * 3);
     const spacing = ledCount / count;
@@ -391,8 +494,14 @@ export class EffectEngine {
     // Get current cycle color if in cycle mode
     let currentCycleColor;
     if (colorMode === 'cycle') {
-      const cycleIndex = Math.floor((this.time * speed * 20) / colors.length) % colors.length;
-      currentCycleColor = colors[cycleIndex];
+      if (usePalette && palette) {
+        const cyclePosition = (this.time * speed * 20) % 1;
+        currentCycleColor = paletteManager.interpolateColor(palette, cyclePosition);
+      } else {
+        const cyclePosition = (this.time * speed * 20) % colors.length;
+        const tempPalette = { id: 'temp', name: 'temp', colors: colors.map(c => this.rgbToHex(c)) };
+        currentCycleColor = paletteManager.interpolateColor(tempPalette, cyclePosition / colors.length);
+      }
     }
     
     // Fill background
@@ -496,18 +605,32 @@ export class EffectEngine {
     const speed = params.get('speed') || 0.1;
     const frequency = params.get('frequency') || 0.05;
     const count = params.get('count') || 1;
-    const colors = this.getColorArray(params, '#00ff00');
     const reverse = params.get('reverse') || false;
     const mirror = params.get('mirror') || false;
     const colorMode = this.getColorMode(params);
+    const palette = this.getPalette(params);
+    const usePalette = palette !== null;
+
+    // Get colors from palette or color array
+    let colors: Array<{r: number, g: number, b: number}> = [];
+    if (usePalette && palette) {
+      colors = palette.colors.map(c => this.parseColor(c));
+    } else {
+      colors = this.getColorArray(params, '#00ff00');
+    }
 
     const buffer = Buffer.alloc(ledCount * 3);
     
     // Get current cycle color if in cycle mode
     let currentCycleColor;
     if (colorMode === 'cycle') {
-      const cycleIndex = Math.floor((this.time * speed * 20) / colors.length) % colors.length;
-      currentCycleColor = colors[cycleIndex];
+      if (usePalette && palette) {
+        const cyclePosition = (this.time * speed * 20) % 1;
+        currentCycleColor = paletteManager.interpolateColor(palette, cyclePosition);
+      } else {
+        const cycleIndex = Math.floor((this.time * speed * 20) / colors.length) % colors.length;
+        currentCycleColor = colors[cycleIndex];
+      }
     }
     
     for (let i = 0; i < ledCount; i++) {
@@ -532,8 +655,15 @@ export class EffectEngine {
       if (colorMode === 'cycle') {
         color = currentCycleColor!;
       } else {
-        const colorIndex = Math.floor((effectiveI * count) / ledCount) % colors.length;
-        color = colors[colorIndex];
+        if (usePalette && palette) {
+          // Use smooth palette interpolation
+          const colorPosition = ((effectiveI * count) / ledCount + this.time * speed * 0.1) % 1;
+          color = paletteManager.interpolateColor(palette, colorPosition);
+        } else {
+          // Use discrete color selection
+          const colorIndex = Math.floor((effectiveI * count) / ledCount) % colors.length;
+          color = colors[colorIndex];
+        }
       }
       
       buffer[pixelIndex] = Math.floor(color.r * intensity);
@@ -704,8 +834,238 @@ export class EffectEngine {
     return buffer;
   }
 
+  private generateCylon(params: Map<string, any>, ledCount: number): Buffer {
+    const speed = params.get('speed') || 0.1;
+    const width = params.get('width') || 3;
+    const tail = params.get('tail') || 0.3;
+    const reverse = params.get('reverse') || false;
+    const mirror = params.get('mirror') || false;
+    const colorMode = this.getColorMode(params);
+    const palette = this.getPalette(params);
+    const usePalette = palette !== null;
+
+    // Get colors from palette or color array
+    let colors: Array<{r: number, g: number, b: number}> = [];
+    if (usePalette && palette) {
+      colors = palette.colors.map(c => this.parseColor(c));
+    } else {
+      colors = this.getColorArray(params, '#ff0000');
+    }
+
+    // Ensure we have at least one valid color
+    if (!colors || colors.length === 0) {
+      colors = [this.parseColor('#ff0000')];
+    }
+
+    const buffer = Buffer.alloc(ledCount * 3);
+    
+    // Calculate the position of the main LED (the "eye")
+    const cycleTime = (ledCount * 2) / (speed * 100); // Full cycle time
+    const cycleProgress = (this.time * speed * 100) % (ledCount * 2);
+    
+    let mainPosition: number;
+    let direction: number;
+    
+    if (cycleProgress < ledCount) {
+      // Moving forward
+      mainPosition = cycleProgress;
+      direction = 1;
+    } else {
+      // Moving backward
+      mainPosition = ledCount - 1 - (cycleProgress - ledCount);
+      direction = -1;
+    }
+    
+    // Apply reverse if enabled
+    if (reverse) {
+      mainPosition = ledCount - 1 - mainPosition;
+      direction = -direction;
+    }
+    
+    // Get current color based on color mode
+    let currentColor;
+    if (colorMode === 'cycle') {
+      if (usePalette && palette) {
+        const cyclePosition = (this.time * speed * 20) % 1;
+        currentColor = paletteManager.interpolateColor(palette, cyclePosition);
+      } else {
+        const cyclePosition = (this.time * speed * 20) % colors.length;
+        const tempPalette = { id: 'temp', name: 'temp', colors: colors.map(c => this.rgbToHex(c)) };
+        currentColor = paletteManager.interpolateColor(tempPalette, cyclePosition / colors.length);
+      }
+    } else {
+      if (usePalette && palette) {
+        // Use smooth palette interpolation based on position
+        const colorPosition = (mainPosition / ledCount) % 1;
+        currentColor = paletteManager.interpolateColor(palette, colorPosition);
+      } else {
+        // Use color based on position with smooth interpolation
+        const colorPosition = (mainPosition / ledCount) % 1;
+        const tempPalette = { id: 'temp', name: 'temp', colors: colors.map(c => this.rgbToHex(c)) };
+        currentColor = paletteManager.interpolateColor(tempPalette, colorPosition);
+      }
+    }
+    
+    // Ensure we have a valid color object
+    if (!currentColor || typeof currentColor.r !== 'number') {
+      currentColor = this.parseColor('#ff0000');
+    }
+    
+    // Create the Cylon effect with tail
+    for (let i = 0; i < ledCount; i++) {
+      const pixelIndex = i * 3;
+      let intensity = 0;
+      
+      // Calculate distance from main position
+      let distance = Math.abs(i - mainPosition);
+      
+      // Apply mirror if enabled
+      if (mirror) {
+        const mirroredDistance = Math.abs(ledCount - 1 - i - mainPosition);
+        distance = Math.min(distance, mirroredDistance);
+      }
+      
+      // Calculate intensity based on distance and width
+      if (distance < width) {
+        intensity = 1 - (distance / width);
+        
+        // Apply tail effect
+        if (tail > 0) {
+          intensity *= Math.pow(intensity, 1 - tail);
+        }
+      }
+      
+      // Apply the color
+      buffer[pixelIndex] = Math.floor(currentColor.r * intensity);
+      buffer[pixelIndex + 1] = Math.floor(currentColor.g * intensity);
+      buffer[pixelIndex + 2] = Math.floor(currentColor.b * intensity);
+    }
+    
+    return buffer;
+  }
+
+  private generateColorTwinkle(params: Map<string, any>, ledCount: number): Buffer {
+    const speed = params.get('speed') || 0.5;
+    const density = params.get('density') || 0.5;
+    let colors = this.getColorArray(params, '#ff0000');
+    const backgroundColor = this.parseColor(params.get('backgroundColor') || '#000000');
+    const coolLikeIncandescent = params.get('coolLikeIncandescent') || true;
+    const paletteMode = params.get('paletteMode') || false;
+    const paletteSpeed = params.get('paletteSpeed') || 0.1;
+
+    // Ensure we have at least one valid color
+    if (!colors || colors.length === 0) {
+      colors = [this.parseColor('#ff0000')];
+    }
+
+    const buffer = Buffer.alloc(ledCount * 3);
+    
+    // Initialize twinkle data if not exists
+    if (!this.colorTwinkleData) {
+      this.colorTwinkleData = {
+        pixelClocks: new Array(ledCount).fill(0).map(() => ({
+          offset: Math.random() * 65536,
+          speedMultiplier: 8 + Math.random() * 15, // 8/8 to 23/8
+          salt: Math.random() * 256
+        })),
+        paletteOffset: 0
+      };
+    }
+
+    // Update palette offset for color cycling
+    if (paletteMode) {
+      this.colorTwinkleData.paletteOffset += paletteSpeed;
+    }
+
+    const currentTime = this.time * 1000; // Convert to milliseconds
+    const backgroundBrightness = (backgroundColor.r + backgroundColor.g + backgroundColor.b) / 3;
+
+    for (let i = 0; i < ledCount; i++) {
+      const pixelIndex = i * 3;
+      const pixelData = this.colorTwinkleData.pixelClocks[i];
+      
+      // Calculate adjusted clock for this pixel
+      const adjustedTime = (currentTime * pixelData.speedMultiplier / 8) + pixelData.offset;
+      
+      // Calculate twinkle brightness using attack-decay wave
+      const fastCycle = (adjustedTime >> (8 - Math.floor(speed * 8))) & 0xFF;
+      const slowCycle = ((adjustedTime >> 8) + pixelData.salt) & 0xFFFF;
+      const slowCycle8 = ((slowCycle & 0xFF) + (slowCycle >> 8)) & 0xFF;
+      
+      let brightness = 0;
+      
+      // Check if this pixel should twinkle based on density
+      const densityCheck = ((slowCycle8 & 0x0E) / 2);
+      if (densityCheck < density * 8) {
+        brightness = this.attackDecayWave8(fastCycle);
+      }
+      
+      let color = backgroundColor;
+      
+      if (brightness > 0) {
+        // Select color based on palette mode
+        let selectedColor;
+        if (paletteMode) {
+          const hue = (slowCycle8 - pixelData.salt + this.colorTwinkleData.paletteOffset) & 0xFF;
+          const colorPosition = (hue / 256) % 1;
+          const tempPalette = { id: 'temp', name: 'temp', colors: colors.map(c => this.rgbToHex(c)) };
+          selectedColor = paletteManager.interpolateColor(tempPalette, colorPosition);
+        } else {
+          const colorPosition = (slowCycle8 / 256) % 1;
+          const tempPalette = { id: 'temp', name: 'temp', colors: colors.map(c => this.rgbToHex(c)) };
+          selectedColor = paletteManager.interpolateColor(tempPalette, colorPosition);
+        }
+        
+        // Apply brightness
+        color = {
+          r: Math.floor(selectedColor.r * brightness / 255),
+          g: Math.floor(selectedColor.g * brightness / 255),
+          b: Math.floor(selectedColor.b * brightness / 255)
+        };
+        
+        // Apply incandescent cooling effect
+        if (coolLikeIncandescent && fastCycle > 128) {
+          const cooling = Math.floor((fastCycle - 128) / 16);
+          color.g = Math.max(0, color.g - cooling);
+          color.b = Math.max(0, color.b - cooling * 2);
+        }
+        
+        // Blend with background if not significantly brighter
+        const colorBrightness = (color.r + color.g + color.b) / 3;
+        const deltaBrightness = colorBrightness - backgroundBrightness;
+        
+        if (deltaBrightness < 32 && backgroundBrightness > 0) {
+          // Blend colors
+          const blendFactor = Math.max(0, deltaBrightness) / 32;
+          color = {
+            r: Math.floor(backgroundColor.r + (color.r - backgroundColor.r) * blendFactor),
+            g: Math.floor(backgroundColor.g + (color.g - backgroundColor.g) * blendFactor),
+            b: Math.floor(backgroundColor.b + (color.b - backgroundColor.b) * blendFactor)
+          };
+        }
+      }
+      
+      buffer[pixelIndex] = Math.min(255, Math.max(0, color.r));
+      buffer[pixelIndex + 1] = Math.min(255, Math.max(0, color.g));
+      buffer[pixelIndex + 2] = Math.min(255, Math.max(0, color.b));
+    }
+    
+    return buffer;
+  }
+
+  // Attack-decay wave function similar to FastLED's attackDecayWave8
+  private attackDecayWave8(i: number): number {
+    if (i < 86) {
+      return i * 3;
+    } else {
+      i -= 86;
+      return 255 - (i + Math.floor(i / 2));
+    }
+  }
+
   private matrixData: any;
   private confettiData: any;
+  private colorTwinkleData: any;
 }
 
 export const defaultEffects: Effect[] = [
@@ -729,6 +1089,7 @@ export const defaultEffects: Effect[] = [
     parameters: [
       { name: 'speed', type: 'range', value: 0.1, min: 0.01, max: 1.0, step: 0.01 },
       { name: 'colors', type: 'array', value: ['#ff0000', '#0000ff'], isColorArray: true },
+      { name: 'palette', type: 'palette', value: 'rainbow' },
       { name: 'reverse', type: 'boolean', value: false },
       { name: 'mirror', type: 'boolean', value: false }
     ]
@@ -741,6 +1102,7 @@ export const defaultEffects: Effect[] = [
       { name: 'intensity', type: 'range', value: 0.8, min: 0.1, max: 1.0, step: 0.1 },
       { name: 'cooling', type: 'range', value: 0.1, min: 0.01, max: 0.5, step: 0.01 },
       { name: 'sparking', type: 'range', value: 0.3, min: 0.1, max: 1.0, step: 0.1 },
+      { name: 'palette', type: 'palette', value: 'fire' },
       { name: 'reverse', type: 'boolean', value: false },
       { name: 'mirror', type: 'boolean', value: false }
     ]
@@ -753,6 +1115,8 @@ export const defaultEffects: Effect[] = [
       { name: 'speed', type: 'range', value: 0.1, min: 0.01, max: 1.0, step: 0.01 },
       { name: 'saturation', type: 'range', value: 1.0, min: 0.1, max: 1.0, step: 0.1 },
       { name: 'brightness', type: 'range', value: 1.0, min: 0.1, max: 1.0, step: 0.1 },
+      { name: 'usePalette', type: 'boolean', value: false },
+      { name: 'palette', type: 'palette', value: 'rainbow' },
       { name: 'reverse', type: 'boolean', value: false },
       { name: 'mirror', type: 'boolean', value: false }
     ]
@@ -765,6 +1129,7 @@ export const defaultEffects: Effect[] = [
       { name: 'speed', type: 'range', value: 0.1, min: 0.01, max: 1.0, step: 0.01 },
       { name: 'density', type: 'range', value: 0.1, min: 0.01, max: 0.5, step: 0.01 },
       { name: 'colors', type: 'array', value: ['#ffffff'], isColorArray: true },
+      { name: 'palette', type: 'palette', value: 'rainbow' },
       { name: 'reverse', type: 'boolean', value: false },
       { name: 'mirror', type: 'boolean', value: false }
     ]
@@ -797,6 +1162,7 @@ export const defaultEffects: Effect[] = [
     parameters: [
       { name: 'speed', type: 'range', value: 0.1, min: 0.01, max: 1.0, step: 0.01 },
       { name: 'colors', type: 'array', value: ['#ff0000'], isColorArray: true },
+      { name: 'palette', type: 'palette', value: 'rainbow' },
       { name: 'minBrightness', type: 'range', value: 0.1, min: 0, max: 0.5, step: 0.1 },
       { name: 'reverse', type: 'boolean', value: false },
       { name: 'mirror', type: 'boolean', value: false }
@@ -812,6 +1178,7 @@ export const defaultEffects: Effect[] = [
       { name: 'count', type: 'range', value: 1, min: 1, max: 10, step: 1 },
       { name: 'colors', type: 'array', value: ['#ff0000'], isColorArray: true },
       { name: 'colorMode', type: 'options', value: 'palette', options: ['palette', 'cycle'] },
+      { name: 'palette', type: 'palette', value: 'rainbow' },
       { name: 'backgroundColor', type: 'color', value: '#000000' },
       { name: 'reverse', type: 'boolean', value: false },
       { name: 'mirror', type: 'boolean', value: false }
@@ -827,6 +1194,7 @@ export const defaultEffects: Effect[] = [
       { name: 'count', type: 'range', value: 1, min: 1, max: 10, step: 1 },
       { name: 'colors', type: 'array', value: ['#00ff00'], isColorArray: true },
       { name: 'colorMode', type: 'options', value: 'palette', options: ['palette', 'cycle'] },
+      { name: 'palette', type: 'palette', value: 'rainbow' },
       { name: 'reverse', type: 'boolean', value: false },
       { name: 'mirror', type: 'boolean', value: false }
     ]
@@ -876,6 +1244,35 @@ export const defaultEffects: Effect[] = [
       { name: 'backgroundColor', type: 'color', value: '#000000' },
       { name: 'reverse', type: 'boolean', value: false },
       { name: 'mirror', type: 'boolean', value: false }
+    ]
+  },
+  {
+    id: 'cylon',
+    name: 'Cylon',
+    type: 'cylon',
+    parameters: [
+      { name: 'speed', type: 'range', value: 0.1, min: 0.01, max: 1.0, step: 0.01 },
+      { name: 'width', type: 'range', value: 3, min: 1, max: 20, step: 1 },
+      { name: 'tail', type: 'range', value: 0.3, min: 0, max: 1, step: 0.1 },
+      { name: 'colors', type: 'array', value: ['#ff0000'], isColorArray: true },
+      { name: 'colorMode', type: 'options', value: 'palette', options: ['palette', 'cycle'] },
+      { name: 'palette', type: 'palette', value: 'rainbow' },
+      { name: 'reverse', type: 'boolean', value: false },
+      { name: 'mirror', type: 'boolean', value: false }
+    ]
+  },
+  {
+    id: 'color-twinkle',
+    name: 'Color Twinkle',
+    type: 'color-twinkle',
+    parameters: [
+      { name: 'speed', type: 'range', value: 0.5, min: 0.1, max: 1.0, step: 0.1 },
+      { name: 'density', type: 'range', value: 0.5, min: 0.1, max: 1.0, step: 0.1 },
+      { name: 'colors', type: 'array', value: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'], isColorArray: true },
+      { name: 'backgroundColor', type: 'color', value: '#000000' },
+      { name: 'paletteMode', type: 'boolean', value: false },
+      { name: 'paletteSpeed', type: 'range', value: 0.1, min: 0.01, max: 0.5, step: 0.01 },
+      { name: 'coolLikeIncandescent', type: 'boolean', value: true }
     ]
   }
 ];

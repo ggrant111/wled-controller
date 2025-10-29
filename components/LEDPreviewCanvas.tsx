@@ -120,8 +120,20 @@ export default function LEDPreviewCanvas({
         }
       } else if (effect.type === 'rainbow') {
         const speed = parameters.get('speed') || 0.1;
+        const saturation = parameters.get('saturation') || 1.0;
+        const brightness = parameters.get('brightness') || 1.0;
         const reverse = parameters.get('reverse') || false;
         const mirror = parameters.get('mirror') || false;
+        const usePalette = parameters.get('usePalette') || false;
+        const paletteId = parameters.get('palette');
+        
+        // Get palette if using palette mode
+        let palette = null;
+        if (usePalette && paletteId) {
+          // For preview, we'll use a simple approach - in real implementation,
+          // this would need to be passed from the parent component
+          palette = { colors: ['#ff0000', '#00ff00', '#0000ff'] }; // Fallback
+        }
         
         for (let i = 0; i < ledCount; i++) {
           let effectiveI = i;
@@ -134,8 +146,22 @@ export default function LEDPreviewCanvas({
             effectiveI = ledCount - 1 - effectiveI;
           }
           
-          const hue = ((effectiveI / ledCount) * 360 + time * speed * 10) % 360;
-          const color = hslToRgb(hue / 360, 1, 0.5);
+          let color;
+          if (usePalette && palette) {
+            // Use palette interpolation for smooth transitions
+            const palettePosition = (effectiveI / ledCount + time * speed * 0.1) % 1;
+            const interpolatedColor = interpolatePaletteColor(palette, palettePosition);
+            color = {
+              r: Math.floor(interpolatedColor.r * brightness),
+              g: Math.floor(interpolatedColor.g * brightness),
+              b: Math.floor(interpolatedColor.b * brightness)
+            };
+          } else {
+            // Use traditional HSV rainbow
+            const hue = ((effectiveI / ledCount) * 360 + time * speed * 10) % 360;
+            color = hslToRgb(hue / 360, saturation, brightness);
+          }
+          
           buffer[i * 3] = color.r;
           buffer[i * 3 + 1] = color.g;
           buffer[i * 3 + 2] = color.b;
@@ -540,5 +566,31 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
     r: Math.round(r * 255),
     g: Math.round(g * 255),
     b: Math.round(b * 255)
+  };
+}
+
+// Helper function to interpolate palette colors with seamless looping
+function interpolatePaletteColor(palette: any, position: number): { r: number; g: number; b: number } {
+  const colors = palette.colors;
+  if (colors.length === 0) return { r: 0, g: 0, b: 0 };
+  if (colors.length === 1) return parseColor(colors[0]);
+
+  // Normalize position to 0-1 range
+  let normalizedPos = position % 1;
+  if (normalizedPos < 0) normalizedPos += 1;
+
+  // For seamless looping, handle transition from last to first color
+  const scaledPos = normalizedPos * colors.length;
+  const index1 = Math.floor(scaledPos) % colors.length;
+  const index2 = (index1 + 1) % colors.length;
+  const t = scaledPos - Math.floor(scaledPos);
+
+  const color1 = parseColor(colors[index1]);
+  const color2 = parseColor(colors[index2]);
+
+  return {
+    r: Math.floor(color1.r + (color2.r - color1.r) * t),
+    g: Math.floor(color1.g + (color2.g - color1.g) * t),
+    b: Math.floor(color1.b + (color2.b - color1.b) * t)
   };
 }

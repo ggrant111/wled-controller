@@ -106,8 +106,6 @@ export class DDPSender {
       throw new Error(`Device ${deviceId} not found`);
     }
 
-    console.log(`Sending DDP packet to ${device.name} (${device.ip}:${device.port}), data length: ${rgbData.length}`);
-    
     // Chunk data if it exceeds MAX_DATALEN
     if (rgbData.length > this.MAX_DATALEN) {
       return this.sendChunkedData(device, rgbData, offset);
@@ -125,7 +123,6 @@ export class DDPSender {
             console.error(`DDP send error to ${device.ip}:${device.port}:`, error);
             reject(error);
           } else {
-            console.log(`DDP packet sent successfully to ${device.ip}:${device.port}`);
             resolve();
           }
         });

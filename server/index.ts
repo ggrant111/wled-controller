@@ -7,6 +7,7 @@ import axios from 'axios';
 import JSONStorage from '../lib/storage';
 import DDPSender from '../lib/ddp-sender';
 import EffectEngine, { defaultEffects } from '../lib/effects';
+import { paletteManager } from '../lib/palettes';
 import { WLEDDevice, Group, VirtualDevice, Preset, StreamingSession, StreamTarget, Effect } from '../types';
 
 const app = express();
@@ -30,6 +31,7 @@ app.use(express.json());
 const streamingSessions = new Map<string, StreamingSession>();
 let streamingInterval: NodeJS.Timeout | null = null;
 let healthCheckInterval: NodeJS.Timeout | null = null;
+const loggedStreamingDevices = new Set<string>(); // Track which devices have been logged for streaming start
 
 // Initialize storage
 async function initializeStorage() {
@@ -387,6 +389,7 @@ app.post('/api/stream/start', async (req, res) => {
     
     if (!streamingInterval) {
       console.log('Starting streaming loop');
+      loggedStreamingDevices.clear(); // Clear logged devices for new streaming session
       startStreamingLoop();
     }
     
@@ -414,6 +417,7 @@ app.post('/api/stream/stop/:sessionId', (req, res) => {
     if (streamingSessions.size === 0 && streamingInterval) {
       clearInterval(streamingInterval);
       streamingInterval = null;
+      loggedStreamingDevices.clear(); // Clear logged devices when streaming stops
     }
     
     io.emit('streaming-stopped', sessionId);
@@ -430,6 +434,7 @@ app.post('/api/stream/stop-all', (req, res) => {
     if (streamingInterval) {
       clearInterval(streamingInterval);
       streamingInterval = null;
+      loggedStreamingDevices.clear(); // Clear logged devices when streaming stops
     }
     
     io.emit('streaming-stopped-all');
@@ -532,7 +537,13 @@ function startStreamingLoop() {
               const device = devices.find(d => d.id === target.id);
               if (device) {
                 ledCount = device.ledCount;
-                console.log(`Streaming to device ${device.name} (${ledCount} LEDs)`);
+                
+                // Log streaming start only once per device
+                if (!loggedStreamingDevices.has(device.id)) {
+                  console.log(`Streaming started to device ${device.name} (${ledCount} LEDs)`);
+                  loggedStreamingDevices.add(device.id);
+                }
+                
                 const frame = effectEngine.generateFrame(session.effect, ledCount);
                 await ddpSender.sendToDevice(target.id, frame);
                 
@@ -579,13 +590,25 @@ function startStreamingLoop() {
                   // Calculate LED count - use full device or segment
                   if (member.startLed !== undefined && member.endLed !== undefined) {
                     ledCount = member.endLed - member.startLed + 1;
-                    console.log(`Streaming to device ${device.name}, LEDs ${member.startLed}-${member.endLed} (${ledCount} LEDs)`);
+                    
+                    // Log streaming start only once per device
+                    if (!loggedStreamingDevices.has(device.id)) {
+                      console.log(`Streaming started to device ${device.name}, LEDs ${member.startLed}-${member.endLed} (${ledCount} LEDs)`);
+                      loggedStreamingDevices.add(device.id);
+                    }
+                    
                     const frame = effectEngine.generateFrame(session.effect, ledCount);
                     // DDP offset is in bytes, so multiply LED index by 3
                     await ddpSender.sendToDevice(member.deviceId, frame, member.startLed * 3);
                   } else {
                     ledCount = device.ledCount;
-                    console.log(`Streaming to device ${device.name} (${ledCount} LEDs)`);
+                    
+                    // Log streaming start only once per device
+                    if (!loggedStreamingDevices.has(device.id)) {
+                      console.log(`Streaming started to device ${device.name} (${ledCount} LEDs)`);
+                      loggedStreamingDevices.add(device.id);
+                    }
+                    
                     const frame = effectEngine.generateFrame(session.effect, ledCount);
                     await ddpSender.sendToDevice(member.deviceId, frame);
                   }
@@ -603,7 +626,11 @@ function startStreamingLoop() {
                 0
               );
               
-              console.log(`Streaming to virtual device ${virtual.name} with ${totalVirtualLEDs} total LEDs`);
+              // Log virtual device streaming start only once
+              if (!loggedStreamingDevices.has(virtual.id)) {
+                console.log(`Streaming started to virtual device ${virtual.name} with ${totalVirtualLEDs} total LEDs`);
+                loggedStreamingDevices.add(virtual.id);
+              }
               
               // Generate effect frame for the total virtual LED count
               const virtualFrame = effectEngine.generateFrame(session.effect, totalVirtualLEDs);
@@ -624,7 +651,11 @@ function startStreamingLoop() {
                   // Extract the portion of the virtual frame for this range
                   const rangeFrame = virtualFrame.slice(virtualLEDIndex * 3, (virtualLEDIndex + rangeLength) * 3);
                   
-                  console.log(`Streaming to device ${device.name}, LEDs ${range.startLed}-${range.endLed} (${rangeLength} LEDs)`);
+                  // Log streaming start only once per device
+                  if (!loggedStreamingDevices.has(device.id)) {
+                    console.log(`Streaming started to device ${device.name}, LEDs ${range.startLed}-${range.endLed} (${rangeLength} LEDs)`);
+                    loggedStreamingDevices.add(device.id);
+                  }
                   // Send with offset to target the specific LED range
                   // DDP offset is in bytes, so multiply LED index by 3
                   await ddpSender.sendToDevice(device.id, rangeFrame, range.startLed * 3);
@@ -656,6 +687,10 @@ async function startServer() {
   
   // Start periodic health checks
   startHealthCheckInterval();
+  
+  // Load custom palettes
+  await paletteManager.loadCustomPalettesFromFile();
+  console.log(`Loaded ${paletteManager.getCustomPalettes().length} custom palettes`);
   
   // Run initial health check after 5 seconds
   setTimeout(async () => {

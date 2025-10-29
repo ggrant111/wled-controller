@@ -58,7 +58,7 @@ export interface Effect {
 
 export interface EffectParameter {
   name: string;
-  type: 'color' | 'number' | 'boolean' | 'range' | 'array' | 'options';
+  type: 'color' | 'number' | 'boolean' | 'range' | 'array' | 'options' | 'palette';
   value: any;
   min?: number;
   max?: number;
@@ -81,7 +81,9 @@ export type EffectType =
   | 'plasma'
   | 'matrix'
   | 'confetti'
-  | 'glitter';
+  | 'glitter'
+  | 'cylon'
+  | 'color-twinkle';
 
 export interface Preset {
   id: string;
@@ -117,4 +119,18 @@ export interface StreamFrame {
   timestamp: number;
   data: Buffer;
   target: StreamTarget;
+}
+
+export interface Palette {
+  id: string;
+  name: string;
+  colors: string[];
+  isCustom?: boolean;
+  description?: string;
+}
+
+export interface PaletteColor {
+  r: number;
+  g: number;
+  b: number;
 }

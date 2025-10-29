@@ -35,8 +35,8 @@
         "brightness": 1
       }
     ],
-    "isOnline": true,
-    "lastSeen": "2025-10-27T00:20:58.654Z"
+    "isOnline": false,
+    "lastSeen": "2025-10-27T10:19:37.220Z"
   },
   {
     "id": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
@@ -53,8 +53,8 @@
         "brightness": 1
       }
     ],
-    "isOnline": true,
-    "lastSeen": "2025-10-27T02:10:41.442Z"
+    "isOnline": false,
+    "lastSeen": "2025-10-27T10:19:37.377Z"
   },
   {
     "id": "55364947-fba5-4ee0-9bd2-afc276eaf9fc",
@@ -71,7 +71,25 @@
         "brightness": 1
       }
     ],
-    "isOnline": true,
-    "lastSeen": "2025-10-27T01:58:44.054Z"
+    "isOnline": false,
+    "lastSeen": "2025-10-27T10:19:37.884Z"
+  },
+  {
+    "id": "1eb40f87-ea9c-4142-a9c0-8344a314f132",
+    "name": "test",
+    "ip": "127.0.0.1",
+    "port": 4048,
+    "ledCount": 150,
+    "segments": [
+      {
+        "id": "a30ff070-a7d2-4392-8911-71467784f6f3",
+        "start": 0,
+        "length": 150,
+        "color": "#ffffff",
+        "brightness": 1
+      }
+    ],
+    "isOnline": false,
+    "lastSeen": "2025-10-29T02:07:35.594Z"
   }
 ]

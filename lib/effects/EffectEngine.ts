@@ -2,8 +2,8 @@
  * Effect Engine - Main class for managing LED effects
  */
 
-import { Effect, EffectType } from '../../types';
-import { getParameterMap } from './helpers';
+import { Effect, EffectType, EffectLayer } from '../../types';
+import { getParameterMap, blendFrames } from './helpers';
 import { SolidEffect } from './solid';
 import { CometEffect } from './comet';
 import { RainbowEffect } from './rainbow';
@@ -20,6 +20,9 @@ import { ConfettiEffect } from './confetti';
 import { GlitterEffect } from './glitter';
 import { CylonEffect } from './cylon';
 import { ColorTwinkleEffect } from './colorTwinkle';
+import { PacificaEffect } from './pacifica';
+import { SkippingRockEffect } from './skippingRock';
+import { ShockwaveDualEffect } from './shockwaveDual';
 
 export class EffectEngine {
   private time: number = 0;
@@ -46,6 +49,9 @@ export class EffectEngine {
     this.effects.set('glitter', new GlitterEffect());
     this.effects.set('cylon', new CylonEffect());
     this.effects.set('color-twinkle', new ColorTwinkleEffect());
+    this.effects.set('pacifica', new PacificaEffect());
+    this.effects.set('skipping-rock', new SkippingRockEffect());
+    this.effects.set('shockwave-dual', new ShockwaveDualEffect());
   }
 
   updateTime(deltaTime: number): void {
@@ -68,6 +74,45 @@ export class EffectEngine {
       console.error(`Error generating effect '${effect.type}':`, error);
       return Buffer.alloc(ledCount * 3);
     }
+  }
+
+  /**
+   * Generate a frame from multiple effect layers
+   * Layers are blended from bottom to top (first to last)
+   */
+  generateFrameFromLayers(layers: EffectLayer[], ledCount: number, width: number = 1, height: number = 1): Buffer {
+    if (layers.length === 0) {
+      return Buffer.alloc(ledCount * 3); // Black frame if no layers
+    }
+    
+    // Filter to enabled layers only
+    const enabledLayers = layers.filter(layer => layer.enabled);
+    
+    if (enabledLayers.length === 0) {
+      return Buffer.alloc(ledCount * 3); // Black frame if all layers disabled
+    }
+    
+    // Generate base frame from first layer (always uses normal blend or replace)
+    const baseLayer = enabledLayers[0];
+    let baseFrame = this.generateFrame(baseLayer.effect, ledCount, width, height);
+    
+    // If only one layer, return it (no blending needed)
+    if (enabledLayers.length === 1) {
+      return baseFrame;
+    }
+    
+    // Generate and blend remaining layers
+    const layerFrames = enabledLayers.slice(1).map(layer => {
+      const layerFrame = this.generateFrame(layer.effect, ledCount, width, height);
+      return {
+        frame: layerFrame,
+        blendMode: layer.blendMode,
+        opacity: layer.opacity
+      };
+    });
+    
+    // Blend all layers together
+    return blendFrames(baseFrame, layerFrames);
   }
 
   getTime(): number {

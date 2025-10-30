@@ -1,0 +1,1312 @@
+[
+  {
+    "id": "preset-1761781221122-gfeb1a2l6",
+    "name": "Test Chase",
+    "description": "",
+    "createdAt": "2025-10-29T23:40:21.122Z",
+    "updatedAt": "2025-10-29T23:40:21.122Z",
+    "useLayers": false,
+    "effect": {
+      "id": "chase",
+      "name": "Chase",
+      "type": "chase",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "length",
+          "type": "range",
+          "value": 5,
+          "min": 1,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "name": "count",
+          "type": "range",
+          "value": 1,
+          "min": 1,
+          "max": 10,
+          "step": 1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "colorMode",
+          "type": "options",
+          "value": "palette",
+          "options": [
+            "palette",
+            "cycle"
+          ]
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "backgroundColor",
+          "type": "color",
+          "value": "#000000"
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.44,
+      "length": 5,
+      "count": 3,
+      "colors": [
+        "#ff0000"
+      ],
+      "colorMode": "palette",
+      "palette": "rainbow",
+      "backgroundColor": "#000000",
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-1761784904982-kacplp4zw",
+    "name": "test2 2 layers",
+    "description": "",
+    "createdAt": "2025-10-30T00:41:44.982Z",
+    "updatedAt": "2025-10-30T00:41:44.982Z",
+    "useLayers": true,
+    "layers": [
+      {
+        "id": "e1ef9d96-ccee-400d-b692-e822d733dc29",
+        "effect": {
+          "id": "chase",
+          "name": "Chase",
+          "type": "chase",
+          "parameters": [
+            {
+              "name": "speed",
+              "type": "range",
+              "value": 0.44,
+              "min": 0.01,
+              "max": 1,
+              "step": 0.01
+            },
+            {
+              "name": "length",
+              "type": "range",
+              "value": 5,
+              "min": 1,
+              "max": 50,
+              "step": 1
+            },
+            {
+              "name": "count",
+              "type": "range",
+              "value": 3,
+              "min": 1,
+              "max": 10,
+              "step": 1
+            },
+            {
+              "name": "colors",
+              "type": "array",
+              "value": [
+                "#ff0000"
+              ],
+              "isColorArray": true
+            },
+            {
+              "name": "colorMode",
+              "type": "options",
+              "value": "palette",
+              "options": [
+                "palette",
+                "cycle"
+              ]
+            },
+            {
+              "name": "palette",
+              "type": "palette",
+              "value": "rainbow"
+            },
+            {
+              "name": "backgroundColor",
+              "type": "color",
+              "value": "#000000"
+            },
+            {
+              "name": "reverse",
+              "type": "boolean",
+              "value": false
+            },
+            {
+              "name": "mirror",
+              "type": "boolean",
+              "value": false
+            }
+          ]
+        },
+        "blendMode": "normal",
+        "opacity": 0.47,
+        "enabled": true,
+        "name": "Chase Layer"
+      },
+      {
+        "id": "231a1119-f28d-4c51-bb42-2a0c362112e8",
+        "effect": {
+          "id": "comet",
+          "name": "Comet",
+          "type": "comet",
+          "parameters": [
+            {
+              "name": "speed",
+              "type": "range",
+              "value": 0.49,
+              "min": 0.01,
+              "max": 1,
+              "step": 0.01
+            },
+            {
+              "name": "length",
+              "type": "range",
+              "value": 20,
+              "min": 1,
+              "max": 100,
+              "step": 1
+            },
+            {
+              "name": "colors",
+              "type": "array",
+              "value": [
+                "#ff0000"
+              ],
+              "isColorArray": true
+            },
+            {
+              "name": "tail",
+              "type": "range",
+              "value": 0.3,
+              "min": 0,
+              "max": 1,
+              "step": 0.1
+            },
+            {
+              "name": "reverse",
+              "type": "boolean",
+              "value": false
+            },
+            {
+              "name": "mirror",
+              "type": "boolean",
+              "value": false
+            }
+          ]
+        },
+        "blendMode": "normal",
+        "opacity": 0.48,
+        "enabled": true,
+        "name": "Comet Layer"
+      }
+    ],
+    "layerParameters": {
+      "chase": {
+        "speed": 0.44,
+        "length": 5,
+        "count": 3,
+        "colors": [
+          "#ff0000"
+        ],
+        "colorMode": "palette",
+        "palette": "rainbow",
+        "backgroundColor": "#000000",
+        "reverse": false,
+        "mirror": false
+      },
+      "e1ef9d96-ccee-400d-b692-e822d733dc29-chase": {
+        "speed": 0.44,
+        "length": 5,
+        "count": 3,
+        "colors": [
+          "#ff0000"
+        ],
+        "colorMode": "palette",
+        "palette": "rainbow",
+        "backgroundColor": "#000000",
+        "reverse": false,
+        "mirror": false
+      },
+      "231a1119-f28d-4c51-bb42-2a0c362112e8-comet": {
+        "speed": 0.49,
+        "length": 20,
+        "colors": [
+          "#ff0000"
+        ],
+        "tail": 0.3,
+        "reverse": false,
+        "mirror": false
+      }
+    }
+  },
+  {
+    "id": "preset-1761806699226-q6n15ld4y",
+    "name": "RWB Skipping Rock",
+    "description": "",
+    "createdAt": "2025-10-30T06:44:59.226Z",
+    "updatedAt": "2025-10-30T06:44:59.226Z",
+    "useLayers": false,
+    "effect": {
+      "id": "skipping-rock",
+      "name": "Skipping Rock (Ripples + Bounces)",
+      "type": "skipping-rock",
+      "parameters": [
+        {
+          "name": "rockWidth",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "rockSpeed",
+          "type": "range",
+          "value": 180,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "rockTrail",
+          "type": "range",
+          "value": 0.85,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "rockHue",
+          "type": "number"
+        },
+        {
+          "name": "rockBrightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "minSkipDist",
+          "type": "range",
+          "value": 40,
+          "min": 5,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "maxSkipDist",
+          "type": "range",
+          "value": 120,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "skipHoldMs",
+          "type": "range",
+          "value": 35,
+          "min": 0,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "spawnAtRock",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "rippleSpeed",
+          "type": "range",
+          "value": 260,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "rippleSigma",
+          "type": "range",
+          "value": 1.6,
+          "min": 0.6,
+          "max": 4,
+          "step": 0.1
+        },
+        {
+          "name": "rippleDampPerSec",
+          "type": "range",
+          "value": 0.6,
+          "min": 0.3,
+          "max": 0.99,
+          "step": 0.01
+        },
+        {
+          "name": "reflectLoss",
+          "type": "range",
+          "value": 0.65,
+          "min": 0.3,
+          "max": 0.95,
+          "step": 0.01
+        },
+        {
+          "name": "maxRipples",
+          "type": "range",
+          "value": 12,
+          "min": 1,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "name": "additive",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "usePaletteCycle",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "paletteShiftPerSkip",
+          "type": "range",
+          "value": 0.18,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "backgroundFade",
+          "type": "range",
+          "value": 0.92,
+          "min": 0.5,
+          "max": 0.999,
+          "step": 0.001
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "clamp",
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    },
+    "parameters": {
+      "rockWidth": 2,
+      "rockSpeed": 40,
+      "rockTrail": 0,
+      "rockBrightness": 1,
+      "minSkipDist": 125,
+      "maxSkipDist": 390,
+      "skipHoldMs": 35,
+      "spawnAtRock": true,
+      "rippleSpeed": 30,
+      "rippleSigma": 1.6,
+      "rippleDampPerSec": 0.6,
+      "reflectLoss": 0.65,
+      "maxRipples": 12,
+      "additive": true,
+      "palette": "red-white-blue",
+      "usePaletteCycle": true,
+      "paletteShiftPerSkip": 0.9,
+      "backgroundFade": 0.92,
+      "gamma": 2.2,
+      "clamp": true
+    }
+  },
+  {
+    "id": "preset-1761807711894-5ihg78i31",
+    "name": "Shockwave1",
+    "description": "",
+    "createdAt": "2025-10-30T07:01:51.894Z",
+    "updatedAt": "2025-10-30T07:01:51.894Z",
+    "useLayers": false,
+    "effect": {
+      "id": "shockwave-dual",
+      "name": "Shockwave (Dual, Random Meet)",
+      "type": "shockwave-dual",
+      "parameters": [
+        {
+          "name": "minMeet",
+          "type": "range",
+          "value": 0.2,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "maxMeet",
+          "type": "range",
+          "value": 0.8,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "minRestMs",
+          "type": "range",
+          "value": 400,
+          "min": 0,
+          "max": 3000,
+          "step": 50
+        },
+        {
+          "name": "maxRestMs",
+          "type": "range",
+          "value": 1400,
+          "min": 0,
+          "max": 5000,
+          "step": 50
+        },
+        {
+          "name": "minHoldMs",
+          "type": "range",
+          "value": 40,
+          "min": 0,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "maxHoldMs",
+          "type": "range",
+          "value": 120,
+          "min": 0,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "speedL",
+          "type": "range",
+          "value": 140,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "speedR",
+          "type": "range",
+          "value": 140,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "cometTrail",
+          "type": "range",
+          "value": 0.86,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waves",
+          "type": "range",
+          "value": 3,
+          "min": 1,
+          "max": 8,
+          "step": 1
+        },
+        {
+          "name": "waveSpeed",
+          "type": "range",
+          "value": 240,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "dispersion",
+          "type": "range",
+          "value": 0.1,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "thickness",
+          "type": "range",
+          "value": 2.1,
+          "min": 0.6,
+          "max": 4,
+          "step": 0.1
+        },
+        {
+          "name": "decayPerWave",
+          "type": "range",
+          "value": 0.55,
+          "min": 0.2,
+          "max": 0.99,
+          "step": 0.01
+        },
+        {
+          "name": "useAdditive",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "globalFade",
+          "type": "range",
+          "value": 0.965,
+          "min": 0.5,
+          "max": 0.999,
+          "step": 0.001
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "clamp",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "hueCore",
+          "type": "range",
+          "value": 30,
+          "min": 0,
+          "max": 360,
+          "step": 1
+        },
+        {
+          "name": "hueEdge",
+          "type": "range",
+          "value": 205,
+          "min": 0,
+          "max": 360,
+          "step": 1
+        },
+        {
+          "name": "sat",
+          "type": "range",
+          "value": 1,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "bright",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "hueTravelL",
+          "type": "range",
+          "value": 330,
+          "min": 0,
+          "max": 360,
+          "step": 1
+        },
+        {
+          "name": "hueTravelR",
+          "type": "range",
+          "value": 200,
+          "min": 0,
+          "max": 360,
+          "step": 1
+        }
+      ]
+    },
+    "parameters": {
+      "minMeet": 0.3,
+      "maxMeet": 0.69,
+      "minRestMs": 950,
+      "maxRestMs": 2100,
+      "minHoldMs": 280,
+      "maxHoldMs": 500,
+      "speedL": 290,
+      "speedR": 140,
+      "cometTrail": 0.18,
+      "waves": 8,
+      "waveSpeed": 180,
+      "dispersion": 0.31,
+      "thickness": 2,
+      "decayPerWave": 0.49,
+      "useAdditive": true,
+      "globalFade": 0.814,
+      "gamma": 1,
+      "clamp": true,
+      "hueCore": 167,
+      "hueEdge": 311,
+      "sat": 1,
+      "bright": 1,
+      "hueTravelL": 81,
+      "hueTravelR": 141
+    }
+  },
+  {
+    "id": "preset-1761808339476-igxhpm3ni",
+    "name": "Valentine1",
+    "description": "",
+    "createdAt": "2025-10-30T07:12:19.476Z",
+    "updatedAt": "2025-10-30T07:12:19.476Z",
+    "useLayers": true,
+    "layers": [
+      {
+        "id": "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916",
+        "effect": {
+          "id": "solid",
+          "name": "Solid Color",
+          "type": "solid",
+          "parameters": [
+            {
+              "name": "colors",
+              "type": "array",
+              "value": [
+                "#f50a45"
+              ],
+              "isColorArray": true
+            },
+            {
+              "name": "mirror",
+              "type": "boolean",
+              "value": false
+            }
+          ]
+        },
+        "blendMode": "max",
+        "opacity": 0.05,
+        "enabled": true,
+        "name": "Solid Color Layer"
+      },
+      {
+        "id": "53dd2580-f960-4178-85d0-e652e6299c40",
+        "effect": {
+          "id": "wave",
+          "name": "Wave",
+          "type": "wave",
+          "parameters": [
+            {
+              "name": "speed",
+              "type": "range",
+              "value": 0.01,
+              "min": 0.01,
+              "max": 1,
+              "step": 0.01
+            },
+            {
+              "name": "frequency",
+              "type": "range",
+              "value": 0.01,
+              "min": 0.01,
+              "max": 0.2,
+              "step": 0.01
+            },
+            {
+              "name": "count",
+              "type": "range",
+              "value": 4,
+              "min": 1,
+              "max": 10,
+              "step": 1
+            },
+            {
+              "name": "colors",
+              "type": "array",
+              "value": [
+                "#e30d4d"
+              ],
+              "isColorArray": true
+            },
+            {
+              "name": "colorMode",
+              "type": "options",
+              "value": "palette",
+              "options": [
+                "palette",
+                "cycle"
+              ]
+            },
+            {
+              "name": "palette",
+              "type": "palette",
+              "value": "ocean"
+            },
+            {
+              "name": "reverse",
+              "type": "boolean",
+              "value": false
+            },
+            {
+              "name": "mirror",
+              "type": "boolean",
+              "value": true
+            }
+          ]
+        },
+        "blendMode": "replace",
+        "opacity": 0.44,
+        "enabled": true,
+        "name": "Comet Layer"
+      }
+    ],
+    "layerParameters": {
+      "solid": {
+        "colors": [
+          "#000000"
+        ],
+        "mirror": false
+      },
+      "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916-solid": {
+        "colors": [
+          "#f50a45"
+        ],
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-comet": {
+        "speed": 0.67,
+        "length": 57,
+        "colors": [
+          "#143ad2"
+        ],
+        "tail": 0.2,
+        "reverse": false,
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-confetti": {
+        "speed": 0.46,
+        "density": 0.1,
+        "reverse": false,
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-twinkle": {
+        "speed": 0.01,
+        "density": 0.02,
+        "colors": [
+          "#ffffff"
+        ],
+        "palette": "rainbow",
+        "reverse": false,
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-wave": {
+        "speed": 0.01,
+        "frequency": 0.01,
+        "count": 4,
+        "colors": [
+          "#e30d4d"
+        ],
+        "colorMode": "palette",
+        "palette": "ocean",
+        "reverse": false,
+        "mirror": true
+      }
+    }
+  },
+  {
+    "id": "preset-1761808542779-w3tiyrc0w",
+    "name": "Breathing Waves",
+    "description": "",
+    "createdAt": "2025-10-30T07:15:42.779Z",
+    "updatedAt": "2025-10-30T07:15:42.779Z",
+    "useLayers": true,
+    "layers": [
+      {
+        "id": "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916",
+        "effect": {
+          "id": "breathing",
+          "name": "Breathing",
+          "type": "breathing",
+          "parameters": [
+            {
+              "name": "speed",
+              "type": "range",
+              "value": 0.1,
+              "min": 0.01,
+              "max": 1,
+              "step": 0.01
+            },
+            {
+              "name": "colors",
+              "type": "array",
+              "value": [
+                "#ff0000"
+              ],
+              "isColorArray": true
+            },
+            {
+              "name": "palette",
+              "type": "palette",
+              "value": "rainbow"
+            },
+            {
+              "name": "minBrightness",
+              "type": "range",
+              "value": 0,
+              "min": 0,
+              "max": 0.5,
+              "step": 0.1
+            },
+            {
+              "name": "reverse",
+              "type": "boolean",
+              "value": false
+            },
+            {
+              "name": "mirror",
+              "type": "boolean",
+              "value": false
+            }
+          ]
+        },
+        "blendMode": "normal",
+        "opacity": 0.09,
+        "enabled": true,
+        "name": "Solid Color Layer"
+      },
+      {
+        "id": "53dd2580-f960-4178-85d0-e652e6299c40",
+        "effect": {
+          "id": "wave",
+          "name": "Wave",
+          "type": "wave",
+          "parameters": [
+            {
+              "name": "speed",
+              "type": "range",
+              "value": 0.01,
+              "min": 0.01,
+              "max": 1,
+              "step": 0.01
+            },
+            {
+              "name": "frequency",
+              "type": "range",
+              "value": 0.01,
+              "min": 0.01,
+              "max": 0.2,
+              "step": 0.01
+            },
+            {
+              "name": "count",
+              "type": "range",
+              "value": 3,
+              "min": 1,
+              "max": 10,
+              "step": 1
+            },
+            {
+              "name": "colors",
+              "type": "array",
+              "value": [
+                "#e30d4d"
+              ],
+              "isColorArray": true
+            },
+            {
+              "name": "colorMode",
+              "type": "options",
+              "value": "palette",
+              "options": [
+                "palette",
+                "cycle"
+              ]
+            },
+            {
+              "name": "palette",
+              "type": "palette",
+              "value": "holiday"
+            },
+            {
+              "name": "reverse",
+              "type": "boolean",
+              "value": false
+            },
+            {
+              "name": "mirror",
+              "type": "boolean",
+              "value": true
+            }
+          ]
+        },
+        "blendMode": "replace",
+        "opacity": 0.44,
+        "enabled": true,
+        "name": "Comet Layer"
+      }
+    ],
+    "layerParameters": {
+      "solid": {
+        "colors": [
+          "#000000"
+        ],
+        "mirror": false
+      },
+      "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916-solid": {
+        "colors": [
+          "#f50a45"
+        ],
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-comet": {
+        "speed": 0.67,
+        "length": 57,
+        "colors": [
+          "#143ad2"
+        ],
+        "tail": 0.2,
+        "reverse": false,
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-confetti": {
+        "speed": 0.46,
+        "density": 0.1,
+        "reverse": false,
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-twinkle": {
+        "speed": 0.01,
+        "density": 0.02,
+        "colors": [
+          "#ffffff"
+        ],
+        "palette": "rainbow",
+        "reverse": false,
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-wave": {
+        "speed": 0.01,
+        "frequency": 0.01,
+        "count": 3,
+        "colors": [
+          "#e30d4d"
+        ],
+        "colorMode": "palette",
+        "palette": "holiday",
+        "reverse": false,
+        "mirror": true
+      },
+      "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916-rainbow": {
+        "speed": 0.1,
+        "saturation": 1,
+        "brightness": 1,
+        "usePalette": false,
+        "palette": "rainbow",
+        "reverse": false,
+        "mirror": false
+      },
+      "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916-cylon": {
+        "speed": 0.74,
+        "width": 20,
+        "tail": 0.3,
+        "colors": [
+          "#ff0000"
+        ],
+        "colorMode": "palette",
+        "palette": "rainbow",
+        "reverse": false,
+        "mirror": false
+      },
+      "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916-breathing": {
+        "speed": 0.1,
+        "colors": [
+          "#ff0000"
+        ],
+        "palette": "rainbow",
+        "minBrightness": 0,
+        "reverse": false,
+        "mirror": false
+      }
+    }
+  },
+  {
+    "id": "preset-1761808694015-d93omzrab",
+    "name": "RWB Waves",
+    "description": "",
+    "createdAt": "2025-10-30T07:18:14.015Z",
+    "updatedAt": "2025-10-30T07:18:14.015Z",
+    "useLayers": true,
+    "layers": [
+      {
+        "id": "53dd2580-f960-4178-85d0-e652e6299c40",
+        "effect": {
+          "id": "wave",
+          "name": "Wave",
+          "type": "wave",
+          "parameters": [
+            {
+              "name": "speed",
+              "type": "range",
+              "value": 0.01,
+              "min": 0.01,
+              "max": 1,
+              "step": 0.01
+            },
+            {
+              "name": "frequency",
+              "type": "range",
+              "value": 0.01,
+              "min": 0.01,
+              "max": 0.2,
+              "step": 0.01
+            },
+            {
+              "name": "count",
+              "type": "range",
+              "value": 3,
+              "min": 1,
+              "max": 10,
+              "step": 1
+            },
+            {
+              "name": "colors",
+              "type": "array",
+              "value": [
+                "#e30d4d"
+              ],
+              "isColorArray": true
+            },
+            {
+              "name": "colorMode",
+              "type": "options",
+              "value": "palette",
+              "options": [
+                "palette",
+                "cycle"
+              ]
+            },
+            {
+              "name": "palette",
+              "type": "palette",
+              "value": "red-white-blue"
+            },
+            {
+              "name": "reverse",
+              "type": "boolean",
+              "value": false
+            },
+            {
+              "name": "mirror",
+              "type": "boolean",
+              "value": true
+            }
+          ]
+        },
+        "blendMode": "replace",
+        "opacity": 0.44,
+        "enabled": true,
+        "name": "Comet Layer"
+      },
+      {
+        "id": "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916",
+        "effect": {
+          "id": "wave",
+          "name": "Wave",
+          "type": "wave",
+          "parameters": [
+            {
+              "name": "speed",
+              "type": "range",
+              "value": 0.01,
+              "min": 0.01,
+              "max": 1,
+              "step": 0.01
+            },
+            {
+              "name": "frequency",
+              "type": "range",
+              "value": 0.02,
+              "min": 0.01,
+              "max": 0.2,
+              "step": 0.01
+            },
+            {
+              "name": "count",
+              "type": "range",
+              "value": 3,
+              "min": 1,
+              "max": 10,
+              "step": 1
+            },
+            {
+              "name": "colors",
+              "type": "array",
+              "value": [
+                "#00ff00"
+              ],
+              "isColorArray": true
+            },
+            {
+              "name": "colorMode",
+              "type": "options",
+              "value": "palette",
+              "options": [
+                "palette",
+                "cycle"
+              ]
+            },
+            {
+              "name": "palette",
+              "type": "palette",
+              "value": "ocean"
+            },
+            {
+              "name": "reverse",
+              "type": "boolean",
+              "value": false
+            },
+            {
+              "name": "mirror",
+              "type": "boolean",
+              "value": false
+            }
+          ]
+        },
+        "blendMode": "normal",
+        "opacity": 0.09,
+        "enabled": true,
+        "name": "Solid Color Layer"
+      }
+    ],
+    "layerParameters": {
+      "solid": {
+        "colors": [
+          "#000000"
+        ],
+        "mirror": false
+      },
+      "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916-solid": {
+        "colors": [
+          "#f50a45"
+        ],
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-comet": {
+        "speed": 0.67,
+        "length": 57,
+        "colors": [
+          "#143ad2"
+        ],
+        "tail": 0.2,
+        "reverse": false,
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-confetti": {
+        "speed": 0.46,
+        "density": 0.1,
+        "reverse": false,
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-twinkle": {
+        "speed": 0.01,
+        "density": 0.02,
+        "colors": [
+          "#ffffff"
+        ],
+        "palette": "rainbow",
+        "reverse": false,
+        "mirror": false
+      },
+      "53dd2580-f960-4178-85d0-e652e6299c40-wave": {
+        "speed": 0.01,
+        "frequency": 0.01,
+        "count": 3,
+        "colors": [
+          "#e30d4d"
+        ],
+        "colorMode": "palette",
+        "palette": "red-white-blue",
+        "reverse": false,
+        "mirror": true
+      },
+      "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916-rainbow": {
+        "speed": 0.1,
+        "saturation": 1,
+        "brightness": 1,
+        "usePalette": false,
+        "palette": "rainbow",
+        "reverse": false,
+        "mirror": false
+      },
+      "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916-cylon": {
+        "speed": 0.74,
+        "width": 20,
+        "tail": 0.3,
+        "colors": [
+          "#ff0000"
+        ],
+        "colorMode": "palette",
+        "palette": "rainbow",
+        "reverse": false,
+        "mirror": false
+      },
+      "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916-breathing": {
+        "speed": 0.1,
+        "colors": [
+          "#460aeb"
+        ],
+        "palette": "rainbow",
+        "minBrightness": 0,
+        "reverse": false,
+        "mirror": false
+      },
+      "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916-vu-bars": {
+        "sensitivity": 0.4,
+        "colors": [
+          "#5413cd"
+        ],
+        "bars": 15,
+        "reverse": false,
+        "mirror": false
+      },
+      "92fbce5d-48e6-4b00-ab4c-3c5f4c46b916-wave": {
+        "speed": 0.01,
+        "frequency": 0.02,
+        "count": 3,
+        "colors": [
+          "#00ff00"
+        ],
+        "colorMode": "palette",
+        "palette": "ocean",
+        "reverse": false,
+        "mirror": false
+      }
+    }
+  }
+]

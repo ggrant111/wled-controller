@@ -16,5 +16,20 @@
     "isDefault": false,
     "brightness": 1,
     "isStreaming": false
+  },
+  {
+    "id": "e209bd15-8e51-4962-8393-9b13635e8711",
+    "name": "Second",
+    "members": [
+      {
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839"
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7"
+      }
+    ],
+    "isDefault": false,
+    "brightness": 1,
+    "isStreaming": false
   }
 ]

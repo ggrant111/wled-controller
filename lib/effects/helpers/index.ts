@@ -6,3 +6,4 @@ export * from './colorUtils';
 export * from './parameterUtils';
 export * from './paletteUtils';
 export * from './effectUtils';
+export * from './blendUtils';

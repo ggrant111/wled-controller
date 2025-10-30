@@ -32,7 +32,7 @@ export default function PaletteSelector({ value, onChange, className = '' }: Pal
     const loadPalettes = async () => {
       await paletteManager.loadCustomPalettes();
       setAllPalettes(paletteManager.getAllPalettes());
-      setSelectedPalette(paletteManager.getPaletteById(value));
+      setSelectedPalette(paletteManager.getPaletteById(value) || null);
     };
     loadPalettes();
   }, [value]);

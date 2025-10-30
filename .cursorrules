@@ -1,0 +1,369 @@
+# WLED Controller - Cursor Rules
+
+This project is a WLED controller application built with Next.js, TypeScript, and Express. It manages LED effects, devices, groups, and color palettes.
+
+## Project Structure
+
+- `/app` - Next.js app directory with pages and API routes
+- `/components` - React components for UI
+- `/lib` - Core library code including effects, utilities, and storage
+- `/lib/effects` - LED effect implementations
+- `/lib/effects/helpers` - Helper utilities for effects (color utils, palette utils, parameter utils)
+- `/types` - TypeScript type definitions
+- `/data` - JSON data storage for devices, groups, palettes, virtuals
+- `/server` - Express server for WebSocket and streaming
+- `/hooks` - React hooks
+- `/contexts` - React contexts
+
+## Adding New Effects
+
+To add a new LED effect, follow these steps:
+
+### Step 1: Create the Effect Implementation File
+
+Create a new file in `/lib/effects/` with your effect name (e.g., `myEffect.ts`):
+
+```typescript
+import { EffectGenerator } from "./helpers";
+// Import other helpers as needed:
+// - getColorArray, getPaletteColors from './helpers/paletteUtils'
+// - parseColor, rgbToHsv, hsvToRgb from './helpers/colorUtils'
+// - applyTransformations from './helpers/effectUtils'
+
+export class MyEffect implements EffectGenerator {
+  generate(
+    params: Map<string, any>,
+    ledCount: number,
+    time: number,
+    width?: number,
+    height?: number
+  ): Buffer {
+    // Extract parameters
+    const speed = params.get("speed") || 0.1;
+    const colors = params.get("colors") || ["#ff0000"];
+
+    // Create buffer (3 bytes per LED: R, G, B)
+    const buffer = Buffer.alloc(ledCount * 3);
+
+    // Generate effect logic here
+    for (let i = 0; i < ledCount; i++) {
+      const pixelIndex = i * 3;
+      // Calculate color for this LED
+      buffer[pixelIndex] = r; // Red channel (0-255)
+      buffer[pixelIndex + 1] = g; // Green channel (0-255)
+      buffer[pixelIndex + 2] = b; // Blue channel (0-255)
+    }
+
+    return buffer;
+  }
+}
+```
+
+### Step 2: Add Effect Type to Type Definitions
+
+In `/types/index.ts`, add your effect type to the `EffectType` union:
+
+```typescript
+export type EffectType =
+  | "comet"
+  | "color-wipe"
+  // ... existing effects ...
+  | "my-effect"; // Add your new effect type (kebab-case)
+```
+
+### Step 3: Register Effect in EffectEngine
+
+In `/lib/effects/EffectEngine.ts`:
+
+1. Import your effect class at the top:
+
+```typescript
+import { MyEffect } from "./myEffect";
+```
+
+2. In the constructor, add it to the effects Map:
+
+```typescript
+this.effects.set("my-effect", new MyEffect());
+```
+
+### Step 4: Export from Index
+
+In `/lib/effects/index.ts`, add:
+
+```typescript
+export * from "./myEffect";
+```
+
+### Step 5: Add Default Configuration
+
+In `/lib/effects/defaultEffects.ts`, add an entry to the `defaultEffects` array:
+
+```typescript
+{
+  id: 'my-effect',
+  name: 'My Effect',
+  type: 'my-effect',
+  parameters: [
+    { name: 'speed', type: 'range', value: 0.1, min: 0.01, max: 1.0, step: 0.01 },
+    { name: 'colors', type: 'array', value: ['#ff0000'], isColorArray: true },
+    { name: 'reverse', type: 'boolean', value: false },
+    { name: 'mirror', type: 'boolean', value: false }
+  ]
+}
+```
+
+### Effect Parameter Types
+
+Available parameter types:
+
+- `'color'` - Single color picker (value: hex string like '#ff0000')
+- `'number'` - Numeric input with optional min/max/step
+- `'range'` - Slider control (requires min, max, step)
+- `'boolean'` - Checkbox/toggle
+- `'array'` - Array of values (set `isColorArray: true` for color arrays)
+- `'options'` - Dropdown (requires `options` array)
+- `'palette'` - Palette selector (value: palette ID string)
+
+### Common Helpers for Effects
+
+Use these helpers from `/lib/effects/helpers/`:
+
+**Color utilities (`colorUtils.ts`):**
+
+- `parseColor(hex: string): RGBColor` - Parse hex to RGB
+- `rgbToHsv(r, g, b): HSVColor` - Convert RGB to HSV
+- `hsvToRgb(h, s, v): RGBColor` - Convert HSV to RGB
+- `blendColors(c1, c2, ratio): RGBColor` - Blend two colors
+
+**Palette utilities (`paletteUtils.ts`):**
+
+- `getColorArray(params, defaultColor): RGBColor[]` - Get colors from params (supports color arrays and palettes)
+- `getPaletteColors(params, defaultPaletteId): RGBColor[]` - Get colors from palette parameter
+- `getPaletteManager()` - Access palette manager for advanced palette operations
+
+**Effect utilities (`effectUtils.ts`):**
+
+- `applyTransformations(index, ledCount, mirror, reverse): number` - Apply mirror/reverse transformations
+- `applyMirror(index, ledCount): number` - Mirror effect
+- `applyReverse(index, ledCount): number` - Reverse effect
+
+**Parameter utilities (`parameterUtils.ts`):**
+
+- `getParameterMap(parameters): Map<string, any>` - Convert parameter array to Map
+- `getParam(params, name, defaultValue): any` - Get parameter with default
+
+### Effect Implementation Best Practices
+
+1. **Buffer Format**: Always use Buffer format: 3 bytes per LED (R, G, B), no alpha channel
+2. **Time Parameter**: Use the `time` parameter for animations (in milliseconds). Scale it appropriately for your effect speed
+3. **Transformations**: Support `reverse` and `mirror` parameters using `applyTransformations()` helper
+4. **Palette Support**: When using palettes, use `getColorArray()` or `getPaletteColors()` helpers
+5. **Performance**: Keep calculations efficient - effects run in real-time at 20-30 FPS
+6. **Width/Height**: For 2D effects, use `width` and `height` parameters to calculate matrix positions
+7. **Error Handling**: Always return a valid buffer even if parameters are invalid
+
+## API Routes
+
+### Palettes API
+
+All palette API routes are in `/app/api/palettes/`:
+
+#### GET `/api/palettes`
+
+Get all custom palettes.
+
+**Response:** `Palette[]`
+
+```typescript
+[
+  {
+    id: string,
+    name: string,
+    colors: string[], // Hex color strings
+    isCustom: true,
+    description?: string
+  }
+]
+```
+
+**Usage:**
+
+```typescript
+const response = await fetch("/api/palettes");
+const palettes = await response.json();
+```
+
+#### POST `/api/palettes`
+
+Create a new custom palette.
+
+**Request Body:**
+
+```typescript
+{
+  name: string,
+  colors: string[], // Array of hex color strings
+  description?: string
+}
+```
+
+**Response:** `Palette` (the created palette)
+
+**Usage:**
+
+```typescript
+const response = await fetch("/api/palettes", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    name: "My Palette",
+    colors: ["#ff0000", "#00ff00", "#0000ff"],
+    description: "Custom color palette",
+  }),
+});
+const palette = await response.json();
+```
+
+#### PUT `/api/palettes/[id]`
+
+Update an existing custom palette.
+
+**Request Body:**
+
+```typescript
+{
+  name: string,
+  colors: string[],
+  description?: string
+}
+```
+
+**Response:** `Palette` (the updated palette)
+
+**Usage:**
+
+```typescript
+const response = await fetch(`/api/palettes/${paletteId}`, {
+  method: "PUT",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    name: "Updated Name",
+    colors: ["#ffffff"],
+    description: "Updated description",
+  }),
+});
+```
+
+#### DELETE `/api/palettes/[id]`
+
+Delete a custom palette.
+
+**Response:** `{ success: boolean }`
+
+**Usage:**
+
+```typescript
+const response = await fetch(`/api/palettes/${paletteId}`, {
+  method: "DELETE",
+});
+```
+
+### API Best Practices
+
+1. **Error Handling**: All API routes should return proper HTTP status codes:
+
+   - `200` - Success
+   - `400` - Bad Request (invalid data)
+   - `404` - Not Found
+   - `409` - Conflict (e.g., duplicate name)
+   - `500` - Internal Server Error
+
+2. **Data Validation**: Always validate request bodies before processing
+3. **File Operations**: Use `fs/promises` for async file operations
+4. **Data Directory**: Data files are stored in `/data` directory (created automatically if missing)
+5. **JSON Formatting**: When writing JSON, use `JSON.stringify(data, null, 2)` for readable formatting
+
+## Code Style & Conventions
+
+### TypeScript
+
+- Use TypeScript for all new code
+- Define types in `/types/index.ts` or local type files
+- Use interfaces for object shapes
+- Use type unions for discriminated unions (e.g., `EffectType`)
+
+### Naming Conventions
+
+- **Files**: camelCase for components/utils, kebab-case for effects
+- **Classes**: PascalCase (e.g., `SolidEffect`, `EffectEngine`)
+- **Interfaces**: PascalCase (e.g., `Effect`, `Palette`)
+- **Functions**: camelCase (e.g., `generateFrame`, `getParameterMap`)
+- **Constants**: camelCase or UPPER_SNAKE_CASE for truly constant values
+- **Effect Types**: kebab-case (e.g., `'color-wipe'`, `'vu-bars'`)
+
+### Imports
+
+- Group imports: external packages first, then internal modules
+- Use absolute imports when possible
+- Import types with `import type { ... }` when importing only types
+
+### Error Handling
+
+- Use try-catch blocks for async operations
+- Log errors with `console.error()` for debugging
+- Return meaningful error messages in API responses
+- Provide default values for optional parameters
+
+## Testing Effects
+
+When adding a new effect:
+
+1. Test with various LED counts (10, 50, 100, 300+)
+2. Test with different parameter values (min, max, mid-range)
+3. Test with palettes and color arrays
+4. Test mirror and reverse transformations
+5. Verify smooth animation without flicker
+6. Check performance with large LED counts
+
+## Common Patterns
+
+### Time-based Animation
+
+```typescript
+const scaledTime = time * speed; // Scale by speed parameter
+const position = (scaledTime % cycleDuration) / cycleDuration; // Normalize to 0-1
+```
+
+### Color Interpolation
+
+```typescript
+import { blendColors } from "./helpers/colorUtils";
+const color = blendColors(color1, color2, ratio); // ratio 0-1
+```
+
+### Using Palettes
+
+```typescript
+import { getColorArray } from "./helpers/paletteUtils";
+const colors = getColorArray(params, "#ff0000"); // Falls back to default if no palette/colors
+```
+
+### Applying Transformations
+
+```typescript
+import { applyTransformations } from "./helpers/effectUtils";
+const mirror = params.get("mirror") || false;
+const reverse = params.get("reverse") || false;
+const effectiveIndex = applyTransformations(i, ledCount, mirror, reverse);
+```
+
+## Files to Modify When Adding Effects
+
+When adding a new effect, you must modify these files:
+
+1. `/lib/effects/[effectName].ts` - Create new file with effect implementation
+2. `/types/index.ts` - Add effect type to `EffectType` union
+3. `/lib/effects/EffectEngine.ts` - Import and register effect
+4. `/lib/effects/index.ts` - Export new effect
+5. `/lib/effects/defaultEffects.ts` - Add default configuration

@@ -132,8 +132,14 @@ export class PaletteManager {
     }
   }
 
-  // Load custom palettes from file (server-side)
+  // Load custom palettes from file (server-side only)
   async loadCustomPalettesFromFile(): Promise<void> {
+    // Only run on server side
+    if (typeof window !== 'undefined') {
+      console.warn('loadCustomPalettesFromFile can only be called on the server side');
+      return;
+    }
+    
     try {
       const fs = await import('fs/promises');
       const path = await import('path');

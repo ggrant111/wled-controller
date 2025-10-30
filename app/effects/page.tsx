@@ -5,9 +5,11 @@ import { motion } from 'framer-motion';
 import { Zap, Play, Pause } from 'lucide-react';
 import EffectPanel from '../../components/EffectPanel';
 import { useStreaming } from '../../contexts/StreamingContext';
-import { Effect, WLEDDevice, Group, VirtualDevice } from '../../types';
+import { Effect, WLEDDevice, Group, VirtualDevice, EffectPreset } from '../../types';
+import { useSearchParams } from 'next/navigation';
 
 export default function EffectsPage() {
+  const searchParams = useSearchParams();
   const [effects, setEffects] = useState<Effect[]>([]);
   const [devices, setDevices] = useState<WLEDDevice[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -20,6 +22,81 @@ export default function EffectsPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Load preset from URL query param
+  useEffect(() => {
+    const presetId = searchParams?.get('preset');
+    if (presetId && effects.length > 0) {
+      console.log('Loading preset with ID:', presetId);
+      loadPreset(presetId);
+    }
+  }, [searchParams, effects]);
+
+  const loadPreset = async (presetId: string) => {
+    try {
+      // URL encode the preset ID in case it has special characters
+      const encodedPresetId = encodeURIComponent(presetId);
+      const url = `/api/presets/${encodedPresetId}`;
+      console.log('Fetching preset:', url);
+      console.log('Original preset ID:', presetId);
+      
+      const response = await fetch(url);
+      
+      console.log('Response status:', response.status, response.statusText);
+      console.log('Response URL:', response.url);
+      
+      if (!response.ok) {
+        let errorMessage = 'Unknown error';
+        try {
+          const errorText = await response.text();
+          console.log('Error response body:', errorText);
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+        } catch (e) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        console.error('Failed to load preset:', errorMessage);
+        alert(`Failed to load preset: ${errorMessage}`);
+        return;
+      }
+
+      const preset: EffectPreset = await response.json();
+      console.log('Loaded preset:', preset);
+      
+      // Convert plain objects back to Maps for component state
+      if (preset.useLayers && preset.layers) {
+        // Load layers mode
+        // Note: This requires EffectPanel to expose a prop/method to load presets
+        // For now, we'll just log it - would need refactoring to properly load layers
+        console.log('Loading preset with layers:', preset);
+        alert('Layer presets are not yet fully supported. Please use single effect presets for now.');
+        // TODO: Expose preset loading method in EffectPanel
+      } else if (preset.effect) {
+        // Load single effect mode
+        const matchingEffect = effects.find(e => e.id === preset.effect?.id);
+        if (matchingEffect) {
+          // Update effect with preset parameters
+          const effectWithParams = {
+            ...matchingEffect,
+            parameters: matchingEffect.parameters.map(param => ({
+              ...param,
+              value: preset.parameters?.[param.name] ?? param.value
+            }))
+          };
+          setSelectedEffect(effectWithParams);
+        } else {
+          console.error('Effect not found for preset:', preset.effect.id);
+          alert('Effect not found. The preset may reference a removed effect.');
+        }
+      } else {
+        console.error('Invalid preset: no effect or layers');
+        alert('Invalid preset format');
+      }
+    } catch (error: any) {
+      console.error('Error loading preset:', error);
+      alert(`Error loading preset: ${error.message || 'Unknown error'}`);
+    }
+  };
 
   // Sync selected effect with active streaming session
   useEffect(() => {

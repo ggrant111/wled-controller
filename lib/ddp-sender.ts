@@ -156,17 +156,17 @@ export class DDPSender {
       await new Promise<void>((resolve, reject) => {
         this.socket.send(fullPacket, device.port, device.ip, (error) => {
           if (error) {
-            console.error(`DDP chunk ${i + 1}/${totalPackets} send error to ${device.ip}:${device.port}:`, error);
+            // console.error(`DDP chunk ${i + 1}/${totalPackets} send error to ${device.ip}:${device.port}:`, error);
             reject(error);
           } else {
-            console.log(`DDP chunk ${i + 1}/${totalPackets} sent to ${device.ip}:${device.port}`);
+            // console.log(`DDP chunk ${i + 1}/${totalPackets} sent to ${device.ip}:${device.port}`);
             resolve();
           }
         });
       });
     }
     
-    console.log(`Sent ${totalPackets} DDP packets to ${device.name} (${rgbData.length} bytes total)`);
+    // console.log(`Sent ${totalPackets} DDP packets to ${device.name} (${rgbData.length} bytes total)`);
   }
 
   async sendToSegment(deviceId: string, segmentId: string, rgbData: Buffer): Promise<void> {

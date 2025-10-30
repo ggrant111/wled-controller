@@ -18,3 +18,6 @@ export * from './confetti';
 export * from './glitter';
 export * from './cylon';
 export * from './colorTwinkle';
+export * from './pacifica';
+export * from './skippingRock';
+export * from './shockwaveDual';

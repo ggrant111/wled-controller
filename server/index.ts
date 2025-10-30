@@ -4,11 +4,18 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import { promises as fs } from 'fs';
+import path from 'path';
 import JSONStorage from '../lib/storage';
 import DDPSender from '../lib/ddp-sender';
 import EffectEngine, { defaultEffects } from '../lib/effects';
 import { paletteManager } from '../lib/palettes';
-import { WLEDDevice, Group, VirtualDevice, Preset, StreamingSession, StreamTarget, Effect } from '../types';
+import { WLEDDevice, Group, VirtualDevice, Preset, StreamingSession, StreamTarget, Effect, EffectPreset, Schedule, ScheduleRule, ScheduleSequenceItem } from '../types';
+// Use require to avoid type resolution issues
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const SunCalc = require('suncalc');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Holidays = require('date-holidays');
 
 const app = express();
 const server = createServer(app);
@@ -32,6 +39,195 @@ const streamingSessions = new Map<string, StreamingSession>();
 let streamingInterval: NodeJS.Timeout | null = null;
 let healthCheckInterval: NodeJS.Timeout | null = null;
 const loggedStreamingDevices = new Set<string>(); // Track which devices have been logged for streaming start
+// Scheduler state
+const activeRuleSessions = new Map<string, { sessionId: string; endAt: number | null }>();
+let schedulerInterval: NodeJS.Timeout | null = null;
+
+async function loadEffectPresetsFromFile(): Promise<EffectPreset[]> {
+  try {
+    const dataDir = path.join(process.cwd(), 'data');
+    const presetsFile = path.join(dataDir, 'presets.json');
+    await fs.mkdir(dataDir, { recursive: true });
+    const data = await fs.readFile(presetsFile, 'utf8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+function isHoliday(date: Date, country?: string, state?: string): boolean {
+  if (!country) return false;
+  try {
+    const hd = new Holidays(country, state);
+    return !!hd.isHoliday(date);
+  } catch {
+    return false;
+  }
+}
+
+function getTodaysTime(date: Date, timeHHMM: string, tz?: string): Date {
+  const [hh, mm] = timeHHMM.split(':').map(Number);
+  const d = new Date(date);
+  d.setHours(hh || 0, mm || 0, 0, 0);
+  return d;
+}
+
+function computeEventTime(type: 'time' | 'sunrise' | 'sunset', baseDate: Date, opts: { time?: string; lat?: number; lon?: number; offsetMin?: number }): Date | null {
+  if (type === 'time') {
+    if (!opts.time) return null;
+    const dt = getTodaysTime(baseDate, opts.time);
+    if (opts.offsetMin) dt.setMinutes(dt.getMinutes() + opts.offsetMin);
+    return dt;
+  }
+  if (opts.lat === undefined || opts.lon === undefined) return null;
+  const times = SunCalc.getTimes(baseDate, opts.lat, opts.lon);
+  const t = type === 'sunrise' ? times.sunrise : times.sunset;
+  const dt = new Date(t);
+  if (opts.offsetMin) dt.setMinutes(dt.getMinutes() + opts.offsetMin);
+  return dt;
+}
+
+function ruleMatchesDate(rule: ScheduleRule, now: Date): boolean {
+  const dow = now.getDay();
+  if (rule.daysOfWeek && rule.daysOfWeek.length > 0 && !rule.daysOfWeek.includes(dow)) return false;
+  if (rule.dates && rule.dates.length > 0) {
+    const ymd = now.toISOString().slice(0, 10);
+    if (!rule.dates.includes(ymd)) return false;
+  }
+  const holiday = isHoliday(now, rule.holidayCountry, rule.holidayState);
+  if (rule.onHolidaysOnly && !holiday) return false;
+  if (rule.skipOnHolidays && holiday) return false;
+  return true;
+}
+
+async function startSequenceForRule(rule: ScheduleRule): Promise<string | null> {
+  const fps = rule.fps || 30;
+  let sequence = [...(rule.sequence || [])];
+  if (sequence.length === 0) return null;
+  if (rule.sequenceShuffle) {
+    sequence = sequence.sort(() => Math.random() - 0.5);
+  }
+  // Prepare body for first item
+  const first = sequence[0];
+  const body: any = { targets: rule.targets, fps };
+  if (first.layers && first.layers.length > 0) {
+    body.layers = first.layers;
+  } else if (first.effect) {
+    body.effect = first.effect;
+    body.blendMode = 'overwrite';
+  } else if (first.presetId) {
+    const presets = await loadEffectPresetsFromFile();
+    const preset = presets.find(p => p.id === first.presetId);
+    if (preset) {
+      if (preset.useLayers && preset.layers) {
+        body.layers = preset.layers;
+      } else if (preset.effect) {
+        body.effect = preset.effect as any;
+        body.blendMode = 'overwrite';
+      }
+    }
+  }
+  const respSession = await new Promise<{ id: string } | null>(async (resolve) => {
+    try {
+      const session: StreamingSession = {
+        id: uuidv4(),
+        targets: rule.targets,
+        layers: body.layers || [],
+        fps,
+        isActive: true,
+        startTime: new Date(),
+        effect: body.effect
+      };
+      streamingSessions.set(session.id, session);
+      if (!streamingInterval) {
+        loggedStreamingDevices.clear();
+        startStreamingLoop();
+      }
+      resolve({ id: session.id });
+    } catch (e) {
+      resolve(null);
+    }
+  });
+  if (!respSession) return null;
+  return respSession.id;
+}
+
+function scheduleEndAtForRule(rule: ScheduleRule, startAt: Date): number | null {
+  const now = startAt;
+  const end = computeEventTime(
+    rule.endType || 'time',
+    now,
+    {
+      time: rule.endTime,
+      lat: rule.latitude,
+      lon: rule.longitude,
+      offsetMin: rule.endOffsetMinutes
+    }
+  );
+  if (end) return end.getTime();
+  if (rule.durationSeconds) return now.getTime() + rule.durationSeconds * 1000;
+  return null;
+}
+
+async function rampBrightness(targets: StreamTarget[], from: number, to: number, durationMs: number) {
+  const steps = Math.max(1, Math.floor(durationMs / 200));
+  for (let i = 1; i <= steps; i++) {
+    const value = Math.round(from + (to - from) * (i / steps));
+    for (const t of targets) {
+      io.emit('brightness-updated', { targetType: t.type, targetId: t.id, brightness: value });
+    }
+    await new Promise(r => setTimeout(r, Math.floor(durationMs / steps)));
+  }
+}
+
+async function schedulerTick() {
+  try {
+    const now = new Date();
+    const schedules: Schedule[] = await storage.loadSchedules();
+    for (const sched of schedules) {
+      if (!sched.enabled) continue;
+      for (const rule of sched.rules) {
+        if (!rule.enabled) continue;
+        const ruleKey = rule.id;
+        // Stop conditions
+        const active = activeRuleSessions.get(ruleKey);
+        if (active) {
+          if (active.endAt && now.getTime() >= active.endAt) {
+            const session = streamingSessions.get(active.sessionId);
+            if (session) session.isActive = false;
+            activeRuleSessions.delete(ruleKey);
+            if (rule.rampOffEnd && rule.rampDurationSeconds) {
+              rampBrightness(rule.targets, 255, 0, rule.rampDurationSeconds * 1000).catch(()=>{});
+            }
+          }
+          continue;
+        }
+        // Start condition
+        if (!ruleMatchesDate(rule, now)) continue;
+        const startAt = computeEventTime(rule.startType, now, { time: rule.startTime, lat: rule.latitude, lon: rule.longitude, offsetMin: rule.startOffsetMinutes });
+        if (!startAt) continue;
+        // Start within current minute/window
+        if (Math.abs(now.getTime() - startAt.getTime()) <= 30000) {
+          const sessionId = await startSequenceForRule(rule);
+          if (sessionId) {
+            const endAt = scheduleEndAtForRule(rule, now);
+            activeRuleSessions.set(ruleKey, { sessionId, endAt });
+            if (rule.rampOnStart && rule.rampDurationSeconds) {
+              rampBrightness(rule.targets, 0, 255, rule.rampDurationSeconds * 1000).catch(()=>{});
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Scheduler tick error:', e);
+  }
+}
+
+function startScheduler() {
+  if (schedulerInterval) return;
+  schedulerInterval = setInterval(schedulerTick, 30000);
+}
 
 // Initialize storage
 async function initializeStorage() {
@@ -103,15 +299,45 @@ io.on('connection', (socket) => {
 
   // Real-time parameter updates
   socket.on('update-effect-parameter', async (data) => {
-    const { sessionId, parameterName, value } = data;
+    const { sessionId, parameterName, value, layerId } = data;
     const session = streamingSessions.get(sessionId);
     
     if (session) {
-      const param = session.effect.parameters.find(p => p.name === parameterName);
-      if (param) {
-        param.value = value;
+      // If layerId is provided, update layer parameter
+      if (layerId && session.layers) {
+        const layer = session.layers.find(l => l.id === layerId);
+        if (layer) {
+          const param = layer.effect.parameters.find(p => p.name === parameterName);
+          if (param) {
+            param.value = value;
+            streamingSessions.set(sessionId, session);
+            io.emit('effect-parameter-updated', { sessionId, parameterName, value, layerId });
+          }
+        }
+      } else if (session.effect) {
+        // Legacy: update single effect
+        const param = session.effect.parameters.find(p => p.name === parameterName);
+        if (param) {
+          param.value = value;
+          streamingSessions.set(sessionId, session);
+          io.emit('effect-parameter-updated', { sessionId, parameterName, value });
+        }
+      }
+    }
+  });
+
+  // Real-time layer property updates (blendMode, opacity, enabled)
+  socket.on('update-layer-property', async (data) => {
+    const { sessionId, layerId, property, value } = data;
+    const session = streamingSessions.get(sessionId);
+    
+    if (session && session.layers) {
+      const layer = session.layers.find(l => l.id === layerId);
+      if (layer && (property === 'blendMode' || property === 'opacity' || property === 'enabled')) {
+        (layer as any)[property] = value;
         streamingSessions.set(sessionId, session);
-        io.emit('effect-parameter-updated', { sessionId, parameterName, value });
+        io.emit('layer-property-updated', { sessionId, layerId, property, value });
+        console.log(`Updated layer ${layerId} ${property} to`, value);
       }
     }
   });
@@ -351,20 +577,159 @@ app.get('/api/stream/state', (req, res) => {
   }
 });
 
+// List all streaming sessions (summary)
+app.get('/api/stream/sessions', (req, res) => {
+  try {
+    const sessions = Array.from(streamingSessions.values());
+    const summaries = sessions.map(s => ({
+      id: s.id,
+      isActive: s.isActive,
+      targets: s.targets,
+      fps: s.fps,
+      startTime: s.startTime,
+    }));
+    res.json({ count: summaries.length, sessions: summaries });
+  } catch (error) {
+    console.error('Error listing sessions:', error);
+    res.status(500).json({ error: 'Failed to list sessions' });
+  }
+});
+
+// Resolve and list all devices currently receiving a stream across active sessions
+app.get('/api/stream/active-devices', async (req, res) => {
+  try {
+    const sessions = Array.from(streamingSessions.values()).filter(s => s.isActive);
+    const devices = await storage.loadDevices();
+    const groups = await storage.loadGroups();
+    const virtuals = await storage.loadVirtuals();
+    const activeDeviceIds = new Set<string>();
+    
+    for (const session of sessions) {
+      for (const target of session.targets) {
+        if (target.type === 'device') {
+          activeDeviceIds.add(target.id);
+        } else if (target.type === 'group') {
+          const group = groups.find(g => g.id === target.id);
+          if (group && group.members) {
+            for (const member of group.members) {
+              if (member.deviceId) {
+                activeDeviceIds.add(member.deviceId);
+              }
+            }
+          }
+        } else if (target.type === 'virtual') {
+          const virtual = virtuals.find(v => v.id === target.id);
+          if (virtual && virtual.ledRanges) {
+            for (const range of virtual.ledRanges) {
+              if (range.deviceId) {
+                activeDeviceIds.add(range.deviceId);
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    const activeDevices = devices
+      .filter(d => activeDeviceIds.has(d.id))
+      .map(d => ({ id: d.id, name: d.name, ledCount: d.ledCount }));
+    
+    res.json({ count: activeDevices.length, devices: activeDevices });
+  } catch (error) {
+    console.error('Error resolving active devices:', error);
+    res.status(500).json({ error: 'Failed to resolve active devices' });
+  }
+});
+
+// Active targets summary (devices resolved, plus raw groups and virtuals in sessions)
+app.get('/api/stream/active-targets', async (req, res) => {
+  try {
+    const sessions = Array.from(streamingSessions.values()).filter(s => s.isActive);
+    const devices = await storage.loadDevices();
+    const groups = await storage.loadGroups();
+    const virtuals = await storage.loadVirtuals();
+
+    const deviceIdSet = new Set<string>();
+    const groupIdSet = new Set<string>();
+    const virtualIdSet = new Set<string>();
+
+    for (const session of sessions) {
+      for (const target of session.targets) {
+        if (target.type === 'device') {
+          deviceIdSet.add(target.id);
+        } else if (target.type === 'group') {
+          groupIdSet.add(target.id);
+          const group = groups.find(g => g.id === target.id);
+          if (group?.members) {
+            for (const member of group.members) {
+              if (member.deviceId) deviceIdSet.add(member.deviceId);
+            }
+          }
+        } else if (target.type === 'virtual') {
+          virtualIdSet.add(target.id);
+          const virtual = virtuals.find(v => v.id === target.id);
+          if (virtual?.ledRanges) {
+            for (const range of virtual.ledRanges) {
+              if (range.deviceId) deviceIdSet.add(range.deviceId);
+            }
+          }
+        }
+      }
+    }
+
+    const deviceNames = devices.filter(d => deviceIdSet.has(d.id)).map(d => ({ id: d.id, name: d.name }));
+    const groupNames = groups.filter(g => groupIdSet.has(g.id)).map(g => ({ id: g.id, name: g.name }));
+    const virtualNames = virtuals.filter(v => virtualIdSet.has(v.id)).map(v => ({ id: v.id, name: v.name }));
+
+    res.json({
+      sessions: sessions.map(s => ({ id: s.id, targets: s.targets })),
+      counts: {
+        sessions: sessions.length,
+        devices: deviceNames.length,
+        groups: groupNames.length,
+        virtuals: virtualNames.length,
+      },
+      devices: deviceNames,
+      groups: groupNames,
+      virtuals: virtualNames,
+    });
+  } catch (error) {
+    console.error('Error resolving active targets:', error);
+    res.status(500).json({ error: 'Failed to resolve active targets' });
+  }
+});
+
 // Streaming
 app.post('/api/stream/start', async (req, res) => {
   try {
-    const { targets, effect, fps = 30, blendMode = 'overwrite', sessionId, selectedTargets } = req.body;
+    const { targets, effect, layers, fps = 30, blendMode = 'replace', sessionId, selectedTargets } = req.body;
     
     let session: StreamingSession;
+    
+    // Convert legacy effect to layers if needed
+    let effectLayers: any[] = [];
+    if (layers && Array.isArray(layers) && layers.length > 0) {
+      effectLayers = layers;
+    } else if (effect) {
+      // Legacy support: convert single effect to a single layer
+      effectLayers = [{
+        id: uuidv4(),
+        effect: effect,
+        blendMode: blendMode === 'add' || blendMode === 'max' ? blendMode : 'normal',
+        opacity: 1.0,
+        enabled: true,
+        name: effect.name
+      }];
+    } else {
+      return res.status(400).json({ error: 'Either effect or layers must be provided' });
+    }
     
     // If sessionId provided, update existing session
     if (sessionId && streamingSessions.has(sessionId)) {
       session = streamingSessions.get(sessionId)!;
       session.targets = targets;
-      session.effect = effect;
+      session.layers = effectLayers;
       session.fps = fps;
-      session.blendMode = blendMode;
       if (selectedTargets !== undefined) {
         session.selectedTargets = selectedTargets;
       }
@@ -374,14 +739,13 @@ app.post('/api/stream/start', async (req, res) => {
       session = {
         id: uuidv4(),
         targets,
-        effect,
+        layers: effectLayers,
         fps,
-        blendMode,
         isActive: true,
         startTime: new Date(),
         selectedTargets: selectedTargets || undefined
       };
-      console.log('Starting streaming session:', { targets, effect: effect.name, fps, blendMode });
+      console.log('Starting streaming session:', { targets, layers: effectLayers.length, fps });
     }
     
     streamingSessions.set(session.id, session);
@@ -406,6 +770,35 @@ app.post('/api/stream/start', async (req, res) => {
   } catch (error) {
     console.error('Failed to start streaming:', error);
     res.status(500).json({ error: 'Failed to start streaming' });
+  }
+});
+
+// Stop streaming to a specific target (device/group/virtual)
+app.post('/api/stream/stop-target', async (req, res) => {
+  try {
+    const { target } = req.body as { target: { type: 'device'|'group'|'virtual'; id: string } };
+    if (!target || !target.type || !target.id) {
+      return res.status(400).json({ error: 'Invalid target' });
+    }
+    let modified = false;
+    for (const session of Array.from(streamingSessions.values())) {
+      const prevLen = session.targets.length;
+      session.targets = session.targets.filter(t => !(t.type === target.type && t.id === target.id));
+      if (session.targets.length !== prevLen) {
+        modified = true;
+        // If no targets left, mark inactive
+        if (session.targets.length === 0) {
+          session.isActive = false;
+        }
+      }
+    }
+    if (!modified) {
+      return res.json({ success: true, message: 'No active sessions for target' });
+    }
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Error stopping target:', error);
+    return res.status(500).json({ error: 'Failed to stop target' });
   }
 });
 
@@ -483,27 +876,98 @@ app.post('/api/brightness', async (req, res) => {
 // Presets
 app.get('/api/presets', async (req, res) => {
   try {
-    const presets = await storage.loadPresets();
-    res.json(presets);
+    // Use the new EffectPreset format from file
+    const dataDir = path.join(process.cwd(), 'data');
+    const presetsFile = path.join(dataDir, 'presets.json');
+    
+    try {
+      await fs.mkdir(dataDir, { recursive: true });
+      const data = await fs.readFile(presetsFile, 'utf8');
+      const presets = JSON.parse(data);
+      res.json(presets);
+    } catch {
+      res.json([]);
+    }
   } catch (error) {
+    console.error('Error loading presets:', error);
     res.status(500).json({ error: 'Failed to load presets' });
+  }
+});
+
+app.get('/api/presets/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const dataDir = path.join(process.cwd(), 'data');
+    const presetsFile = path.join(dataDir, 'presets.json');
+    
+    try {
+      await fs.mkdir(dataDir, { recursive: true });
+      const data = await fs.readFile(presetsFile, 'utf8');
+      const presets: EffectPreset[] = JSON.parse(data);
+      const preset = presets.find(p => p.id === id);
+      
+      if (!preset) {
+        return res.status(404).json({ error: `Preset not found with ID: ${id}` });
+      }
+      
+      res.json(preset);
+    } catch (error) {
+      console.error('Error reading presets file:', error);
+      res.status(404).json({ error: 'Preset not found' });
+    }
+  } catch (error) {
+    console.error('Error getting preset:', error);
+    res.status(500).json({ error: 'Failed to get preset' });
   }
 });
 
 app.post('/api/presets', async (req, res) => {
   try {
-    const preset: Preset = {
-      id: uuidv4(),
-      name: req.body.name,
-      effect: req.body.effect,
-      targets: req.body.targets,
-      brightness: req.body.brightness || 1.0
-    };
-    
-    await storage.addPreset(preset);
-    io.emit('preset-added', preset);
-    res.json(preset);
+    // Legacy Preset format - keep for backward compatibility
+    // But also support new EffectPreset format
+    if (req.body.useLayers !== undefined || req.body.effect) {
+      // New EffectPreset format
+      const dataDir = path.join(process.cwd(), 'data');
+      const presetsFile = path.join(dataDir, 'presets.json');
+      
+      await fs.mkdir(dataDir, { recursive: true });
+      const existingData = await fs.readFile(presetsFile, 'utf8').catch(() => '[]');
+      const presets: EffectPreset[] = JSON.parse(existingData);
+      
+      const newPreset: EffectPreset = {
+        id: uuidv4(),
+        name: req.body.name,
+        description: req.body.description || '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        useLayers: req.body.useLayers || false,
+        effect: req.body.effect,
+        parameters: req.body.parameters,
+        layers: req.body.layers,
+        layerParameters: req.body.layerParameters
+      };
+      
+      presets.push(newPreset);
+      await fs.writeFile(presetsFile, JSON.stringify(presets, null, 2));
+      
+      io.emit('preset-added', newPreset);
+      res.json(newPreset);
+    } else {
+      // Legacy Preset format
+      const preset: Preset = {
+        id: uuidv4(),
+        name: req.body.name,
+        effect: req.body.effect,
+        targets: req.body.targets,
+        brightness: req.body.brightness || 1.0
+      };
+      
+      await storage.addPreset(preset);
+      io.emit('preset-added', preset);
+      res.json(preset);
+    }
   } catch (error) {
+    console.error('Error creating preset:', error);
     res.status(500).json({ error: 'Failed to add preset' });
   }
 });
@@ -524,7 +988,7 @@ function startStreamingLoop() {
     
     for (const session of sessions) {
       if (!session.isActive) {
-        console.log('Session inactive:', session.id);
+        
         continue;
       }
       
@@ -544,7 +1008,11 @@ function startStreamingLoop() {
                   loggedStreamingDevices.add(device.id);
                 }
                 
-                const frame = effectEngine.generateFrame(session.effect, ledCount);
+                const frame = session.layers && session.layers.length > 0
+                  ? effectEngine.generateFrameFromLayers(session.layers, ledCount)
+                  : session.effect
+                    ? effectEngine.generateFrame(session.effect, ledCount)
+                    : Buffer.alloc(ledCount * 3);
                 await ddpSender.sendToDevice(target.id, frame);
                 
                 // Emit frame data to clients for preview
@@ -574,7 +1042,11 @@ function startStreamingLoop() {
               }
               
               // Generate one frame for the entire group
-              const groupFrame = effectEngine.generateFrame(session.effect, totalGroupLEDs);
+              const groupFrame = session.layers && session.layers.length > 0
+                ? effectEngine.generateFrameFromLayers(session.layers, totalGroupLEDs)
+                : session.effect
+                  ? effectEngine.generateFrame(session.effect, totalGroupLEDs)
+                  : Buffer.alloc(totalGroupLEDs * 3);
               
               // Emit frame data for preview (once per group)
               io.emit('frame-data', {
@@ -597,7 +1069,11 @@ function startStreamingLoop() {
                       loggedStreamingDevices.add(device.id);
                     }
                     
-                    const frame = effectEngine.generateFrame(session.effect, ledCount);
+                    const frame = session.layers && session.layers.length > 0
+                      ? effectEngine.generateFrameFromLayers(session.layers, ledCount)
+                      : session.effect
+                        ? effectEngine.generateFrame(session.effect, ledCount)
+                        : Buffer.alloc(ledCount * 3);
                     // DDP offset is in bytes, so multiply LED index by 3
                     await ddpSender.sendToDevice(member.deviceId, frame, member.startLed * 3);
                   } else {
@@ -609,7 +1085,11 @@ function startStreamingLoop() {
                       loggedStreamingDevices.add(device.id);
                     }
                     
-                    const frame = effectEngine.generateFrame(session.effect, ledCount);
+                    const frame = session.layers && session.layers.length > 0
+                      ? effectEngine.generateFrameFromLayers(session.layers, ledCount)
+                      : session.effect
+                        ? effectEngine.generateFrame(session.effect, ledCount)
+                        : Buffer.alloc(ledCount * 3);
                     await ddpSender.sendToDevice(member.deviceId, frame);
                   }
                 }
@@ -633,7 +1113,11 @@ function startStreamingLoop() {
               }
               
               // Generate effect frame for the total virtual LED count
-              const virtualFrame = effectEngine.generateFrame(session.effect, totalVirtualLEDs);
+              const virtualFrame = session.layers && session.layers.length > 0
+                ? effectEngine.generateFrameFromLayers(session.layers, totalVirtualLEDs)
+                : session.effect
+                  ? effectEngine.generateFrame(session.effect, totalVirtualLEDs)
+                  : Buffer.alloc(totalVirtualLEDs * 3);
               
               // Emit frame data for preview
               io.emit('frame-data', {
@@ -696,6 +1180,9 @@ async function startServer() {
   setTimeout(async () => {
     await checkAllDevicesHealth();
   }, 5000);
+  
+  // Start scheduler
+  startScheduler();
   
   const PORT = process.env.PORT || 3001;
   server.listen(PORT, () => {

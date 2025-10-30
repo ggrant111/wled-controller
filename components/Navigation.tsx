@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { LayoutDashboard, Zap, Cpu, Settings, Play, Pause } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { LayoutDashboard, Zap, Cpu, Settings, Play, Pause, Save } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useStreaming } from '../contexts/StreamingContext';
@@ -9,6 +9,22 @@ import { useStreaming } from '../contexts/StreamingContext';
 export default function Navigation() {
   const pathname = usePathname();
   const { isStreaming, setIsStreaming, setStreamingSessionId, lastStreamConfig } = useStreaming();
+  const [activeStreams, setActiveStreams] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCount = async () => {
+      try {
+        const res = await fetch('/api/stream/sessions');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (isMounted) setActiveStreams(data.count || 0);
+      } catch {}
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 3000);
+    return () => { isMounted = false; clearInterval(interval); };
+  }, []);
 
   const handleStartStopStreaming = async () => {
     try {
@@ -63,6 +79,8 @@ export default function Navigation() {
     { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/devices', icon: Cpu, label: 'Devices' },
     { href: '/effects', icon: Zap, label: 'Effects' },
+    { href: '/presets', icon: Save, label: 'Presets' },
+    { href: '/schedule', icon: Settings, label: 'Schedule' },
     { href: '/settings', icon: Settings, label: 'Settings' },
   ];
 
@@ -103,7 +121,7 @@ export default function Navigation() {
             <div className="h-8 w-px bg-white/20 mx-2"></div>
             <button
               onClick={handleStartStopStreaming}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+              className={`relative flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                 isStreaming
                   ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
                   : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
@@ -111,6 +129,11 @@ export default function Navigation() {
             >
               {isStreaming ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               <span className="hidden lg:inline">{isStreaming ? 'Stop' : 'Start'} All</span>
+              {activeStreams > 0 && (
+                <span className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 rounded-full bg-primary-500 text-white text-xs flex items-center justify-center">
+                  {activeStreams}
+                </span>
+              )}
             </button>
           </div>
 
@@ -140,7 +163,7 @@ export default function Navigation() {
             <div className="h-6 w-px bg-white/20 mx-1"></div>
             <button
               onClick={handleStartStopStreaming}
-              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm transition-all whitespace-nowrap ${
+              className={`relative flex items-center gap-1 px-3 py-2 rounded-lg text-sm transition-all whitespace-nowrap ${
                 isStreaming
                   ? 'bg-red-500/20 text-red-400'
                   : 'bg-green-500/20 text-green-400'
@@ -148,6 +171,11 @@ export default function Navigation() {
             >
               {isStreaming ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               <span className="text-xs">{isStreaming ? 'Stop' : 'Start'}</span>
+              {activeStreams > 0 && (
+                <span className="absolute -top-2 -right-2 min-w-[18px] h-4 px-1 rounded-full bg-primary-500 text-white text-[10px] leading-none flex items-center justify-center">
+                  {activeStreams}
+                </span>
+              )}
             </button>
           </div>
         </div>

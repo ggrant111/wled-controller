@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Pause, Settings, Palette, Zap, Trash2 } from 'lucide-react';
-import { Effect, EffectParameter } from '../types';
+import { Play, Pause, Settings, Palette, Zap, Trash2, Layers, Save, Download } from 'lucide-react';
+import { Effect, EffectParameter, EffectLayer, EffectPreset } from '../types';
 import { useStreaming } from '../contexts/StreamingContext';
 import { useSocket } from '../hooks/useSocket';
 import LEDPreviewCanvas from './LEDPreviewCanvas';
 import PaletteSelector from './PaletteSelector';
+import LayerPanel from './LayerPanel';
+import { v4 as uuidv4 } from 'uuid';
 
 interface EffectPanelProps {
   effects: Effect[];
@@ -23,6 +25,11 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
   const { emit } = useSocket();
   const [effectParameters, setEffectParameters] = useState<Map<string, Map<string, any>>>(new Map());
   const [activeEffect, setActiveEffect] = useState<Effect | null>(null);
+  const [useLayers, setUseLayers] = useState(false);
+  const [layers, setLayers] = useState<EffectLayer[]>([]);
+  const [showSavePresetModal, setShowSavePresetModal] = useState(false);
+  const [presetName, setPresetName] = useState('');
+  const [presetDescription, setPresetDescription] = useState('');
 
   // Get parameters for the current effect
   const parameters = selectedEffect ? (effectParameters.get(selectedEffect.id) || new Map()) : new Map();
@@ -57,32 +64,46 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
     newEffectParams.set(selectedEffect.id, newParams);
     setEffectParameters(newEffectParams);
     
-    // If streaming is active, update the session's effect parameters
-    if (isStreaming && streamingSessionId && activeEffect) {
-      // Update the active effect with new parameter
-      const updatedEffect = {
-        ...activeEffect,
-        parameters: activeEffect.parameters.map(p => 
-          p.name === paramName ? { ...p, value } : p
-        )
-      };
-      setActiveEffect(updatedEffect);
-      
-      // Hot-reload parameter update via Socket.IO - instant effect
+    // If streaming is active, hot-reload the parameter via Socket.IO
+    if (isStreaming && streamingSessionId) {
       emit('update-effect-parameter', {
         sessionId: streamingSessionId,
         parameterName: paramName,
         value: value
       });
-      
       console.log('Hot-reloaded parameter:', paramName, '=', value);
     }
     
     console.log('Parameter updated:', paramName, value);
   };
 
+  // Initialize layers when useLayers is enabled
+  useEffect(() => {
+    if (useLayers && layers.length === 0 && selectedEffect) {
+      const layerId = uuidv4();
+      const initialLayer: EffectLayer = {
+        id: layerId,
+        effect: { ...selectedEffect },
+        blendMode: 'normal',
+        opacity: 1.0,
+        enabled: true,
+        name: `${selectedEffect.name} Layer`
+      };
+      setLayers([initialLayer]);
+      
+      // Initialize parameters for the first layer
+      const layerParams = new Map();
+      selectedEffect.parameters.forEach(param => {
+        layerParams.set(param.name, param.value);
+      });
+      const newEffectParams = new Map(effectParameters);
+      newEffectParams.set(`${layerId}-${selectedEffect.id}`, layerParams);
+      setEffectParameters(newEffectParams);
+    }
+  }, [useLayers, selectedEffect]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleStartStreaming = async () => {
-    if (!selectedEffect) return;
+    if (!selectedEffect && (!useLayers || layers.length === 0)) return;
     
     try {
       setIsStreaming(true);
@@ -92,15 +113,6 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
         setIsStreaming(false);
         return;
       }
-      
-      // Update effect with current parameters
-      const effectWithParams = {
-        ...selectedEffect,
-        parameters: selectedEffect.parameters.map(param => ({
-          ...param,
-          value: parameters.get(param.name) ?? param.value
-        }))
-      };
       
       // Create targets array from selected targets (devices, groups, virtuals)
       const targets = selectedTargets.map(targetId => {
@@ -122,16 +134,52 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
         }
       });
       
-      const response = await fetch('/api/stream/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      let requestBody: any;
+      if (useLayers && layers.length > 0) {
+        // Use layers mode
+        requestBody = {
+          targets,
+          layers: layers.map(layer => ({
+            ...layer,
+            effect: {
+              ...layer.effect,
+              parameters: layer.effect.parameters.map(param => {
+                const layerParams = effectParameters.get(`${layer.id}-${layer.effect.id}`) || new Map();
+                return {
+                  ...param,
+                  value: layerParams.get(param.name) ?? param.value
+                };
+              })
+            }
+          })),
+          fps: 30,
+          selectedTargets
+        };
+      } else if (selectedEffect) {
+        // Legacy single effect mode
+        const effectWithParams = {
+          ...selectedEffect,
+          parameters: selectedEffect.parameters.map(param => ({
+            ...param,
+            value: parameters.get(param.name) ?? param.value
+          }))
+        };
+        requestBody = {
           targets,
           effect: effectWithParams,
           fps: 30,
           blendMode: 'overwrite',
           selectedTargets
-        })
+        };
+      } else {
+        setIsStreaming(false);
+        return;
+      }
+      
+      const response = await fetch('/api/stream/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
       });
       
       if (!response.ok) {
@@ -143,12 +191,12 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
       
       // Store session info for parameter updates
       setStreamingSessionId(session.id);
-      setActiveEffect(effectWithParams);
       
       // Store last streaming configuration for restart from navbar
       setLastStreamConfig({
         targets,
-        effect: effectWithParams,
+        effect: useLayers ? undefined : requestBody.effect,
+        layers: useLayers ? layers : undefined,
         fps: 30,
         blendMode: 'overwrite'
       });
@@ -226,8 +274,19 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
               min={param.min}
               max={param.max}
               step={param.step}
-              value={parameters.get(param.name) ?? param.value}
-              onChange={(e) => handleParameterChange(param.name, parseFloat(e.target.value))}
+              value={(() => {
+                const v = parameters.has(param.name) ? parameters.get(param.name) : param.value;
+                return v === undefined || v === null ? '' : v;
+              })()}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === '') {
+                  handleParameterChange(param.name, undefined);
+                  return;
+                }
+                const parsed = parseFloat(raw);
+                handleParameterChange(param.name, isNaN(parsed) ? undefined : parsed);
+              }}
               className="input-field w-full"
             />
           </div>
@@ -571,8 +630,138 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
         </motion.div>
       )}
 
-      {/* Effect Parameters */}
+      {/* Save Preset Button & Layers Mode Toggle */}
       {selectedEffect && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="glass-card p-4 sm:p-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Layers className="h-5 w-5 text-primary-500" />
+              <h3 className="text-lg font-bold">Effect Mode</h3>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowSavePresetModal(true)}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+                title="Save current effect configuration as preset"
+              >
+                <Save className="w-4 h-4" />
+                Save as Preset
+              </button>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <span className="text-sm text-gray-300">Single</span>
+                <button
+                  onClick={() => setUseLayers(!useLayers)}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    useLayers ? 'bg-primary-500' : 'bg-white/20'
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                    useLayers ? 'translate-x-6' : 'translate-x-0.5'
+                  }`} />
+                </button>
+                <span className="text-sm text-gray-300">Layers</span>
+              </label>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Layer Panel */}
+      {selectedEffect && useLayers && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="glass-card p-4 sm:p-6"
+        >
+          <LayerPanel
+            layers={layers}
+            onLayersChange={setLayers}
+            availableEffects={effects}
+            onLayerEffectSelect={(layerId, effect) => {
+              // Initialize parameters for the new effect
+              const layerParams = new Map();
+              effect.parameters.forEach(param => {
+                layerParams.set(param.name, param.value);
+              });
+              const newEffectParams = new Map(effectParameters);
+              newEffectParams.set(`${layerId}-${effect.id}`, layerParams);
+              setEffectParameters(newEffectParams);
+              
+              // Update the layer with the new effect (only if layer exists)
+              // When adding a new layer, the layer already has the effect, so this is mainly for effect changes
+              const layerExists = layers.some(l => l.id === layerId);
+              if (layerExists) {
+                const updatedLayers = layers.map(l => 
+                  l.id === layerId ? { ...l, effect: { ...effect } } : l
+                );
+                setLayers(updatedLayers);
+              }
+            }}
+            onLayerParameterChange={(layerId, paramName, value) => {
+              const layer = layers.find(l => l.id === layerId);
+              if (!layer) return;
+              
+              // Update parameter map
+              const paramKey = `${layerId}-${layer.effect.id}`;
+              const layerParams = effectParameters.get(paramKey) || new Map();
+              layerParams.set(paramName, value);
+              const newEffectParams = new Map(effectParameters);
+              newEffectParams.set(paramKey, layerParams);
+              setEffectParameters(newEffectParams);
+              
+              // Update the layer's effect parameters
+              const updatedLayers = layers.map(l => 
+                l.id === layerId
+                  ? {
+                      ...l,
+                      effect: {
+                        ...l.effect,
+                        parameters: l.effect.parameters.map(p =>
+                          p.name === paramName ? { ...p, value } : p
+                        )
+                      }
+                    }
+                  : l
+              );
+              setLayers(updatedLayers);
+              
+              // Hot-reload if streaming
+              if (isStreaming && streamingSessionId) {
+                emit('update-effect-parameter', {
+                  sessionId: streamingSessionId,
+                  layerId: layerId,
+                  parameterName: paramName,
+                  value: value
+                });
+              }
+            }}
+            onLayerPropertyChange={(layerId, property, value) => {
+              // Hot-reload layer properties during streaming
+              if (isStreaming && streamingSessionId) {
+                emit('update-layer-property', {
+                  sessionId: streamingSessionId,
+                  layerId: layerId,
+                  property: property,
+                  value: value
+                });
+                console.log(`Hot-reloaded layer ${layerId} ${property} =`, value);
+              }
+            }}
+            layerParameters={effectParameters}
+            isStreaming={isStreaming}
+            streamingSessionId={streamingSessionId}
+          />
+        </motion.div>
+      )}
+
+      {/* Effect Parameters (Single Effect Mode) */}
+      {selectedEffect && !useLayers && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -596,7 +785,7 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="glass-card p-4 sm:p-6"
+          className="glass-card p-4 sm:p-6 z-index-10"
         >
           <div className="flex items-center gap-3">
             {!isStreaming ? (
@@ -608,13 +797,23 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
                 Start Streaming
               </button>
             ) : (
-              <button
-                onClick={handleStopStreaming}
-                className="btn-secondary flex items-center gap-2 flex-1"
-              >
-                <Pause className="h-4 w-4" />
-                Stop Streaming
-              </button>
+              <>
+                <button
+                  onClick={handleStopStreaming}
+                  className="btn-secondary flex items-center gap-2 flex-1"
+                >
+                  <Pause className="h-4 w-4" />
+                  Stop Streaming
+                </button>
+                <button
+                  onClick={handleStartStreaming}
+                  className="btn-primary flex items-center gap-2 flex-1"
+                  title="Start a new stream with the current selection while keeping existing streams running"
+                >
+                  <Play className="h-4 w-4" />
+                  Start New Stream
+                </button>
+              </>
             )}
           </div>
         </motion.div>
@@ -629,13 +828,115 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
         >
           <h3 className="text-lg font-bold mb-4">Live Preview</h3>
           <LEDPreviewCanvas 
-            effect={selectedEffect}
-            parameters={parameters}
+            effect={useLayers ? null : selectedEffect}
+            parameters={useLayers ? undefined : parameters}
+            layers={useLayers ? layers : undefined}
+            layerParameters={useLayers ? effectParameters : undefined}
             ledCount={100}
             width={600}
             height={80}
           />
         </motion.div>
+      )}
+
+      {/* Save Preset Modal */}
+      {showSavePresetModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card p-6 max-w-md w-full mx-4"
+          >
+            <h3 className="text-xl font-bold mb-4">Save Effect Preset</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Preset Name *</label>
+                <input
+                  type="text"
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                  placeholder="Enter preset name"
+                  className="input-field w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Description</label>
+                <textarea
+                  value={presetDescription}
+                  onChange={(e) => setPresetDescription(e.target.value)}
+                  placeholder="Optional description"
+                  rows={3}
+                  className="input-field w-full resize-none"
+                />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowSavePresetModal(false);
+                    setPresetName('');
+                    setPresetDescription('');
+                  }}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!presetName.trim()) {
+                      alert('Please enter a preset name');
+                      return;
+                    }
+
+                    try {
+                      // Prepare preset data
+                      const presetData: any = {
+                        name: presetName.trim(),
+                        description: presetDescription.trim() || '',
+                        useLayers: useLayers
+                      };
+
+                      if (useLayers && layers.length > 0) {
+                        presetData.layers = layers;
+                        // Convert layerParameters Map to plain object
+                        const layerParamsObj: Record<string, Record<string, any>> = {};
+                        effectParameters.forEach((params, key) => {
+                          layerParamsObj[key] = Object.fromEntries(params);
+                        });
+                        presetData.layerParameters = layerParamsObj;
+                      } else if (selectedEffect) {
+                        presetData.effect = selectedEffect;
+                        presetData.parameters = Object.fromEntries(parameters);
+                      }
+
+                      const response = await fetch('/api/presets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(presetData)
+                      });
+
+                      if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to save preset');
+                      }
+
+                      const savedPreset = await response.json();
+                      alert(`Preset "${savedPreset.name}" saved successfully!`);
+                      setShowSavePresetModal(false);
+                      setPresetName('');
+                      setPresetDescription('');
+                    } catch (error: any) {
+                      console.error('Error saving preset:', error);
+                      alert(error.message || 'Failed to save preset');
+                    }
+                  }}
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                >
+                  Save Preset
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );

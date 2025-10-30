@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Cpu, Users, Monitor } from 'lucide-react';
 import DeviceCard from '../../components/DeviceCard';
+import GroupCard from '../../components/GroupCard';
+import VirtualCard from '../../components/VirtualCard';
 import DeviceModal from '../../components/DeviceModal';
 import VirtualDeviceModal from '../../components/VirtualDeviceModal';
 import GroupModal from '../../components/GroupModal';
@@ -352,43 +354,13 @@ export default function DevicesPage() {
             ) : (
               <div className="space-y-4">
                 {groups.map((group, index) => (
-                  <motion.div
+                  <GroupCard
                     key={group.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="glass-card p-6 glass-card-hover"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold">{group.name}</h3>
-                        <p className="text-sm text-white/70">
-                          {group.members.length} member{group.members.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          group.isStreaming
-                            ? 'bg-green-500/20 text-green-400'
-                            : 'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {group.isStreaming ? 'Streaming' : 'Idle'}
-                        </span>
-                        <button
-                          onClick={() => handleEditGroup(group)}
-                          className="btn-secondary text-xs px-3 py-1"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteGroup(group.id)}
-                          className="btn-secondary text-xs px-3 py-1 text-red-400"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
+                    group={group}
+                    onEdit={() => handleEditGroup(group)}
+                    onDelete={() => handleDeleteGroup(group.id)}
+                    delay={index * 0.1}
+                  />
                 ))}
               </div>
             )}
@@ -418,43 +390,13 @@ export default function DevicesPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {virtuals.map((virtual, index) => (
-                  <motion.div
+                  <VirtualCard
                     key={virtual.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="glass-card p-6 glass-card-hover"
-                  >
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h3 className="text-xl font-bold">{virtual.name}</h3>
-                          <p className="text-sm text-white/70">
-                            {virtual.ledRanges?.reduce((sum, range) => sum + (range.endLed - range.startLed + 1), 0) || 0} LEDs • {virtual.ledRanges?.length || 0} ranges
-                          </p>
-                        </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          virtual.isStreaming 
-                            ? 'bg-green-500/20 text-green-400' 
-                            : 'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {virtual.isStreaming ? 'Streaming' : 'Idle'}
-                        </span>
-                        <button
-                          onClick={() => handleEditVirtual(virtual)}
-                          className="btn-secondary text-xs px-3 py-1"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteVirtual(virtual.id)}
-                          className="btn-secondary text-xs px-3 py-1 text-red-400"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
+                    virtual={virtual}
+                    onEdit={() => handleEditVirtual(virtual)}
+                    onDelete={() => handleDeleteVirtual(virtual.id)}
+                    delay={index * 0.1}
+                  />
                 ))}
               </div>
             )}

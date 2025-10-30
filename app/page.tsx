@@ -2,14 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Cpu, Users, Monitor, Zap, Wifi, WifiOff } from 'lucide-react';
+import { Cpu, Users, Monitor, Zap, Wifi, WifiOff, Save } from 'lucide-react';
 
 export default function Dashboard() {
   const [devices, setDevices] = useState(0);
   const [groups, setGroups] = useState(0);
   const [virtuals, setVirtuals] = useState(0);
   const [effects, setEffects] = useState(14);
+  const [presets, setPresets] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activeStreams, setActiveStreams] = useState(0);
+  const [activeDevices, setActiveDevices] = useState<{ id: string; name: string }[]>([]);
+  const [activeGroups, setActiveGroups] = useState<{ id: string; name: string }[]>([]);
+  const [activeVirtuals, setActiveVirtuals] = useState<{ id: string; name: string }[]>([]);
+  const [totalLeds, setTotalLeds] = useState(0);
 
   useEffect(() => {
     loadDashboardData();
@@ -17,19 +23,31 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const [devicesRes, groupsRes, virtualsRes] = await Promise.all([
+      const [devicesRes, groupsRes, virtualsRes, presetsRes, sessionsRes, activeTargetsRes] = await Promise.all([
         fetch('/api/devices'),
         fetch('/api/groups'),
-        fetch('/api/virtuals')
+        fetch('/api/virtuals'),
+        fetch('/api/presets'),
+        fetch('/api/stream/sessions'),
+        fetch('/api/stream/active-targets')
       ]);
 
       const devicesData = await devicesRes.json();
       const groupsData = await groupsRes.json();
       const virtualsData = await virtualsRes.json();
+      const presetsData = await presetsRes.json();
+      const sessionsData = sessionsRes.ok ? await sessionsRes.json() : { count: 0 };
+      const activeTargets = activeTargetsRes.ok ? await activeTargetsRes.json() : { devices: [], groups: [], virtuals: [], counts: { sessions: 0 } };
 
       setDevices(devicesData.length);
+      setTotalLeds(Array.isArray(devicesData) ? devicesData.reduce((sum: number, d: any) => sum + (d?.ledCount || 0), 0) : 0);
       setGroups(groupsData.length);
       setVirtuals(virtualsData.length);
+      setPresets(presetsData.length);
+      setActiveStreams(sessionsData.count || activeTargets.counts?.sessions || 0);
+      setActiveDevices(activeTargets.devices || []);
+      setActiveGroups(activeTargets.groups || []);
+      setActiveVirtuals(activeTargets.virtuals || []);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
@@ -109,6 +127,51 @@ export default function Dashboard() {
           </div>
           <p className="text-xs text-white/50 mt-2">Available effects</p>
         </div>
+        
+        <div className="glass-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white/70 text-sm mb-1">Presets</p>
+              <p className="text-3xl font-bold">{presets}</p>
+            </div>
+            <Save className="h-10 w-10 text-primary-500" />
+          </div>
+          <p className="text-xs text-white/50 mt-2">Saved presets</p>
+        </div>
+
+        {/* Active Streams Tile */}
+        <div className="glass-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white/70 text-sm mb-1">Active Streams</p>
+              <p className="text-3xl font-bold">{activeStreams}</p>
+            </div>
+            <Wifi className="h-10 w-10 text-primary-500" />
+          </div>
+          <div className="text-xs text-white/50 mt-2 space-y-1">
+            <p>
+              <span className="text-white/70">Devices:</span> {activeDevices.length > 0 ? activeDevices.map(d => d.name).join(', ') : 'None'}
+            </p>
+            <p>
+              <span className="text-white/70">Groups:</span> {activeGroups.length > 0 ? activeGroups.map(g => g.name).join(', ') : 'None'}
+            </p>
+            <p>
+              <span className="text-white/70">Virtuals:</span> {activeVirtuals.length > 0 ? activeVirtuals.map(v => v.name).join(', ') : 'None'}
+            </p>
+          </div>
+        </div>
+
+        {/* Total LEDs Tile */}
+        <div className="glass-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white/70 text-sm mb-1">Total LEDs</p>
+              <p className="text-3xl font-bold">{totalLeds}</p>
+            </div>
+            <Monitor className="h-10 w-10 text-primary-500" />
+          </div>
+          <p className="text-xs text-white/50 mt-2">Sum of LEDs across all devices</p>
+        </div>
       </motion.div>
 
       {/* Quick Actions */}
@@ -126,6 +189,9 @@ export default function Dashboard() {
             </a>
             <a href="/effects" className="block btn-secondary text-center">
               Browse Effects
+            </a>
+            <a href="/presets" className="block btn-secondary text-center">
+              View Presets
             </a>
           </div>
         </div>
@@ -149,11 +215,13 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white/70">Active Streams</span>
-              <span className="text-primary-500">0</span>
+              <span className="text-primary-500">{activeStreams}</span>
             </div>
           </div>
         </div>
       </motion.div>
+
+      {/* Removed devices receiving stream section; summarized in the tile above */}
     </div>
   );
 }

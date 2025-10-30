@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { Palette } from '../../../types';
+import { Palette } from '../../../../types';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const PALETTES_FILE = path.join(DATA_DIR, 'palettes.json');
@@ -34,9 +34,9 @@ async function writePalettes(palettes: Palette[]): Promise<void> {
 }
 
 // PUT /api/palettes/[id] - Update a custom palette
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { name, colors, description } = body;
 
@@ -74,9 +74,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/palettes/[id] - Delete a custom palette
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const palettes = await readPalettes();
     const index = palettes.findIndex(p => p.id === id);

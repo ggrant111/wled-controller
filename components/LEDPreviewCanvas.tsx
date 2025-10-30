@@ -1,23 +1,30 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Effect } from '../types';
+import { Effect, EffectLayer } from '../types';
 import { useSocket } from '../hooks/useSocket';
+import { blendFrames } from '../lib/effects/helpers/blendUtilsClient';
 
 interface LEDPreviewCanvasProps {
-  effect: Effect | null;
-  parameters: Map<string, any>;
+  effect?: Effect | null;
+  parameters?: Map<string, any>;
+  layers?: EffectLayer[];
+  layerParameters?: Map<string, Map<string, any>>;
   ledCount?: number;
   width?: number;
   height?: number;
+  onlyTargetId?: string; // when set, only render frames for this target id
 }
 
 export default function LEDPreviewCanvas({ 
-  effect, 
-  parameters, 
+  effect = null, 
+  parameters = new Map(), 
+  layers,
+  layerParameters = new Map(),
   ledCount = 100,
   width = 600,
-  height = 100
+  height = 100,
+  onlyTargetId
 }: LEDPreviewCanvasProps) {
   const { on, off } = useSocket();
   const [frameData, setFrameData] = useState<Uint8Array | null>(null);
@@ -27,6 +34,7 @@ export default function LEDPreviewCanvas({
   // Parse base64 frame data from server
   const handleFrameData = useCallback((data: { targetId: string; data: string; ledCount: number }) => {
     try {
+      if (onlyTargetId && data.targetId !== onlyTargetId) return;
       const binaryString = atob(data.data);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
@@ -36,7 +44,7 @@ export default function LEDPreviewCanvas({
     } catch (error) {
       console.error('Error parsing frame data:', error);
     }
-  }, []);
+  }, [onlyTargetId]);
 
   // Listen for frame data from server when streaming
   useEffect(() => {
@@ -90,22 +98,12 @@ export default function LEDPreviewCanvas({
     }
   }, [frameData, ledCount]);
 
-  // Simulate effect locally when not receiving frame data
-  useEffect(() => {
-    if (frameData) return; // Don't simulate if we have real frame data
-
-    if (!effect || !containerRef.current) return;
-
-    // Reset time when effect or parameters change
-    let time = 0;
-    const frameTime = 0.016; // Match server's frame time (16ms per frame)
-    const interval = 16; // 16ms interval = ~60fps rendering
-
-    const simulateEffect = (): Uint8Array => {
-      const buffer = new Uint8Array(ledCount * 3);
+  // Helper function to simulate a single effect (used for both single effect and layers)
+  const simulateSingleEffect = useCallback((effect: Effect, params: Map<string, any>, time: number): Uint8Array => {
+    const buffer = new Uint8Array(ledCount * 3);
       
       if (effect.type === 'solid') {
-        const colors = parameters.get('colors');
+        const colors = params.get('colors');
         const colorsArr = Array.isArray(colors) && colors.length > 0 
           ? colors.map((c: string) => parseColor(c))
           : [parseColor('#ff0000')];
@@ -119,13 +117,13 @@ export default function LEDPreviewCanvas({
           buffer[pixelIndex + 2] = color.b;
         }
       } else if (effect.type === 'rainbow') {
-        const speed = parameters.get('speed') || 0.1;
-        const saturation = parameters.get('saturation') || 1.0;
-        const brightness = parameters.get('brightness') || 1.0;
-        const reverse = parameters.get('reverse') || false;
-        const mirror = parameters.get('mirror') || false;
-        const usePalette = parameters.get('usePalette') || false;
-        const paletteId = parameters.get('palette');
+        const speed = params.get('speed') || 0.1;
+        const saturation = params.get('saturation') || 1.0;
+        const brightness = params.get('brightness') || 1.0;
+        const reverse = params.get('reverse') || false;
+        const mirror = params.get('mirror') || false;
+        const usePalette = params.get('usePalette') || false;
+        const paletteId = params.get('palette');
         
         // Get palette if using palette mode
         let palette = null;
@@ -167,10 +165,10 @@ export default function LEDPreviewCanvas({
           buffer[i * 3 + 2] = color.b;
         }
       } else if (effect.type === 'color-wipe') {
-        const speed = parameters.get('speed') || 0.1;
-        const reverse = parameters.get('reverse') || false;
-        const mirror = parameters.get('mirror') || false;
-        const colors = parameters.get('colors') || ['#ff0000', '#0000ff'];
+        const speed = params.get('speed') || 0.1;
+        const reverse = params.get('reverse') || false;
+        const mirror = params.get('mirror') || false;
+        const colors = params.get('colors') || ['#ff0000', '#0000ff'];
         const colorsArr = colors.map((c: string) => parseColor(c));
         
         const totalCycleTime = ledCount * colorsArr.length;
@@ -220,7 +218,7 @@ export default function LEDPreviewCanvas({
         const colorsArr = Array.isArray(colors) && colors.length > 0 
           ? colors.map((c: string) => parseColor(c))
           : [parseColor('#ff0000')];
-        const tail = parameters.get('tail') || 0.3;
+        const tail = params.get('tail') || 0.3;
         const mirror = parameters.get('mirror') || false;
         
         let position = (time * speed * ledCount * 10) % (ledCount * 2) - ledCount;
@@ -251,17 +249,17 @@ export default function LEDPreviewCanvas({
           }
         }
       } else if (effect.type === 'chase') {
-        const speed = parameters.get('speed') || 0.1;
-        const length = parameters.get('length') || 5;
-        const count = parameters.get('count') || 1;
-        const colors = parameters.get('colors');
+        const speed = params.get('speed') || 0.1;
+        const length = params.get('length') || 5;
+        const count = params.get('count') || 1;
+        const colors = params.get('colors');
         const colorsArr = Array.isArray(colors) && colors.length > 0 
           ? colors.map((c: string) => parseColor(c))
           : [parseColor('#ff0000')];
-        const colorMode = parameters.get('colorMode') || 'palette';
-        const bgColor = parseColor(parameters.get('backgroundColor') || '#000000');
-        const reverse = parameters.get('reverse') || false;
-        const mirror = parameters.get('mirror') || false;
+        const colorMode = params.get('colorMode') || 'palette';
+        const bgColor = parseColor(params.get('backgroundColor') || '#000000');
+        const reverse = params.get('reverse') || false;
+        const mirror = params.get('mirror') || false;
         
         let currentCycleColor;
         if (colorMode === 'cycle') {
@@ -325,12 +323,12 @@ export default function LEDPreviewCanvas({
           }
         }
       } else if (effect.type === 'breathing') {
-        const speed = parameters.get('speed') || 0.1;
-        const colors = parameters.get('colors');
+        const speed = params.get('speed') || 0.1;
+        const colors = params.get('colors');
         const colorsArr = Array.isArray(colors) && colors.length > 0 
           ? colors.map((c: string) => parseColor(c))
           : [parseColor('#ff0000')];
-        const minBrightness = parameters.get('minBrightness') || 0.1;
+        const minBrightness = params.get('minBrightness') || 0.1;
         
         const brightness = minBrightness + (Math.sin(time * speed * 10) + 1) / 2 * (1 - minBrightness);
         
@@ -342,16 +340,16 @@ export default function LEDPreviewCanvas({
           buffer[pixelIndex + 2] = color.b * brightness;
         }
       } else if (effect.type === 'wave') {
-        const speed = parameters.get('speed') || 0.1;
-        const frequency = parameters.get('frequency') || 0.05;
-        const count = parameters.get('count') || 1;
-        const colors = parameters.get('colors');
+        const speed = params.get('speed') || 0.1;
+        const frequency = params.get('frequency') || 0.05;
+        const count = params.get('count') || 1;
+        const colors = params.get('colors');
         const colorsArr = Array.isArray(colors) && colors.length > 0 
           ? colors.map((c: string) => parseColor(c))
           : [parseColor('#00ff00')];
-        const colorMode = parameters.get('colorMode') || 'palette';
-        const reverse = parameters.get('reverse') || false;
-        const mirror = parameters.get('mirror') || false;
+        const colorMode = params.get('colorMode') || 'palette';
+        const reverse = params.get('reverse') || false;
+        const mirror = params.get('mirror') || false;
         
         let currentCycleColor;
         if (colorMode === 'cycle') {
@@ -387,8 +385,8 @@ export default function LEDPreviewCanvas({
           buffer[pixelIndex + 2] = color.b * wave;
         }
       } else if (effect.type === 'twinkle') {
-        const density = parameters.get('density') || 0.1;
-        const colors = parameters.get('colors');
+        const density = params.get('density') || 0.1;
+        const colors = params.get('colors');
         const colorsArr = Array.isArray(colors) && colors.length > 0 
           ? colors.map((c: string) => parseColor(c))
           : [parseColor('#ffffff')];
@@ -411,11 +409,11 @@ export default function LEDPreviewCanvas({
           buffer[pixelIndex + 2] = 0;
         }
       } else if (effect.type === 'matrix') {
-        const colors = parameters.get('colors');
+        const colors = params.get('colors');
         const colorsArr = Array.isArray(colors) && colors.length > 0 
           ? colors.map((c: string) => parseColor(c))
           : [parseColor('#00ff00')];
-        const density = parameters.get('density') || 0.1;
+        const density = params.get('density') || 0.1;
         
         for (let i = 0; i < ledCount; i++) {
           const sparkle = Math.random() < density ? (0.5 + Math.random() * 0.5) : 0;
@@ -436,11 +434,11 @@ export default function LEDPreviewCanvas({
           buffer[pixelIndex + 2] = color.b * sparkle;
         }
       } else if (effect.type === 'glitter') {
-        const colors = parameters.get('colors');
+        const colors = params.get('colors');
         const colorsArr = Array.isArray(colors) && colors.length > 0 
           ? colors.map((c: string) => parseColor(c))
           : [parseColor('#ffffff')];
-        const density = parameters.get('density') || 0.1;
+        const density = params.get('density') || 0.1;
         
         for (let i = 0; i < ledCount; i++) {
           const sparkle = Math.random() < density ? 1 : 0;
@@ -451,8 +449,8 @@ export default function LEDPreviewCanvas({
           buffer[pixelIndex + 2] = color.b * sparkle;
         }
       } else {
-        if (parameters.has('color')) {
-          const color = parseColor(parameters.get('color') || '#ff0000');
+        if (params.has('color')) {
+          const color = parseColor(params.get('color') || '#ff0000');
           for (let i = 0; i < ledCount; i++) {
             const pixelIndex = i * 3;
             buffer[pixelIndex] = color.r;
@@ -471,6 +469,58 @@ export default function LEDPreviewCanvas({
       }
 
       return buffer;
+  }, [ledCount]);
+
+  // Simulate effect locally when not receiving frame data
+  useEffect(() => {
+    if (frameData) return; // Don't simulate if we have real frame data
+
+    if ((!effect && (!layers || layers.length === 0)) || !containerRef.current) return;
+
+    // Reset time when effect/parameters or layers change
+    let time = 0;
+    const frameTime = 0.016; // Match server's frame time (16ms per frame)
+    const interval = 16; // 16ms interval = ~60fps rendering
+
+    const simulateEffect = (): Uint8Array => {
+      // If layers are provided, simulate and blend them
+      if (layers && layers.length > 0) {
+        const enabledLayers = layers.filter(l => l.enabled);
+        if (enabledLayers.length === 0) {
+          return new Uint8Array(ledCount * 3); // Black if all disabled
+        }
+
+        // Generate base frame from first layer
+        const baseLayer = enabledLayers[0];
+        const baseParams = layerParameters.get(`${baseLayer.id}-${baseLayer.effect.id}`) || new Map();
+        let baseFrame = simulateSingleEffect(baseLayer.effect, baseParams, time);
+
+        // If only one layer, return it
+        if (enabledLayers.length === 1) {
+          return baseFrame;
+        }
+
+        // Generate and blend remaining layers
+        const layerFrames = enabledLayers.slice(1).map(layer => {
+          const layerParams = layerParameters.get(`${layer.id}-${layer.effect.id}`) || new Map();
+          const layerFrame = simulateSingleEffect(layer.effect, layerParams, time);
+          return {
+            frame: layerFrame,
+            blendMode: layer.blendMode,
+            opacity: layer.opacity
+          };
+        });
+
+        // Blend all layers together
+        return blendFrames(baseFrame, layerFrames);
+      }
+
+      // Single effect mode (legacy)
+      if (effect) {
+        return simulateSingleEffect(effect, parameters, time);
+      }
+
+      return new Uint8Array(ledCount * 3);
     };
 
     const updatePreview = () => {
@@ -512,7 +562,7 @@ export default function LEDPreviewCanvas({
         clearInterval(intervalId);
       }
     };
-  }, [effect, parameters, ledCount, frameData]);
+  }, [effect, parameters, layers, layerParameters, ledCount, frameData, simulateSingleEffect]);
 
   return (
     <div
@@ -520,7 +570,7 @@ export default function LEDPreviewCanvas({
       className="w-full rounded-lg overflow-hidden"
       style={{ height: `${height}px`, background: '#000' }}
     >
-      {!frameData && !effect && (
+      {!frameData && !effect && (!layers || layers.length === 0) && (
         <div className="flex items-center justify-center w-full text-white/50">
           No preview available
         </div>

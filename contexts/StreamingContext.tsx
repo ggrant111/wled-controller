@@ -5,7 +5,8 @@ import { useSocket } from '../hooks/useSocket';
 
 interface LastStreamConfig {
   targets: any[];
-  effect: any;
+  effect?: any;
+  layers?: any[];
   fps?: number;
   blendMode?: string;
   selectedTargets?: string[];

@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { WLEDDevice, Group, VirtualDevice, Preset } from '../types';
+import { WLEDDevice, Group, VirtualDevice, Preset, Schedule } from '../types';
 
 export class JSONStorage {
   private dataDir: string;
@@ -79,6 +79,21 @@ export class JSONStorage {
   async savePresets(presets: Preset[]): Promise<void> {
     await this.ensureDataDir();
     await fs.writeFile(this.getFilePath('presets'), JSON.stringify(presets, null, 2));
+  }
+
+  async loadSchedules(): Promise<Schedule[]> {
+    try {
+      await this.ensureDataDir();
+      const data = await fs.readFile(this.getFilePath('schedules'), 'utf-8');
+      return JSON.parse(data);
+    } catch {
+      return [];
+    }
+  }
+
+  async saveSchedules(schedules: Schedule[]): Promise<void> {
+    await this.ensureDataDir();
+    await fs.writeFile(this.getFilePath('schedules'), JSON.stringify(schedules, null, 2));
   }
 
   async addDevice(device: WLEDDevice): Promise<void> {
@@ -163,6 +178,27 @@ export class JSONStorage {
     const presets = await this.loadPresets();
     const filtered = presets.filter(p => p.id !== presetId);
     await this.savePresets(filtered);
+  }
+
+  async addSchedule(schedule: Schedule): Promise<void> {
+    const schedules = await this.loadSchedules();
+    schedules.push(schedule);
+    await this.saveSchedules(schedules);
+  }
+
+  async updateSchedule(schedule: Schedule): Promise<void> {
+    const schedules = await this.loadSchedules();
+    const index = schedules.findIndex(s => s.id === schedule.id);
+    if (index !== -1) {
+      schedules[index] = schedule;
+      await this.saveSchedules(schedules);
+    }
+  }
+
+  async removeSchedule(scheduleId: string): Promise<void> {
+    const schedules = await this.loadSchedules();
+    const filtered = schedules.filter(s => s.id !== scheduleId);
+    await this.saveSchedules(filtered);
   }
 }
 

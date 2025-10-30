@@ -2,22 +2,22 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Edit, Trash2, Play, Pause, Settings, Wifi, WifiOff, Zap, Save, Eye } from 'lucide-react';
-import { WLEDDevice, Effect, EffectPreset } from '../types';
+import { Edit, Trash2, Play, Pause, Settings, Users, Eye, Save, Zap } from 'lucide-react';
+import { Group, Effect, EffectPreset } from '../types';
 import LEDPreviewCanvas from './LEDPreviewCanvas';
 import { useToast } from './ToastProvider';
 import { useStreamIndicator } from '../hooks/useStreamIndicator';
 
-interface DeviceCardProps {
-  device: WLEDDevice;
+interface GroupCardProps {
+  group: Group;
   onEdit: () => void;
   onDelete: () => void;
   delay?: number;
 }
 
-export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: DeviceCardProps) {
+export default function GroupCard({ group, onEdit, onDelete, delay = 0 }: GroupCardProps) {
   const { showToast } = useToast();
-  const isReceiving = useStreamIndicator(device.id);
+  const isReceiving = useStreamIndicator(group.id);
   const [showStreamControls, setShowStreamControls] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [effects, setEffects] = useState<Effect[]>([]);
@@ -27,7 +27,6 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
   const [selectedEffectId, setSelectedEffectId] = useState<string>('');
 
   useEffect(() => {
-    // Lazy-load when controls shown
     if (!showStreamControls) return;
     (async () => {
       try {
@@ -41,19 +40,14 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
     })();
   }, [showStreamControls]);
 
-  const handlePlay = () => {
-    setShowStreamControls((v) => !v);
-  };
+  const handlePlay = () => setShowStreamControls(v => !v);
 
   const handlePause = () => {
-    // Stop streaming to this specific device
     fetch('/api/stream/stop-target', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target: { type: 'device', id: device.id } })
-    }).then(res => {
-      if (res.ok) showToast('Stopped streaming to device', 'success');
-    }).catch(() => {});
+      body: JSON.stringify({ target: { type: 'group', id: group.id } })
+    }).then(res => { if (res.ok) showToast('Stopped streaming to group', 'success'); }).catch(() => {});
   };
 
   return (
@@ -61,127 +55,60 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="glass-card glass-card-hover p-4"
+      className="glass-card p-6 glass-card-hover"
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
-          {device.isOnline ? (
-            <Wifi className="h-4 w-4 text-green-400" />
-          ) : (
-            <WifiOff className="h-4 w-4 text-red-400" />
-          )}
-          <h3 className="font-semibold truncate">{device.name}</h3>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-xl font-bold">{group.name}</h3>
           {isReceiving && (
             <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] bg-primary-500/20 text-primary-400">Streaming</span>
           )}
+          <p className="text-sm text-white/70">{group.members.length} member{group.members.length !== 1 ? 's' : ''}</p>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={onEdit}
-            className="p-1 hover:bg-white/20 rounded transition-colors"
-            title="Edit device"
-          >
-            <Edit className="h-4 w-4" />
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-1 hover:bg-red-500/20 rounded transition-colors"
-            title="Delete device"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      <div className="space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-white/70">IP Address:</span>
-          <span className="font-mono">{device.ip}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-white/70">Port:</span>
-          <span>{device.port}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-white/70">LEDs:</span>
-          <span>{device.ledCount}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-white/70">Segments:</span>
-          <span>{device.segments.length}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-white/70">Status:</span>
+        <div className="flex items-center gap-2">
           <span className={`px-2 py-1 rounded-full text-xs ${
-            device.isOnline 
-              ? 'bg-green-500/20 text-green-400' 
-              : 'bg-red-500/20 text-red-400'
+            group.isStreaming ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
           }`}>
-            {device.isOnline ? 'Online' : 'Offline'}
+            {group.isStreaming ? 'Streaming' : 'Idle'}
           </span>
+          <button onClick={onEdit} className="btn-secondary text-xs px-3 py-1"><Edit className="h-4 w-4" /></button>
+          <button onClick={onDelete} className="btn-secondary text-xs px-3 py-1 text-red-400"><Trash2 className="h-4 w-4" /></button>
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-white/20">
+      <div className="mt-2 pt-4 border-t border-white/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <button
-              onClick={handlePlay}
-              className="p-2 bg-green-500/20 hover:bg-green-500/30 rounded-lg transition-colors"
-              title="Start streaming"
-            >
+            <button onClick={handlePlay} className="p-2 bg-green-500/20 hover:bg-green-500/30 rounded-lg transition-colors" title="Start streaming">
               <Play className="h-4 w-4 text-green-400" />
             </button>
-            <button
-              onClick={handlePause}
-              className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors"
-              title="Stop streaming"
-            >
+            <button onClick={handlePause} className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors" title="Stop streaming">
               <Pause className="h-4 w-4 text-red-400" />
             </button>
-            <button
-              onClick={() => setShowPreview(v => !v)}
-              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-              title={showPreview ? 'Hide live preview' : 'Show live preview'}
-            >
+            <button onClick={() => setShowPreview(v => !v)} className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors" title={showPreview ? 'Hide live preview' : 'Show live preview'}>
               <Eye className="h-4 w-4" />
             </button>
           </div>
-          <button
-            onClick={onEdit}
-            className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-            title="Device settings"
-          >
+          <button onClick={onEdit} className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors" title="Group settings">
             <Settings className="h-4 w-4" />
           </button>
         </div>
+
         {showStreamControls && (
           <div className="mt-4 space-y-3">
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setMode('preset')}
-                className={`px-3 py-1.5 rounded ${mode==='preset'?'bg-primary-500/20 text-primary-400':'bg-white/10 text-white/70'}`}
-              >
+              <button onClick={() => setMode('preset')} className={`px-3 py-1.5 rounded ${mode==='preset'?'bg-primary-500/20 text-primary-400':'bg-white/10 text-white/70'}`}>
                 <Save className="w-4 h-4 inline mr-1"/> Preset
               </button>
-              <button
-                onClick={() => setMode('effect')}
-                className={`px-3 py-1.5 rounded ${mode==='effect'?'bg-primary-500/20 text-primary-400':'bg-white/10 text-white/70'}`}
-              >
+              <button onClick={() => setMode('effect')} className={`px-3 py-1.5 rounded ${mode==='effect'?'bg-primary-500/20 text-primary-400':'bg-white/10 text-white/70'}`}>
                 <Zap className="w-4 h-4 inline mr-1"/> Effect
               </button>
             </div>
             {mode==='preset' ? (
               <div className="flex items-center gap-2">
-                <select
-                  value={selectedPresetId}
-                  onChange={(e)=>setSelectedPresetId(e.target.value)}
-                  className="flex-1 bg-gray-700 text-gray-200 px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                >
+                <select value={selectedPresetId} onChange={(e)=>setSelectedPresetId(e.target.value)} className="flex-1 bg-gray-700 text-gray-200 px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none">
                   <option value="">Select preset...</option>
-                  {presets.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
+                  {presets.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
                 </select>
                 <button
                   onClick={async ()=>{
@@ -192,7 +119,7 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
                     let body: any;
                     if (preset.useLayers && preset.layers) {
                       body = {
-                        targets: [{ type:'device', id: device.id }],
+                        targets: [{ type:'group', id: group.id }],
                         layers: preset.layers.map(layer => ({
                           ...layer,
                           effect: {
@@ -207,7 +134,7 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
                       };
                     } else if (preset.effect) {
                       body = {
-                        targets: [{ type:'device', id: device.id }],
+                        targets: [{ type:'group', id: group.id }],
                         effect: {
                           ...preset.effect,
                           parameters: preset.effect.parameters.map(param => ({
@@ -227,26 +154,17 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <select
-                  value={selectedEffectId}
-                  onChange={(e)=>setSelectedEffectId(e.target.value)}
-                  className="flex-1 bg-gray-700 text-gray-200 px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                >
+                <select value={selectedEffectId} onChange={(e)=>setSelectedEffectId(e.target.value)} className="flex-1 bg-gray-700 text-gray-200 px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none">
                   <option value="">Select effect...</option>
-                  {effects.map(e => (
-                    <option key={e.id} value={e.id}>{e.name}</option>
-                  ))}
+                  {effects.map(e => (<option key={e.id} value={e.id}>{e.name}</option>))}
                 </select>
                 <button
                   onClick={async ()=>{
                     const eff = effects.find(e=>e.id===selectedEffectId);
                     if (!eff) { alert('Select an effect'); return; }
-                    const effectWithDefaults = {
-                      ...eff,
-                      parameters: eff.parameters.map(p => ({...p}))
-                    };
+                    const effectWithDefaults = { ...eff, parameters: eff.parameters.map(p => ({...p})) };
                     const start = await fetch('/api/stream/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-                      targets:[{ type:'device', id: device.id }],
+                      targets:[{ type:'group', id: group.id }],
                       effect: effectWithDefaults,
                       fps: 30,
                       blendMode: 'overwrite'
@@ -261,10 +179,12 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
         )}
         {showPreview && (
           <div className="mt-4">
-            <LEDPreviewCanvas height={60} width={400} onlyTargetId={device.id} />
+            <LEDPreviewCanvas height={60} width={400} onlyTargetId={group.id} />
           </div>
         )}
       </div>
     </motion.div>
   );
 }
+
+

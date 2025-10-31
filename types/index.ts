@@ -285,8 +285,9 @@ export interface ScheduleRule {
   // Holidays handling
   onHolidaysOnly?: boolean; // Run only on holidays
   skipOnHolidays?: boolean; // Skip if holiday
-  holidayCountry?: string; // e.g., 'US'
-  holidayState?: string;   // e.g., 'CA'
+  selectedHolidayIds?: string[]; // Specific holiday IDs to match
+  daysBeforeHoliday?: number; // Days before selected holidays to include (default: 0)
+  daysAfterHoliday?: number; // Days after selected holidays to include (default: 0)
   // Time window
   startType: ScheduleTimeType;
   endType?: ScheduleTimeType; // If omitted and durationSeconds provided, compute end
@@ -317,6 +318,18 @@ export interface Schedule {
   name: string;
   enabled: boolean;
   rules: ScheduleRule[];
+  priority?: number; // Higher priority schedules run when overlapping (default: 0)
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Holiday {
+  id: string;
+  name: string;
+  date: string; // "MM-DD" for fixed dates, or pattern like "4TH_THURSDAY_NOVEMBER" for variable dates
+  isRecurring: boolean; // If true, holiday repeats yearly
+  description?: string;
+  isCustom?: boolean; // True for user-created holidays
+  createdAt?: string;
+  updatedAt?: string;
 }

@@ -422,7 +422,10 @@ export default function Dashboard() {
         </div>
 
         {/* Active Streams Tile */}
-        <div className="glass-card p-6">
+        <div 
+          className="glass-card p-6 cursor-pointer hover:bg-white/10 transition-colors"
+          onClick={() => router.push('/streams')}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/70 text-sm mb-1">Active Streams</p>

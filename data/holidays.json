@@ -1,0 +1,92 @@
+[
+  {
+    "id": "new-years-day",
+    "name": "New Year's Day",
+    "date": "01-01",
+    "isRecurring": true,
+    "description": "Federal holiday celebrating the new year",
+    "isCustom": false
+  },
+  {
+    "id": "martin-luther-king-day",
+    "name": "Martin Luther King Jr. Day",
+    "date": "3RD_MONDAY_JANUARY",
+    "isRecurring": true,
+    "description": "Third Monday in January",
+    "isCustom": false
+  },
+  {
+    "id": "presidents-day",
+    "name": "Presidents' Day",
+    "date": "3RD_MONDAY_FEBRUARY",
+    "isRecurring": true,
+    "description": "Third Monday in February",
+    "isCustom": false
+  },
+  {
+    "id": "memorial-day",
+    "name": "Memorial Day",
+    "date": "LAST_MONDAY_MAY",
+    "isRecurring": true,
+    "description": "Last Monday in May",
+    "isCustom": false
+  },
+  {
+    "id": "independence-day",
+    "name": "Independence Day",
+    "date": "07-04",
+    "isRecurring": true,
+    "description": "Fourth of July",
+    "isCustom": false
+  },
+  {
+    "id": "labor-day",
+    "name": "Labor Day",
+    "date": "1ST_MONDAY_SEPTEMBER",
+    "isRecurring": true,
+    "description": "First Monday in September",
+    "isCustom": false
+  },
+  {
+    "id": "columbus-day",
+    "name": "Columbus Day",
+    "date": "2ND_MONDAY_OCTOBER",
+    "isRecurring": true,
+    "description": "Second Monday in October",
+    "isCustom": false
+  },
+  {
+    "id": "veterans-day",
+    "name": "Veterans Day",
+    "date": "11-11",
+    "isRecurring": true,
+    "description": "Federal holiday honoring military veterans",
+    "isCustom": false
+  },
+  {
+    "id": "thanksgiving",
+    "name": "Thanksgiving",
+    "date": "4TH_THURSDAY_NOVEMBER",
+    "isRecurring": true,
+    "description": "Fourth Thursday in November",
+    "isCustom": false
+  },
+  {
+    "id": "christmas",
+    "name": "Christmas",
+    "date": "12-25",
+    "isRecurring": true,
+    "description": "Federal holiday",
+    "isCustom": false
+  },
+  {
+    "id": "0c53aa51-4a74-4680-9922-7c6135a72bfb",
+    "name": "rew",
+    "date": "1ST_MONDAY_JANUARY",
+    "isRecurring": true,
+    "isCustom": true,
+    "createdAt": "2025-10-31T19:00:50.103Z",
+    "updatedAt": "2025-10-31T19:03:05.611Z",
+    "description": "fds"
+  }
+]

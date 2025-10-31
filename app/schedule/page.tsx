@@ -436,11 +436,6 @@ function ScheduleList({
                         {rule.onHolidaysOnly && <span>Only</span>}
                         {rule.onHolidaysOnly && rule.skipOnHolidays && <span className="mx-1">·</span>}
                         {rule.skipOnHolidays && <span>Skip</span>}
-                        {(rule.holidayCountry || rule.holidayState) && (
-                          <span className="ml-1">
-                            ({rule.holidayCountry || ''}{rule.holidayCountry && rule.holidayState ? ', ' : ''}{rule.holidayState || ''})
-                          </span>
-                        )}
                       </div>
                     </div>
                   )}
@@ -456,7 +451,23 @@ function ScheduleList({
 
 function ScheduleEditor({ value, onCancel, onSave, presets, saving, locationSettings }: { value: Schedule; onCancel: ()=>void; onSave: (s: Schedule)=>void; presets: EffectPreset[]; saving: boolean; locationSettings?: LocationSettings }) {
   const [sched, setSched] = useState<Schedule>(value);
+  const [customOffsetMode, setCustomOffsetMode] = useState<Map<string, boolean>>(new Map());
+  const [holidays, setHolidays] = useState<Array<{ id: string; name: string }>>([]);
   const update = (patch: Partial<Schedule>) => setSched(prev => ({ ...prev, ...patch, updatedAt: new Date().toISOString() }));
+  
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await fetch('/api/holidays');
+        if (response.ok) {
+          const data = await response.json();
+          setHolidays(data.map((h: any) => ({ id: h.id, name: h.name })));
+        }
+      } catch (e) {
+        console.error('Failed to load holidays:', e);
+      }
+    })();
+  }, []);
   const updateRule = (idx: number, patch: Partial<ScheduleRule>) => {
     const rules = [...sched.rules];
     const currentRule = rules[idx];
@@ -480,14 +491,6 @@ function ScheduleEditor({ value, onCancel, onSave, presets, saving, locationSett
         !updatedRule.latitude && !updatedRule.longitude) {
       updatedRule.latitude = locationSettings.latitude;
       updatedRule.longitude = locationSettings.longitude;
-    }
-    
-    // Auto-populate country from location settings for holidays if not set
-    const hasHolidaySetting = patch.onHolidaysOnly !== undefined || patch.skipOnHolidays !== undefined ||
-                              currentRule.onHolidaysOnly || currentRule.skipOnHolidays;
-    if (hasHolidaySetting && 
-        locationSettings?.countryCode && !updatedRule.holidayCountry) {
-      updatedRule.holidayCountry = locationSettings.countryCode.toUpperCase();
     }
     
     rules[idx] = updatedRule;
@@ -570,32 +573,101 @@ function ScheduleEditor({ value, onCancel, onSave, presets, saving, locationSett
                       className="input-field flex-1 min-w-[120px]" 
                     />
                   ) : (
-                    <div className="flex flex-wrap gap-2 w-full">
-                      <input 
-                        type="number" 
-                        step="any"
-                        placeholder={locationSettings?.latitude ? `Lat (${locationSettings.latitude})` : 'Lat'} 
-                        value={r.latitude ?? locationSettings?.latitude ?? ''} 
-                        onChange={(e)=>updateRule(i, { latitude: e.target.value === '' ? undefined : Number(e.target.value) })} 
-                        className="input-field flex-1 min-w-[100px]"
-                        title={locationSettings?.latitude ? `Default: ${locationSettings.latitude}` : 'Enter latitude'}
-                      />
-                      <input 
-                        type="number" 
-                        step="any"
-                        placeholder={locationSettings?.longitude ? `Lon (${locationSettings.longitude})` : 'Lon'} 
-                        value={r.longitude ?? locationSettings?.longitude ?? ''} 
-                        onChange={(e)=>updateRule(i, { longitude: e.target.value === '' ? undefined : Number(e.target.value) })} 
-                        className="input-field flex-1 min-w-[100px]"
-                        title={locationSettings?.longitude ? `Default: ${locationSettings.longitude}` : 'Enter longitude'}
-                      />
-                      <input 
-                        type="number" 
-                        placeholder="Offset (min)" 
-                        value={r.startOffsetMinutes ?? 0} 
-                        onChange={(e)=>updateRule(i, { startOffsetMinutes: Number(e.target.value) })} 
-                        className="input-field w-24" 
-                      />
+                    <div className="space-y-3 w-full">
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/70 font-medium">Location for sunrise/sunset calculation</label>
+                        <div className="flex flex-wrap gap-2">
+                          <div className="flex-1 min-w-[140px]">
+                            <label className="block text-xs text-white/60 mb-1">Latitude</label>
+                            <input 
+                              type="number" 
+                              step="any"
+                              placeholder={locationSettings?.latitude ? String(locationSettings.latitude) : 'e.g. 37.7749'} 
+                              value={r.latitude ?? locationSettings?.latitude ?? ''} 
+                              onChange={(e)=>updateRule(i, { latitude: e.target.value === '' ? undefined : Number(e.target.value) })} 
+                              className="input-field w-full"
+                              title={locationSettings?.latitude ? `Default: ${locationSettings.latitude}` : 'Enter latitude (-90 to 90)'}
+                            />
+                            {locationSettings?.latitude && !r.latitude && (
+                              <p className="text-xs text-white/50 mt-0.5">Using default: {locationSettings.latitude.toFixed(4)}</p>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-[140px]">
+                            <label className="block text-xs text-white/60 mb-1">Longitude</label>
+                            <input 
+                              type="number" 
+                              step="any"
+                              placeholder={locationSettings?.longitude ? String(locationSettings.longitude) : 'e.g. -122.4194'} 
+                              value={r.longitude ?? locationSettings?.longitude ?? ''} 
+                              onChange={(e)=>updateRule(i, { longitude: e.target.value === '' ? undefined : Number(e.target.value) })} 
+                              className="input-field w-full"
+                              title={locationSettings?.longitude ? `Default: ${locationSettings.longitude}` : 'Enter longitude (-180 to 180)'}
+                            />
+                            {locationSettings?.longitude && !r.longitude && (
+                              <p className="text-xs text-white/50 mt-0.5">Using default: {locationSettings.longitude.toFixed(4)}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-xs text-white/70 font-medium mb-1">Time offset (minutes)</label>
+                        <div className="flex gap-2">
+                          {(() => {
+                            const presetOffsets = [-120, -90, -60, -45, -30, -15, 0, 15, 30, 45, 60, 90, 120];
+                            const currentOffset = r.startOffsetMinutes ?? 0;
+                            const isPresetValue = presetOffsets.includes(currentOffset);
+                            const customKey = `start-${i}`;
+                            const isCustomMode = customOffsetMode.get(customKey) || !isPresetValue;
+                            const selectedValue = isCustomMode ? 'custom' : String(currentOffset);
+                            return (
+                              <>
+                                <select
+                                  value={selectedValue}
+                                  onChange={(e)=>{
+                                    if (e.target.value === 'custom') {
+                                      setCustomOffsetMode(prev => new Map(prev).set(customKey, true));
+                                    } else {
+                                      setCustomOffsetMode(prev => {
+                                        const next = new Map(prev);
+                                        next.delete(customKey);
+                                        return next;
+                                      });
+                                      updateRule(i, { startOffsetMinutes: Number(e.target.value) });
+                                    }
+                                  }}
+                                  className="input-field flex-1 min-w-[120px]"
+                                >
+                                  <option value="-120">-2 hours</option>
+                                  <option value="-90">-1.5 hours</option>
+                                  <option value="-60">-1 hour</option>
+                                  <option value="-45">-45 minutes</option>
+                                  <option value="-30">-30 minutes</option>
+                                  <option value="-15">-15 minutes</option>
+                                  <option value="0">No offset</option>
+                                  <option value="15">+15 minutes</option>
+                                  <option value="30">+30 minutes</option>
+                                  <option value="45">+45 minutes</option>
+                                  <option value="60">+1 hour</option>
+                                  <option value="90">+1.5 hours</option>
+                                  <option value="120">+2 hours</option>
+                                  <option value="custom">Custom...</option>
+                                </select>
+                                {isCustomMode && (
+                                  <input
+                                    type="number"
+                                    placeholder="Custom minutes"
+                                    value={currentOffset}
+                                    onChange={(e)=>updateRule(i, { startOffsetMinutes: Number(e.target.value) })}
+                                    className="input-field w-32"
+                                    min="-1440"
+                                    max="1440"
+                                  />
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -621,17 +693,101 @@ function ScheduleEditor({ value, onCancel, onSave, presets, saving, locationSett
                       className="input-field flex-1 min-w-[120px]" 
                     />
                   ) : r.endType === 'sunrise' || r.endType === 'sunset' ? (
-                    <div className="w-full space-y-2">
-                      {(!r.latitude || !r.longitude) && locationSettings?.latitude && locationSettings?.longitude ? (
-                        <div className="text-xs text-white/60">Using location settings: {locationSettings.latitude.toFixed(4)}, {locationSettings.longitude.toFixed(4)}</div>
-                      ) : null}
-                      <input 
-                        type="number" 
-                        placeholder="Offset (min)" 
-                        value={r.endOffsetMinutes ?? 0} 
-                        onChange={(e)=>updateRule(i, { endOffsetMinutes: Number(e.target.value) })} 
-                        className="input-field w-full" 
-                      />
+                    <div className="w-full space-y-3">
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/70 font-medium">Location for sunrise/sunset calculation</label>
+                        <div className="flex flex-wrap gap-2">
+                          <div className="flex-1 min-w-[140px]">
+                            <label className="block text-xs text-white/60 mb-1">Latitude</label>
+                            <input 
+                              type="number" 
+                              step="any"
+                              placeholder={locationSettings?.latitude ? String(locationSettings.latitude) : 'e.g. 37.7749'} 
+                              value={r.latitude ?? locationSettings?.latitude ?? ''} 
+                              onChange={(e)=>updateRule(i, { latitude: e.target.value === '' ? undefined : Number(e.target.value) })} 
+                              className="input-field w-full"
+                              title={locationSettings?.latitude ? `Default: ${locationSettings.latitude}` : 'Enter latitude (-90 to 90)'}
+                            />
+                            {locationSettings?.latitude && !r.latitude && (
+                              <p className="text-xs text-white/50 mt-0.5">Using default: {locationSettings.latitude.toFixed(4)}</p>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-[140px]">
+                            <label className="block text-xs text-white/60 mb-1">Longitude</label>
+                            <input 
+                              type="number" 
+                              step="any"
+                              placeholder={locationSettings?.longitude ? String(locationSettings.longitude) : 'e.g. -122.4194'} 
+                              value={r.longitude ?? locationSettings?.longitude ?? ''} 
+                              onChange={(e)=>updateRule(i, { longitude: e.target.value === '' ? undefined : Number(e.target.value) })} 
+                              className="input-field w-full"
+                              title={locationSettings?.longitude ? `Default: ${locationSettings.longitude}` : 'Enter longitude (-180 to 180)'}
+                            />
+                            {locationSettings?.longitude && !r.longitude && (
+                              <p className="text-xs text-white/50 mt-0.5">Using default: {locationSettings.longitude.toFixed(4)}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-xs text-white/70 font-medium mb-1">Time offset (minutes)</label>
+                        <div className="flex gap-2">
+                          {(() => {
+                            const presetOffsets = [-120, -90, -60, -45, -30, -15, 0, 15, 30, 45, 60, 90, 120];
+                            const currentOffset = r.endOffsetMinutes ?? 0;
+                            const isPresetValue = presetOffsets.includes(currentOffset);
+                            const customKey = `end-${i}`;
+                            const isCustomMode = customOffsetMode.get(customKey) || !isPresetValue;
+                            const selectedValue = isCustomMode ? 'custom' : String(currentOffset);
+                            return (
+                              <>
+                                <select
+                                  value={selectedValue}
+                                  onChange={(e)=>{
+                                    if (e.target.value === 'custom') {
+                                      setCustomOffsetMode(prev => new Map(prev).set(customKey, true));
+                                    } else {
+                                      setCustomOffsetMode(prev => {
+                                        const next = new Map(prev);
+                                        next.delete(customKey);
+                                        return next;
+                                      });
+                                      updateRule(i, { endOffsetMinutes: Number(e.target.value) });
+                                    }
+                                  }}
+                                  className="input-field flex-1 min-w-[120px]"
+                                >
+                                  <option value="-120">-2 hours</option>
+                                  <option value="-90">-1.5 hours</option>
+                                  <option value="-60">-1 hour</option>
+                                  <option value="-45">-45 minutes</option>
+                                  <option value="-30">-30 minutes</option>
+                                  <option value="-15">-15 minutes</option>
+                                  <option value="0">No offset</option>
+                                  <option value="15">+15 minutes</option>
+                                  <option value="30">+30 minutes</option>
+                                  <option value="45">+45 minutes</option>
+                                  <option value="60">+1 hour</option>
+                                  <option value="90">+1.5 hours</option>
+                                  <option value="120">+2 hours</option>
+                                  <option value="custom">Custom...</option>
+                                </select>
+                                {isCustomMode && (
+                                  <input
+                                    type="number"
+                                    placeholder="Custom minutes"
+                                    value={currentOffset}
+                                    onChange={(e)=>updateRule(i, { endOffsetMinutes: Number(e.target.value) })}
+                                    className="input-field w-32"
+                                    min="-1440"
+                                    max="1440"
+                                  />
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <input 
@@ -663,19 +819,53 @@ function ScheduleEditor({ value, onCancel, onSave, presets, saving, locationSett
                     size="sm"
                   />
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  <input 
-                    className="input-field flex-1 min-w-[120px]" 
-                    placeholder={locationSettings?.countryCode ? `Country (e.g. ${locationSettings.countryCode.toUpperCase()})` : 'Country (e.g. US)'} 
-                    value={r.holidayCountry || locationSettings?.countryCode?.toUpperCase() || ''} 
-                    onChange={(e)=>updateRule(i, { holidayCountry: e.target.value || undefined })} 
-                  />
-                  <input 
-                    className="input-field flex-1 min-w-[120px]" 
-                    placeholder="State (optional)" 
-                    value={r.holidayState || ''} 
-                    onChange={(e)=>updateRule(i, { holidayState: e.target.value || undefined })} 
-                  />
+                <div className="space-y-2">
+                  <div>
+                    <label className="block text-xs text-white/60 mb-1">Select Specific Holidays</label>
+                    <select
+                      multiple
+                      className="input-field w-full min-h-[80px]"
+                      value={r.selectedHolidayIds || []}
+                      onChange={(e) => {
+                        const selected = Array.from(e.target.selectedOptions, option => option.value);
+                        updateRule(i, { selectedHolidayIds: selected.length > 0 ? selected : undefined });
+                      }}
+                      title="Hold Ctrl/Cmd to select multiple holidays"
+                    >
+                      {holidays.map(h => (
+                        <option key={h.id} value={h.id}>{h.name}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-white/50 mt-1">
+                      {r.selectedHolidayIds?.length || 0} holiday(s) selected
+                    </p>
+                  </div>
+                  {(r.selectedHolidayIds && r.selectedHolidayIds.length > 0) && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-white/60 mb-1">Days Before</label>
+                        <input
+                          type="number"
+                          value={r.daysBeforeHoliday ?? 0}
+                          onChange={(e)=>updateRule(i, { daysBeforeHoliday: Number(e.target.value) || 0 })}
+                          className="input-field w-full"
+                          min="0"
+                          max="30"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-white/60 mb-1">Days After</label>
+                        <input
+                          type="number"
+                          value={r.daysAfterHoliday ?? 0}
+                          onChange={(e)=>updateRule(i, { daysAfterHoliday: Number(e.target.value) || 0 })}
+                          className="input-field w-full"
+                          min="0"
+                          max="30"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

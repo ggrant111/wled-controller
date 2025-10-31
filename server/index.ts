@@ -73,6 +73,132 @@ function isHoliday(date: Date, country?: string, state?: string): boolean {
   }
 }
 
+// Calculate variable date pattern (e.g., "4TH_THURSDAY_NOVEMBER")
+function calculateVariableDate(year: number, pattern: string): Date | null {
+  const parts = pattern.split('_');
+  if (parts.length !== 3) return null;
+  
+  const [nthStr, dayName, monthName] = parts;
+  
+  // Parse month name
+  const monthMap: Record<string, number> = {
+    JANUARY: 0, FEBRUARY: 1, MARCH: 2, APRIL: 3, MAY: 4, JUNE: 5,
+    JULY: 6, AUGUST: 7, SEPTEMBER: 8, OCTOBER: 9, NOVEMBER: 10, DECEMBER: 11
+  };
+  const month = monthMap[monthName.toUpperCase()];
+  if (month === undefined) return null;
+  
+  // Parse day name
+  const dayMap: Record<string, number> = {
+    SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4, FRIDAY: 5, SATURDAY: 6
+  };
+  const targetDay = dayMap[dayName.toUpperCase()];
+  if (targetDay === undefined) return null;
+  
+  // Parse nth occurrence
+  let nth: number;
+  if (nthStr === 'LAST') {
+    // Find last occurrence - start from end of month
+    const lastDay = new Date(year, month + 1, 0);
+    let day = lastDay.getDate();
+    let date = new Date(year, month, day);
+    
+    // Go backwards until we find the matching day of week
+    while (date.getDay() !== targetDay) {
+      day--;
+      if (day < 1) return null;
+      date = new Date(year, month, day);
+    }
+    return date;
+  } else {
+    // Parse ordinal (1ST, 2ND, 3RD, 4TH, 5TH)
+    const match = nthStr.match(/^(\d+)(ST|ND|RD|TH)$/i);
+    if (!match) return null;
+    nth = parseInt(match[1]);
+    if (nth < 1 || nth > 5) return null;
+    
+    // Find nth occurrence - start from first day of month
+    let found = 0;
+    let day = 1;
+    let date = new Date(year, month, day);
+    
+    while (day <= 31) {
+      if (date.getMonth() !== month) break; // Gone past end of month
+      if (date.getDay() === targetDay) {
+        found++;
+        if (found === nth) return date;
+      }
+      day++;
+      date = new Date(year, month, day);
+    }
+    return null;
+  }
+}
+
+// Check if a date matches selected holidays (with days before/after support)
+async function matchesSelectedHolidays(date: Date, holidayIds?: string[], daysBefore?: number, daysAfter?: number): Promise<boolean> {
+  if (!holidayIds || holidayIds.length === 0) return false;
+  
+  try {
+    const holidaysFile = path.join(process.cwd(), 'data', 'holidays.json');
+    const holidaysData = await fs.readFile(holidaysFile, 'utf8');
+    const holidays = JSON.parse(holidaysData);
+    
+    const checkDate = (d: Date): boolean => {
+      const dateStr = d.toISOString().slice(0, 10);
+      const monthDay = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const year = d.getFullYear();
+      
+      return holidays.some((h: any) => {
+        if (!holidayIds.includes(h.id)) return false;
+        
+        // Check if it's a variable date pattern (contains underscores and no dashes)
+        if (h.date.includes('_') && !h.date.includes('-')) {
+          const holidayDate = calculateVariableDate(year, h.date);
+          if (holidayDate) {
+            return holidayDate.toISOString().slice(0, 10) === dateStr;
+          }
+          return false;
+        }
+        
+        // Fixed date pattern (MM-DD or YYYY-MM-DD)
+        if (h.isRecurring) {
+          // For recurring holidays, compare MM-DD
+          return h.date === monthDay;
+        } else {
+          // For one-time holidays, compare full date
+          return h.date === dateStr;
+        }
+      });
+    };
+    
+    // Check the date itself
+    if (checkDate(date)) return true;
+    
+    // Check days before
+    if (daysBefore && daysBefore > 0) {
+      for (let i = 1; i <= daysBefore; i++) {
+        const beforeDate = new Date(date);
+        beforeDate.setDate(beforeDate.getDate() - i);
+        if (checkDate(beforeDate)) return true;
+      }
+    }
+    
+    // Check days after
+    if (daysAfter && daysAfter > 0) {
+      for (let i = 1; i <= daysAfter; i++) {
+        const afterDate = new Date(date);
+        afterDate.setDate(afterDate.getDate() + i);
+        if (checkDate(afterDate)) return true;
+      }
+    }
+    
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 function getTodaysTime(date: Date, timeHHMM: string, tz?: string): Date {
   const [hh, mm] = timeHHMM.split(':').map(Number);
   const d = new Date(date);
@@ -95,14 +221,28 @@ function computeEventTime(type: 'time' | 'sunrise' | 'sunset', baseDate: Date, o
   return dt;
 }
 
-function ruleMatchesDate(rule: ScheduleRule, now: Date): boolean {
+async function ruleMatchesDate(rule: ScheduleRule, now: Date): Promise<boolean> {
   const dow = now.getDay();
   if (rule.daysOfWeek && rule.daysOfWeek.length > 0 && !rule.daysOfWeek.includes(dow)) return false;
   if (rule.dates && rule.dates.length > 0) {
     const ymd = now.toISOString().slice(0, 10);
     if (!rule.dates.includes(ymd)) return false;
   }
-  const holiday = isHoliday(now, rule.holidayCountry, rule.holidayState);
+  
+  // Check selected holidays with days before/after
+  if (rule.selectedHolidayIds && rule.selectedHolidayIds.length > 0) {
+    const matchesHoliday = await matchesSelectedHolidays(
+      now,
+      rule.selectedHolidayIds,
+      rule.daysBeforeHoliday,
+      rule.daysAfterHoliday
+    );
+    if (!matchesHoliday) return false;
+  }
+  
+  // Legacy holiday check (using date-holidays library) - kept for backwards compatibility
+  // Note: This is now less relevant since we use selectedHolidayIds instead
+  const holiday = false; // Disabled - using selectedHolidayIds instead
   if (rule.onHolidaysOnly && !holiday) return false;
   if (rule.skipOnHolidays && holiday) return false;
   return true;
@@ -406,6 +546,9 @@ async function schedulerTick() {
     // Load default location settings once per tick
     const defaultLocation = await storage.loadLocationSettings();
     
+    // Track potential rule starts for priority handling
+    const potentialStarts: Array<{ schedule: Schedule; rule: ScheduleRule; priority: number; startAt: Date }> = [];
+    
     for (const sched of schedules) {
       if (!sched.enabled) continue;
       for (const rule of sched.rules) {
@@ -498,7 +641,7 @@ async function schedulerTick() {
         }
         
         // Start condition
-        if (!ruleMatchesDate(rule, now)) continue;
+        if (!(await ruleMatchesDate(rule, now))) continue;
         // Use rule's location if specified, otherwise use default location from settings
         const lat = rule.latitude ?? defaultLocation.latitude;
         const lon = rule.longitude ?? defaultLocation.longitude;
@@ -506,28 +649,54 @@ async function schedulerTick() {
         if (!startAt) continue;
         // Start within current minute/window
         if (Math.abs(nowTime - startAt.getTime()) <= 30000) {
-          let sequence = [...(rule.sequence || [])];
-          if (sequence.length === 0) continue;
-          if (rule.sequenceShuffle) {
-            sequence = sequence.sort(() => Math.random() - 0.5);
+          // Add to potential starts for priority handling
+          potentialStarts.push({
+            schedule: sched,
+            rule,
+            priority: sched.priority ?? 0,
+            startAt
+          });
+        }
+      }
+    }
+    
+    // Handle priority-based scheduling: only start the highest priority schedule(s)
+    if (potentialStarts.length > 0) {
+      // Sort by priority (descending) and start time (ascending)
+      potentialStarts.sort((a, b) => {
+        if (b.priority !== a.priority) return b.priority - a.priority;
+        return a.startAt.getTime() - b.startAt.getTime();
+      });
+      
+      // Get the highest priority
+      const highestPriority = potentialStarts[0].priority;
+      
+      // Start all rules with the highest priority
+      for (const { schedule, rule, priority } of potentialStarts) {
+        if (priority !== highestPriority) continue;
+        
+        const ruleKey = rule.id;
+        let sequence = [...(rule.sequence || [])];
+        if (sequence.length === 0) continue;
+        if (rule.sequenceShuffle) {
+          sequence = sequence.sort(() => Math.random() - 0.5);
+        }
+        
+        const sessionId = await startSequenceForRule(rule);
+        if (sessionId) {
+          const endAt = scheduleEndAtForRule(rule, now, defaultLocation);
+          activeRuleSessions.set(ruleKey, {
+            sessionId,
+            endAt,
+            sequence,
+            currentSequenceIndex: 0,
+            currentSequenceStartTime: nowTime,
+            rule
+          });
+          if (rule.rampOnStart && rule.rampDurationSeconds) {
+            rampBrightness(rule.targets, 0, 255, rule.rampDurationSeconds * 1000).catch(()=>{});
           }
-          
-          const sessionId = await startSequenceForRule(rule);
-          if (sessionId) {
-            const endAt = scheduleEndAtForRule(rule, now, defaultLocation);
-            activeRuleSessions.set(ruleKey, {
-              sessionId,
-              endAt,
-              sequence,
-              currentSequenceIndex: 0,
-              currentSequenceStartTime: nowTime,
-              rule
-            });
-            if (rule.rampOnStart && rule.rampDurationSeconds) {
-              rampBrightness(rule.targets, 0, 255, rule.rampDurationSeconds * 1000).catch(()=>{});
-            }
-            console.log(`[Scheduler] Started sequence for rule "${rule.name}" with ${sequence.length} items`);
-          }
+          console.log(`[Scheduler] Started sequence for rule "${rule.name}" (priority ${priority}) with ${sequence.length} items`);
         }
       }
     }

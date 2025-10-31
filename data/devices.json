@@ -35,8 +35,8 @@
         "brightness": 1
       }
     ],
-    "isOnline": false,
-    "lastSeen": "2025-10-31T18:19:18.676Z"
+    "isOnline": true,
+    "lastSeen": "2025-10-31T18:34:47.749Z"
   },
   {
     "id": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
@@ -367,7 +367,7 @@
       }
     ],
     "isOnline": true,
-    "lastSeen": "2025-10-31T18:03:48.913Z"
+    "lastSeen": "2025-10-31T19:21:01.352Z"
   },
   {
     "id": "55364947-fba5-4ee0-9bd2-afc276eaf9fc",
@@ -385,7 +385,7 @@
       }
     ],
     "isOnline": true,
-    "lastSeen": "2025-10-31T17:37:56.614Z"
+    "lastSeen": "2025-10-31T18:32:50.389Z"
   },
   {
     "id": "1eb40f87-ea9c-4142-a9c0-8344a314f132",
@@ -421,6 +421,6 @@
       }
     ],
     "isOnline": true,
-    "lastSeen": "2025-10-31T17:51:53.530Z"
+    "lastSeen": "2025-10-31T18:47:01.226Z"
   }
 ]

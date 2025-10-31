@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, Server, Cpu, Palette, MapPin, Loader } from 'lucide-react';
+import { Settings as SettingsIcon, Server, Cpu, Palette, MapPin, Loader, Calendar } from 'lucide-react';
 import { LocationSettings } from '../../types';
 import { useToast } from '../../components/ToastProvider';
+import { useRouter } from 'next/navigation';
 import Toggle from '../../components/Toggle';
 
 export default function SettingsPage() {
   const { showToast } = useToast();
+  const router = useRouter();
   const [locationSettings, setLocationSettings] = useState<LocationSettings>({});
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [savingLocation, setSavingLocation] = useState(false);
@@ -239,11 +241,34 @@ export default function SettingsPage() {
           </div>
         </motion.div>
 
-        {/* Display Settings */}
+        {/* Holidays Management */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
+          className="glass-card p-6"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <Calendar className="h-6 w-6 text-primary-500" />
+            <h2 className="text-xl font-bold">Holidays</h2>
+          </div>
+          <p className="text-sm text-white/70 mb-4">
+            Manage holidays for schedule triggers. Create custom holidays or use the built-in US national holidays.
+          </p>
+          <button
+            onClick={() => router.push('/holidays')}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Calendar className="h-4 w-4" />
+            Manage Holidays
+          </button>
+        </motion.div>
+
+        {/* Display Settings */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
           className="glass-card p-6"
         >
           <div className="flex items-center gap-3 mb-4">
@@ -272,7 +297,7 @@ export default function SettingsPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.5 }}
           className="glass-card p-6"
         >
           <div className="flex items-center gap-3 mb-4">

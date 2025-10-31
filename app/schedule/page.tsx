@@ -2,23 +2,43 @@
 import { useEffect, useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Schedule, ScheduleRule, StreamTarget, EffectPreset } from '../../types';
+import { useToast } from '../../components/ToastProvider';
 
 export default function SchedulePage() {
+  const { showToast } = useToast();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<Schedule | null>(null);
   const [presets, setPresets] = useState<EffectPreset[]>([]);
+  const [devices, setDevices] = useState<Array<{ id: string; name: string }>>([]);
+  const [groups, setGroups] = useState<Array<{ id: string; name: string }>>([]);
+  const [virtuals, setVirtuals] = useState<Array<{ id: string; name: string }>>([]);
 
   useEffect(() => {
     (async () => {
       try {
-        const [sRes, pRes] = await Promise.all([
+        const [sRes, pRes, dRes, gRes, vRes] = await Promise.all([
           fetch('/api/schedules'),
-          fetch('/api/presets')
+          fetch('/api/presets'),
+          fetch('/api/devices'),
+          fetch('/api/groups'),
+          fetch('/api/virtuals')
         ]);
         if (sRes.ok) setSchedules(await sRes.json());
         if (pRes.ok) setPresets(await pRes.json());
+        if (dRes.ok) {
+          const d = await dRes.json();
+          setDevices(d.map((x: any) => ({ id: x.id, name: x.name })));
+        }
+        if (gRes.ok) {
+          const g = await gRes.json();
+          setGroups(g.map((x: any) => ({ id: x.id, name: x.name })));
+        }
+        if (vRes.ok) {
+          const v = await vRes.json();
+          setVirtuals(v.map((x: any) => ({ id: x.id, name: x.name })));
+        }
       } finally {
         setLoading(false);
       }
@@ -80,8 +100,42 @@ export default function SchedulePage() {
 
   const removeSchedule = async (id: string) => {
     if (!confirm('Delete schedule?')) return;
-    const res = await fetch(`/api/schedules/${id}`, { method: 'DELETE' });
-    if (res.ok) setSchedules(prev => prev.filter(s => s.id !== id));
+    try {
+      console.log('Attempting to delete schedule with ID:', id);
+      const res = await fetch(`/api/schedules/${id}`, { method: 'DELETE' });
+      console.log('Delete response status:', res.status, res.statusText);
+      
+      if (res.ok) {
+        setSchedules(prev => prev.filter(s => s.id !== id));
+        showToast('Schedule deleted successfully', 'success');
+      } else {
+        const contentType = res.headers.get('content-type');
+        console.log('Response content-type:', contentType);
+        
+        let errorMessage = 'Unknown error';
+        if (contentType?.includes('application/json')) {
+          try {
+            const error = await res.json();
+            console.error('Failed to delete schedule - error response:', error);
+            errorMessage = error.error || error.message || JSON.stringify(error) || 'Unknown error';
+          } catch (e) {
+            console.error('Failed to parse error response as JSON:', e);
+            const text = await res.text().catch(() => '');
+            console.error('Response text:', text);
+            errorMessage = text || 'Failed to parse error response';
+          }
+        } else {
+          const text = await res.text().catch(() => '');
+          console.error('Non-JSON response:', text);
+          errorMessage = text || `Server returned ${res.status} ${res.statusText}`;
+        }
+        
+        alert(`Failed to delete schedule: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      alert(`Error deleting schedule: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   if (loading) return <div className="p-6">Loading…</div>;
@@ -106,25 +160,237 @@ export default function SchedulePage() {
           items={schedules}
           onEdit={setEditing}
           onDelete={removeSchedule}
+          presets={presets}
+          devices={devices}
+          groups={groups}
+          virtuals={virtuals}
         />
       )}
     </div>
   );
 }
 
-function ScheduleList({ items, onEdit, onDelete }: { items: Schedule[]; onEdit: (s: Schedule)=>void; onDelete: (id: string)=>void; }) {
+function ScheduleList({ 
+  items, 
+  onEdit, 
+  onDelete,
+  presets,
+  devices,
+  groups,
+  virtuals
+}: { 
+  items: Schedule[]; 
+  onEdit: (s: Schedule)=>void; 
+  onDelete: (id: string)=>void;
+  presets: EffectPreset[];
+  devices: Array<{ id: string; name: string }>;
+  groups: Array<{ id: string; name: string }>;
+  virtuals: Array<{ id: string; name: string }>;
+}) {
   if (items.length === 0) return <div className="text-gray-400">No schedules yet.</div>;
+  
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  const getTargetNames = (targets: StreamTarget[]): string[] => {
+    return targets.map(t => {
+      if (t.type === 'device') {
+        const d = devices.find(x => x.id === t.id);
+        return d ? d.name : `Device: ${t.id}`;
+      } else if (t.type === 'group') {
+        const g = groups.find(x => x.id === t.id);
+        return g ? `Group: ${g.name}` : `Group: ${t.id}`;
+      } else if (t.type === 'virtual') {
+        const v = virtuals.find(x => x.id === t.id);
+        return v ? `Virtual: ${v.name}` : `Virtual: ${t.id}`;
+      }
+      return '';
+    });
+  };
+  
+  const getEffectNames = (rule: ScheduleRule): string[] => {
+    return rule.sequence.map(item => {
+      if (item.presetId) {
+        const p = presets.find(x => x.id === item.presetId);
+        return p ? p.name : `Preset: ${item.presetId}`;
+      } else if (item.effect) {
+        return item.effect.name || 'Inline Effect';
+      } else if (item.layers) {
+        return `${item.layers.length} layer(s)`;
+      }
+      return 'Unknown';
+    });
+  };
+  
+  const formatTime = (rule: ScheduleRule): string => {
+    if (rule.startType === 'time' && rule.startTime) {
+      return rule.startTime;
+    } else if (rule.startType === 'sunrise') {
+      return `Sunrise${rule.startOffsetMinutes ? ` ${rule.startOffsetMinutes > 0 ? '+' : ''}${rule.startOffsetMinutes}m` : ''}`;
+    } else if (rule.startType === 'sunset') {
+      return `Sunset${rule.startOffsetMinutes ? ` ${rule.startOffsetMinutes > 0 ? '+' : ''}${rule.startOffsetMinutes}m` : ''}`;
+    }
+    return 'N/A';
+  };
+  
+  const formatDuration = (seconds?: number): string => {
+    if (!seconds) return 'N/A';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${secs}s`;
+  };
+  
   return (
     <div className="space-y-4">
       {items.map(s => (
-        <div key={s.id} className="rounded border border-gray-700 p-4 bg-gray-800/50 flex items-start justify-between">
-          <div>
-            <div className="font-medium">{s.name}</div>
-            <div className="text-sm text-gray-400">{s.enabled ? 'Enabled' : 'Disabled'} · {s.rules.length} rule(s)</div>
+        <div key={s.id} className="rounded border border-gray-700 p-4 bg-gray-800/50">
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <div className="font-medium text-lg">{s.name}</div>
+              <div className="text-sm text-gray-400 mt-1">
+                {s.enabled ? (
+                  <span className="text-green-400">● Enabled</span>
+                ) : (
+                  <span className="text-gray-500">○ Disabled</span>
+                )}
+                {' · '}
+                {s.rules.length} rule{s.rules.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={()=>onEdit(s)} className="btn-secondary">Edit</button>
+              <button onClick={()=>onDelete(s.id)} className="btn-danger">Delete</button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={()=>onEdit(s)} className="btn-secondary">Edit</button>
-            <button onClick={()=>onDelete(s.id)} className="btn-danger">Delete</button>
+          
+          <div className="space-y-3 mt-4">
+            {s.rules.map((rule, idx) => (
+              <div key={rule.id || idx} className="bg-gray-900/50 rounded p-3 border border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="font-medium text-base">{rule.name}</div>
+                  <div className="text-xs text-gray-400">
+                    {rule.enabled ? (
+                      <span className="text-green-400">Enabled</span>
+                    ) : (
+                      <span className="text-gray-500">Disabled</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  {/* Days */}
+                  <div>
+                    <span className="text-gray-400">Days: </span>
+                    <span className="text-white">
+                      {rule.daysOfWeek && rule.daysOfWeek.length > 0 ? (
+                        rule.daysOfWeek.map(d => daysOfWeek[d]).join(', ')
+                      ) : (
+                        'Every day'
+                      )}
+                    </span>
+                  </div>
+                  
+                  {/* Time */}
+                  <div>
+                    <span className="text-gray-400">Start Time: </span>
+                    <span className="text-white">{formatTime(rule)}</span>
+                  </div>
+                  
+                  {/* Duration/End */}
+                  <div>
+                    <span className="text-gray-400">
+                      {rule.endType ? 'End Time' : 'Duration'}: 
+                    </span>
+                    <span className="text-white ml-1">
+                      {rule.endType === 'time' && rule.endTime ? rule.endTime :
+                       rule.endType === 'sunrise' ? `Sunrise${rule.endOffsetMinutes ? ` ${rule.endOffsetMinutes > 0 ? '+' : ''}${rule.endOffsetMinutes}m` : ''}` :
+                       rule.endType === 'sunset' ? `Sunset${rule.endOffsetMinutes ? ` ${rule.endOffsetMinutes > 0 ? '+' : ''}${rule.endOffsetMinutes}m` : ''}` :
+                       rule.durationSeconds ? formatDuration(rule.durationSeconds) : 'Indefinite'}
+                    </span>
+                  </div>
+                  
+                  {/* FPS */}
+                  {rule.fps && (
+                    <div>
+                      <span className="text-gray-400">FPS: </span>
+                      <span className="text-white">{rule.fps}</span>
+                    </div>
+                  )}
+                  
+                  {/* Targets */}
+                  <div className="md:col-span-2">
+                    <span className="text-gray-400">Targets: </span>
+                    <span className="text-white">
+                      {rule.targets.length > 0 ? (
+                        getTargetNames(rule.targets).join(', ')
+                      ) : (
+                        <span className="text-gray-500">None</span>
+                      )}
+                    </span>
+                  </div>
+                  
+                  {/* Sequence */}
+                  <div className="md:col-span-2">
+                    <span className="text-gray-400">Effects/Presets: </span>
+                    <div className="mt-1 space-y-1">
+                      {rule.sequence.length > 0 ? (
+                        rule.sequence.map((item, seqIdx) => {
+                          const effectName = item.presetId 
+                            ? (presets.find(p => p.id === item.presetId)?.name || `Preset: ${item.presetId}`)
+                            : item.effect?.name || item.layers ? `${item.layers?.length || 0} layer(s)` : 'Unknown';
+                          return (
+                            <div key={seqIdx} className="text-white flex items-center gap-2">
+                              <span className="text-gray-500">•</span>
+                              <span>{effectName}</span>
+                              {item.durationSeconds && (
+                                <span className="text-gray-400 text-xs">
+                                  ({formatDuration(item.durationSeconds)})
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <span className="text-gray-500">None</span>
+                      )}
+                      {(rule.sequenceLoop || rule.sequenceShuffle) && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          {rule.sequenceLoop && <span>Loop</span>}
+                          {rule.sequenceLoop && rule.sequenceShuffle && <span> · </span>}
+                          {rule.sequenceShuffle && <span>Shuffle</span>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Ramp Settings */}
+                  {(rule.rampOnStart || rule.rampOffEnd) && (
+                    <div className="md:col-span-2 text-xs text-gray-400">
+                      {rule.rampOnStart && <span>Ramp up on start</span>}
+                      {rule.rampOnStart && rule.rampOffEnd && <span> · </span>}
+                      {rule.rampOffEnd && <span>Ramp down on end</span>}
+                      {rule.rampDurationSeconds && (
+                        <span> ({rule.rampDurationSeconds}s)</span>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Holiday Settings */}
+                  {(rule.onHolidaysOnly || rule.skipOnHolidays) && (
+                    <div className="md:col-span-2 text-xs text-gray-400">
+                      {rule.onHolidaysOnly && <span>Only on holidays</span>}
+                      {rule.onHolidaysOnly && rule.skipOnHolidays && <span> · </span>}
+                      {rule.skipOnHolidays && <span>Skip on holidays</span>}
+                      {(rule.holidayCountry || rule.holidayState) && (
+                        <span> ({rule.holidayCountry || ''}{rule.holidayCountry && rule.holidayState ? ', ' : ''}{rule.holidayState || ''})</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       ))}

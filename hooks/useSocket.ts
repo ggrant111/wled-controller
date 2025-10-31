@@ -16,8 +16,15 @@ export function useSocket(): UseSocketReturn {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:3001', {
-      transports: ['websocket'],
+    const url = (process.env.NEXT_PUBLIC_SOCKET_URL as string) ||
+      (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3001` : 'http://localhost:3001');
+
+    const newSocket = io(url, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 3000,
     });
 
     newSocket.on('connect', () => {

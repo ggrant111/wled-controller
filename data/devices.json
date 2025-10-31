@@ -36,25 +36,338 @@
       }
     ],
     "isOnline": true,
-    "lastSeen": "2025-10-30T07:20:57.350Z"
+    "lastSeen": "2025-10-31T04:27:54.794Z"
   },
   {
     "id": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
     "name": "Chromance",
     "ip": "192.168.1.30",
     "port": 4048,
-    "ledCount": 590,
+    "ledCount": 560,
     "segments": [
       {
-        "id": "85a45f33-bfa2-489e-9963-cbe8b91625be",
+        "id": "0d381388-6dd5-485d-ae27-67f88d8934ff",
         "start": 0,
-        "length": 590,
+        "length": 14,
         "color": "#ffffff",
-        "brightness": 1
+        "brightness": 1,
+        "name": "Chromance1"
+      },
+      {
+        "id": "903ba6b1-dbd7-435f-8b89-d463df7da017",
+        "start": 14,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance2"
+      },
+      {
+        "id": "3790c798-e63d-41a3-b5ee-a57902113136",
+        "start": 28,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance3"
+      },
+      {
+        "id": "8f838f71-5a2e-43df-9146-668c9f35a6db",
+        "start": 42,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance4"
+      },
+      {
+        "id": "64d899b5-d567-4c3e-927b-977deb530b79",
+        "start": 56,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance5"
+      },
+      {
+        "id": "e9b86511-ee3c-4c50-90aa-5d293d094312",
+        "start": 70,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance6"
+      },
+      {
+        "id": "43411587-87b1-47f0-ae2b-5bef15c78cbe",
+        "start": 84,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance7"
+      },
+      {
+        "id": "def15295-050a-40a4-a96c-b5872bc24706",
+        "start": 98,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance8"
+      },
+      {
+        "id": "eb1739bd-0ce9-4617-a5cb-ac4b0d9c212f",
+        "start": 112,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance9"
+      },
+      {
+        "id": "2d9246b0-5fd1-4e3c-a14f-279ce0f8b07e",
+        "start": 126,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance10"
+      },
+      {
+        "id": "235c528b-4a16-44ce-9c20-d6c22d59c464",
+        "start": 140,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance11"
+      },
+      {
+        "id": "6a8a4625-f18a-4ee4-9e71-c2b3be9bfff1",
+        "start": 154,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance12"
+      },
+      {
+        "id": "f224d0c3-1672-4a6b-ad0e-4bc3d2d03415",
+        "start": 168,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance13"
+      },
+      {
+        "id": "115f8ad0-ea37-49be-a8c7-5943c3b81b6b",
+        "start": 182,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance14"
+      },
+      {
+        "id": "0b069a60-19d3-49b7-b441-96a10ad8f735",
+        "start": 196,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance15"
+      },
+      {
+        "id": "9e8a01ab-1896-43a6-9eb1-62f4b1ad1e55",
+        "start": 210,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance16"
+      },
+      {
+        "id": "a0641e7f-3a99-45ee-8c00-b47505067795",
+        "start": 224,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance17"
+      },
+      {
+        "id": "222b1d81-0df6-4a7b-82d7-bd612b342db7",
+        "start": 238,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance18"
+      },
+      {
+        "id": "a54a80a0-7d3f-4f2a-847a-0a6623f32c3f",
+        "start": 252,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance19"
+      },
+      {
+        "id": "70ece377-0b35-4322-a5ef-030dcabe2e00",
+        "start": 266,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance20"
+      },
+      {
+        "id": "c3742e34-b3a5-41f7-b2ab-c393e20837f4",
+        "start": 280,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance21"
+      },
+      {
+        "id": "c2acf2b8-8659-47d8-8a22-fc9f21932269",
+        "start": 294,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance22"
+      },
+      {
+        "id": "adff2174-695f-4210-b04f-0a8819964930",
+        "start": 308,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance23"
+      },
+      {
+        "id": "4afc19fd-07e9-48e4-94d5-cf569c86f4b9",
+        "start": 322,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance24"
+      },
+      {
+        "id": "3c8ca5fb-4c92-453d-a0d1-63baaf901869",
+        "start": 336,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance25"
+      },
+      {
+        "id": "e32d5162-6113-4d5b-860d-8ad7ad1fe714",
+        "start": 350,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance26"
+      },
+      {
+        "id": "7ea7c87b-ded6-4ea2-be07-959e4d631208",
+        "start": 364,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance27"
+      },
+      {
+        "id": "6c6ee5f6-e12f-48b0-ae2a-99eacb5f5f01",
+        "start": 378,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance28"
+      },
+      {
+        "id": "abfa9076-ad09-400e-b69a-04492106248d",
+        "start": 392,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance29"
+      },
+      {
+        "id": "4c27c673-ece5-40e3-81e0-ed3ce0e8996c",
+        "start": 406,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance30"
+      },
+      {
+        "id": "3ff597bf-4e28-49ab-8804-e5c2cec5f304",
+        "start": 420,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance31"
+      },
+      {
+        "id": "dc9befa4-0701-4278-a616-7e59006a86b6",
+        "start": 434,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance32"
+      },
+      {
+        "id": "5c32ff9c-98f2-4818-a57f-67016fd13abd",
+        "start": 448,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance33"
+      },
+      {
+        "id": "af50df94-0bbb-4237-9f57-d10b90e627ed",
+        "start": 462,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance34"
+      },
+      {
+        "id": "a88243da-2a6f-4263-9e47-84e9fe9ccc29",
+        "start": 476,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance35"
+      },
+      {
+        "id": "c267af36-aefe-4836-8f20-946eec5cfee9",
+        "start": 490,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance36"
+      },
+      {
+        "id": "cd163cf4-2952-4002-b218-9b4e50b94dc5",
+        "start": 504,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance37"
+      },
+      {
+        "id": "0ce6765a-a646-4d7a-835e-17af4976c31e",
+        "start": 518,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance38"
+      },
+      {
+        "id": "d601a11e-e695-405b-b74e-1af295f89901",
+        "start": 532,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance39"
+      },
+      {
+        "id": "f0e85df9-dd9d-44d4-930d-f583fe6fee5b",
+        "start": 546,
+        "length": 14,
+        "color": "#ffffff",
+        "brightness": 1,
+        "name": "Chromance40"
       }
     ],
-    "isOnline": true,
-    "lastSeen": "2025-10-30T07:20:58.191Z"
+    "isOnline": false,
+    "lastSeen": "2025-10-31T04:35:38.507Z"
   },
   {
     "id": "55364947-fba5-4ee0-9bd2-afc276eaf9fc",
@@ -72,7 +385,7 @@
       }
     ],
     "isOnline": true,
-    "lastSeen": "2025-10-30T07:20:58.587Z"
+    "lastSeen": "2025-10-31T04:25:57.737Z"
   },
   {
     "id": "1eb40f87-ea9c-4142-a9c0-8344a314f132",
@@ -91,5 +404,23 @@
     ],
     "isOnline": false,
     "lastSeen": "2025-10-29T02:07:35.594Z"
+  },
+  {
+    "id": "c9012eeb-f968-44dc-87b0-f26759381790",
+    "name": "Cabinet",
+    "ip": "192.168.1.213",
+    "port": 4048,
+    "ledCount": 250,
+    "segments": [
+      {
+        "id": "76ae86aa-78d9-4364-ab11-ef6856ef1856",
+        "start": 0,
+        "length": 250,
+        "color": "#ffffff",
+        "brightness": 1
+      }
+    ],
+    "isOnline": true,
+    "lastSeen": "2025-10-31T04:08:48.665Z"
   }
 ]

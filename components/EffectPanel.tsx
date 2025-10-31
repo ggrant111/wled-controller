@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause, Settings, Palette, Zap, Trash2, Layers, Save, Download } from 'lucide-react';
 import { Effect, EffectParameter, EffectLayer, EffectPreset } from '../types';
@@ -30,6 +30,25 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
   const [showSavePresetModal, setShowSavePresetModal] = useState(false);
   const [presetName, setPresetName] = useState('');
   const [presetDescription, setPresetDescription] = useState('');
+  // Debounce timers per parameter (single and layers)
+  const paramDebounceTimers = useRef<Map<string, any>>(new Map());
+
+  const clearDebounce = (key: string) => {
+    const t = paramDebounceTimers.current.get(key);
+    if (t) {
+      clearTimeout(t);
+      paramDebounceTimers.current.delete(key);
+    }
+  };
+
+  const scheduleEmitParam = (key: string, payload: any, delayMs: number = 300) => {
+    clearDebounce(key);
+    const t = setTimeout(() => {
+      emit('update-effect-parameter', payload);
+      paramDebounceTimers.current.delete(key);
+    }, delayMs);
+    paramDebounceTimers.current.set(key, t);
+  };
 
   // Get parameters for the current effect
   const parameters = selectedEffect ? (effectParameters.get(selectedEffect.id) || new Map()) : new Map();
@@ -64,14 +83,24 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
     newEffectParams.set(selectedEffect.id, newParams);
     setEffectParameters(newEffectParams);
     
-    // If streaming is active, hot-reload the parameter via Socket.IO
+    // If streaming is active, emit with debounce for sliders/colors/palettes
     if (isStreaming && streamingSessionId) {
-      emit('update-effect-parameter', {
+      // Detect parameter type from selectedEffect definition
+      const def = selectedEffect.parameters.find(p => p.name === paramName);
+      const type = def?.type;
+      const debouncedTypes = new Set(['range', 'number', 'color', 'array', 'palette']);
+      const key = `${selectedEffect.id}:${paramName}`;
+      const payload = {
         sessionId: streamingSessionId,
         parameterName: paramName,
         value: value
-      });
-      console.log('Hot-reloaded parameter:', paramName, '=', value);
+      };
+      if (debouncedTypes.has(type as string)) {
+        scheduleEmitParam(key, payload, 300);
+      } else {
+        clearDebounce(key);
+        emit('update-effect-parameter', payload);
+      }
     }
     
     console.log('Parameter updated:', paramName, value);
@@ -260,6 +289,32 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
               step={param.step || 1}
               value={parameters.get(param.name) ?? param.value}
               onChange={(e) => handleParameterChange(param.name, parseFloat(e.target.value))}
+              onMouseUp={(e) => {
+                // Emit immediately on release
+                if (isStreaming && streamingSessionId) {
+                  const key = `${selectedEffect?.id}:${param.name}`;
+                  const payload = {
+                    sessionId: streamingSessionId,
+                    parameterName: param.name,
+                    value: parseFloat((e.target as HTMLInputElement).value)
+                  };
+                  clearDebounce(key);
+                  emit('update-effect-parameter', payload);
+                }
+              }}
+              onTouchEnd={(e) => {
+                if (isStreaming && streamingSessionId) {
+                  const key = `${selectedEffect?.id}:${param.name}`;
+                  const input = e.target as HTMLInputElement;
+                  const payload = {
+                    sessionId: streamingSessionId,
+                    parameterName: param.name,
+                    value: parseFloat(input.value)
+                  };
+                  clearDebounce(key);
+                  emit('update-effect-parameter', payload);
+                }
+              }}
               className="slider w-full"
             />
           </div>
@@ -733,12 +788,23 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
               
               // Hot-reload if streaming
               if (isStreaming && streamingSessionId) {
-                emit('update-effect-parameter', {
+                // Detect param type from layer effect definition
+                const def = layer.effect.parameters.find(p => p.name === paramName);
+                const type = def?.type;
+                const debouncedTypes = new Set(['range', 'number', 'color', 'array', 'palette']);
+                const key = `${layerId}:${paramName}`;
+                const payload = {
                   sessionId: streamingSessionId,
                   layerId: layerId,
                   parameterName: paramName,
                   value: value
-                });
+                };
+                if (debouncedTypes.has(type as string)) {
+                  scheduleEmitParam(key, payload, 300);
+                } else {
+                  clearDebounce(key);
+                  emit('update-effect-parameter', payload);
+                }
               }
             }}
             onLayerPropertyChange={(layerId, property, value) => {

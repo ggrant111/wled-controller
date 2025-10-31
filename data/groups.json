@@ -31,5 +31,113 @@
     "isDefault": false,
     "brightness": 1,
     "isStreaming": false
+  },
+  {
+    "id": "e6fb2e8e-9977-46ad-b3dc-d3f6a2fc06a9",
+    "name": "chromance segtments test",
+    "members": [
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "d601a11e-e695-405b-b74e-1af295f89901",
+        "startLed": 532,
+        "endLed": 545
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "5c32ff9c-98f2-4818-a57f-67016fd13abd",
+        "startLed": 448,
+        "endLed": 461
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "4afc19fd-07e9-48e4-94d5-cf569c86f4b9",
+        "startLed": 322,
+        "endLed": 335
+      }
+    ],
+    "isDefault": false,
+    "brightness": 1,
+    "isStreaming": false
+  },
+  {
+    "id": "d193f6a9-be37-40c1-a4e4-0356dd3ed4a1",
+    "name": "CHromance Border",
+    "members": [
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "0d381388-6dd5-485d-ae27-67f88d8934ff",
+        "startLed": 0,
+        "endLed": 13
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "903ba6b1-dbd7-435f-8b89-d463df7da017",
+        "startLed": 14,
+        "endLed": 27
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "3790c798-e63d-41a3-b5ee-a57902113136",
+        "startLed": 28,
+        "endLed": 41
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "8f838f71-5a2e-43df-9146-668c9f35a6db",
+        "startLed": 42,
+        "endLed": 55
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "64d899b5-d567-4c3e-927b-977deb530b79",
+        "startLed": 56,
+        "endLed": 69
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "e9b86511-ee3c-4c50-90aa-5d293d094312",
+        "startLed": 70,
+        "endLed": 83
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "43411587-87b1-47f0-ae2b-5bef15c78cbe",
+        "startLed": 84,
+        "endLed": 97
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "def15295-050a-40a4-a96c-b5872bc24706",
+        "startLed": 98,
+        "endLed": 111
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "eb1739bd-0ce9-4617-a5cb-ac4b0d9c212f",
+        "startLed": 112,
+        "endLed": 125
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "2d9246b0-5fd1-4e3c-a14f-279ce0f8b07e",
+        "startLed": 126,
+        "endLed": 139
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "235c528b-4a16-44ce-9c20-d6c22d59c464",
+        "startLed": 140,
+        "endLed": 153
+      },
+      {
+        "deviceId": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
+        "segmentId": "6a8a4625-f18a-4ee4-9e71-c2b3be9bfff1",
+        "startLed": 154,
+        "endLed": 167
+      }
+    ],
+    "isDefault": false,
+    "brightness": 1,
+    "isStreaming": false
   }
 ]

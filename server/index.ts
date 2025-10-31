@@ -40,7 +40,15 @@ let streamingInterval: NodeJS.Timeout | null = null;
 let healthCheckInterval: NodeJS.Timeout | null = null;
 const loggedStreamingDevices = new Set<string>(); // Track which devices have been logged for streaming start
 // Scheduler state
-const activeRuleSessions = new Map<string, { sessionId: string; endAt: number | null }>();
+interface ActiveRuleSession {
+  sessionId: string;
+  endAt: number | null; // Overall rule end time
+  sequence: ScheduleSequenceItem[]; // Full sequence array
+  currentSequenceIndex: number; // Current item index
+  currentSequenceStartTime: number; // When current item started (timestamp)
+  rule: ScheduleRule; // Store the rule for reference
+}
+const activeRuleSessions = new Map<string, ActiveRuleSession>();
 let schedulerInterval: NodeJS.Timeout | null = null;
 
 async function loadEffectPresetsFromFile(): Promise<EffectPreset[]> {
@@ -100,6 +108,97 @@ function ruleMatchesDate(rule: ScheduleRule, now: Date): boolean {
   return true;
 }
 
+// Helper function to stop existing streams to all targets in a rule
+function stopStreamsToTargets(targets: StreamTarget[]): void {
+  const sessionsToRemove: string[] = [];
+  
+  for (const target of targets) {
+    for (const session of Array.from(streamingSessions.values())) {
+      const prevLen = session.targets.length;
+      session.targets = session.targets.filter(t => !(t.type === target.type && t.id === target.id));
+      
+      // If no targets left, mark inactive and queue for removal
+      if (session.targets.length === 0 && prevLen > 0) {
+        session.isActive = false;
+        sessionsToRemove.push(session.id);
+      } else if (session.targets.length < prevLen && prevLen > 0) {
+        // Target removed but session still has targets - emit update
+        io.emit('streaming-session-updated', session);
+      }
+    }
+  }
+  
+  // Remove sessions with no targets and emit stopped events
+  for (const sessionId of sessionsToRemove) {
+    streamingSessions.delete(sessionId);
+    io.emit('streaming-stopped', sessionId);
+    console.log(`[Scheduler] Stopped and removed session ${sessionId} (no targets remaining)`);
+  }
+  
+  // Emit state change if any sessions were affected
+  if (sessionsToRemove.length > 0 || targets.length > 0) {
+    const activeSessions = Array.from(streamingSessions.values()).filter(s => s.isActive);
+    io.emit('streaming-state-changed', {
+      isStreaming: activeSessions.length > 0,
+      session: activeSessions.length > 0 ? activeSessions[0] : null
+    });
+  }
+}
+
+// Helper function to apply a sequence item to a session
+async function applySequenceItemToSession(session: StreamingSession, item: ScheduleSequenceItem, fps: number): Promise<void> {
+  const body: any = { targets: session.targets, fps };
+  
+  if (item.layers && item.layers.length > 0) {
+    body.layers = item.layers;
+    body.effect = undefined;
+  } else if (item.effect) {
+    body.effect = item.effect;
+    body.blendMode = 'overwrite';
+    body.layers = [];
+  } else if (item.presetId) {
+    const presets = await loadEffectPresetsFromFile();
+    const preset = presets.find(p => p.id === item.presetId);
+    if (preset) {
+      if (preset.useLayers && preset.layers) {
+        // Apply layer parameters to layers
+        body.layers = preset.layers.map((layer: any) => {
+          const layerParamsKey = `${layer.id}-${layer.effect.id}`;
+          const savedParams = preset.layerParameters?.[layerParamsKey] || {};
+          
+          return {
+            ...layer,
+            effect: {
+              ...layer.effect,
+              parameters: layer.effect.parameters.map((param: any) => ({
+                ...param,
+                value: savedParams[param.name] ?? param.value
+              }))
+            }
+          };
+        });
+        body.effect = undefined;
+      } else if (preset.effect) {
+        // Apply saved parameters to effect
+        body.effect = {
+          ...preset.effect,
+          parameters: preset.effect.parameters.map((param: any) => ({
+            ...param,
+            value: preset.parameters?.[param.name] ?? param.value
+          }))
+        } as any;
+        body.blendMode = 'overwrite';
+        body.layers = [];
+      }
+    }
+  }
+  
+  // Update the session
+  session.layers = body.layers || [];
+  session.effect = body.effect;
+  session.fps = fps;
+}
+
 async function startSequenceForRule(rule: ScheduleRule): Promise<string | null> {
   const fps = rule.fps || 30;
   let sequence = [...(rule.sequence || [])];
@@ -107,6 +206,13 @@ async function startSequenceForRule(rule: ScheduleRule): Promise<string | null> 
   if (rule.sequenceShuffle) {
     sequence = sequence.sort(() => Math.random() - 0.5);
   }
+  
+  // Stop any existing streams to the targets before starting the schedule
+  if (rule.targets && rule.targets.length > 0) {
+    stopStreamsToTargets(rule.targets);
+    console.log(`[Scheduler] Stopped existing streams to ${rule.targets.length} target(s) before starting schedule`);
+  }
+  
   // Prepare body for first item
   const first = sequence[0];
   const body: any = { targets: rule.targets, fps };
@@ -120,13 +226,36 @@ async function startSequenceForRule(rule: ScheduleRule): Promise<string | null> 
     const preset = presets.find(p => p.id === first.presetId);
     if (preset) {
       if (preset.useLayers && preset.layers) {
-        body.layers = preset.layers;
+        // Apply layer parameters to layers
+        body.layers = preset.layers.map((layer: any) => {
+          const layerParamsKey = `${layer.id}-${layer.effect.id}`;
+          const savedParams = preset.layerParameters?.[layerParamsKey] || {};
+          
+          return {
+            ...layer,
+            effect: {
+              ...layer.effect,
+              parameters: layer.effect.parameters.map((param: any) => ({
+                ...param,
+                value: savedParams[param.name] ?? param.value
+              }))
+            }
+          };
+        });
       } else if (preset.effect) {
-        body.effect = preset.effect as any;
+        // Apply saved parameters to effect
+        body.effect = {
+          ...preset.effect,
+          parameters: preset.effect.parameters.map((param: any) => ({
+            ...param,
+            value: preset.parameters?.[param.name] ?? param.value
+          }))
+        } as any;
         body.blendMode = 'overwrite';
       }
     }
   }
+  
   const respSession = await new Promise<{ id: string } | null>(async (resolve) => {
     try {
       const session: StreamingSession = {
@@ -139,12 +268,23 @@ async function startSequenceForRule(rule: ScheduleRule): Promise<string | null> 
         effect: body.effect
       };
       streamingSessions.set(session.id, session);
+      
       if (!streamingInterval) {
         loggedStreamingDevices.clear();
         startStreamingLoop();
       }
+      
+      // Emit Socket.IO events to notify frontend
+      io.emit('streaming-started', session);
+      io.emit('streaming-state-changed', {
+        isStreaming: true,
+        session: session
+      });
+      
+      console.log(`[Scheduler] Started streaming session ${session.id} and emitted events`);
       resolve({ id: session.id });
     } catch (e) {
+      console.error('[Scheduler] Error creating session:', e);
       resolve(null);
     }
   });
@@ -183,38 +323,126 @@ async function rampBrightness(targets: StreamTarget[], from: number, to: number,
 async function schedulerTick() {
   try {
     const now = new Date();
+    const nowTime = now.getTime();
     const schedules: Schedule[] = await storage.loadSchedules();
     for (const sched of schedules) {
       if (!sched.enabled) continue;
       for (const rule of sched.rules) {
         if (!rule.enabled) continue;
         const ruleKey = rule.id;
-        // Stop conditions
+        // Check active sessions for sequence advancement
         const active = activeRuleSessions.get(ruleKey);
         if (active) {
-          if (active.endAt && now.getTime() >= active.endAt) {
+          // Check if overall rule end time reached
+          if (active.endAt && nowTime >= active.endAt) {
             const session = streamingSessions.get(active.sessionId);
-            if (session) session.isActive = false;
+            if (session) {
+              session.isActive = false;
+              const sessionId = session.id;
+              streamingSessions.delete(sessionId);
+              io.emit('streaming-stopped', sessionId);
+              
+              // Emit state change
+              const activeSessions = Array.from(streamingSessions.values()).filter(s => s.isActive);
+              io.emit('streaming-state-changed', {
+                isStreaming: activeSessions.length > 0,
+                session: activeSessions.length > 0 ? activeSessions[0] : null
+              });
+            }
             activeRuleSessions.delete(ruleKey);
             if (rule.rampOffEnd && rule.rampDurationSeconds) {
               rampBrightness(rule.targets, 255, 0, rule.rampDurationSeconds * 1000).catch(()=>{});
             }
+            console.log(`[Scheduler] Schedule rule "${rule.name}" ended`);
+            continue;
+          }
+          
+          // Check if current sequence item duration has elapsed
+          const currentItem = active.sequence[active.currentSequenceIndex];
+          if (currentItem && currentItem.durationSeconds) {
+            const itemEndTime = active.currentSequenceStartTime + (currentItem.durationSeconds * 1000);
+            
+            if (nowTime >= itemEndTime) {
+              // Current item duration expired, advance to next
+              let nextIndex = active.currentSequenceIndex + 1;
+              
+              // Check if we've reached the end of the sequence
+              if (nextIndex >= active.sequence.length) {
+                if (active.rule.sequenceLoop) {
+                  // Loop back to start
+                  nextIndex = 0;
+                  // Re-shuffle if needed
+                  if (active.rule.sequenceShuffle) {
+                    active.sequence = active.sequence.sort(() => Math.random() - 0.5);
+                  }
+                } else {
+                  // Sequence complete, stop the session
+                  const session = streamingSessions.get(active.sessionId);
+                  if (session) {
+                    session.isActive = false;
+                    const sessionId = session.id;
+                    streamingSessions.delete(sessionId);
+                    io.emit('streaming-stopped', sessionId);
+                    
+                    // Emit state change
+                    const activeSessions = Array.from(streamingSessions.values()).filter(s => s.isActive);
+                    io.emit('streaming-state-changed', {
+                      isStreaming: activeSessions.length > 0,
+                      session: activeSessions.length > 0 ? activeSessions[0] : null
+                    });
+                  }
+                  activeRuleSessions.delete(ruleKey);
+                  continue;
+                }
+              }
+              
+              // Apply next sequence item
+              const session = streamingSessions.get(active.sessionId);
+              if (session && nextIndex < active.sequence.length) {
+                const nextItem = active.sequence[nextIndex];
+                await applySequenceItemToSession(session, nextItem, active.rule.fps || 30);
+                
+                // Update active session tracking
+                active.currentSequenceIndex = nextIndex;
+                active.currentSequenceStartTime = nowTime;
+                
+                // Emit session updated event
+                io.emit('streaming-session-updated', session);
+                
+                console.log(`[Scheduler] Advanced to sequence item ${nextIndex + 1}/${active.sequence.length} for rule "${active.rule.name}"`);
+              }
+            }
           }
           continue;
         }
+        
         // Start condition
         if (!ruleMatchesDate(rule, now)) continue;
         const startAt = computeEventTime(rule.startType, now, { time: rule.startTime, lat: rule.latitude, lon: rule.longitude, offsetMin: rule.startOffsetMinutes });
         if (!startAt) continue;
         // Start within current minute/window
-        if (Math.abs(now.getTime() - startAt.getTime()) <= 30000) {
+        if (Math.abs(nowTime - startAt.getTime()) <= 30000) {
+          let sequence = [...(rule.sequence || [])];
+          if (sequence.length === 0) continue;
+          if (rule.sequenceShuffle) {
+            sequence = sequence.sort(() => Math.random() - 0.5);
+          }
+          
           const sessionId = await startSequenceForRule(rule);
           if (sessionId) {
             const endAt = scheduleEndAtForRule(rule, now);
-            activeRuleSessions.set(ruleKey, { sessionId, endAt });
+            activeRuleSessions.set(ruleKey, {
+              sessionId,
+              endAt,
+              sequence,
+              currentSequenceIndex: 0,
+              currentSequenceStartTime: nowTime,
+              rule
+            });
             if (rule.rampOnStart && rule.rampDurationSeconds) {
               rampBrightness(rule.targets, 0, 255, rule.rampDurationSeconds * 1000).catch(()=>{});
             }
+            console.log(`[Scheduler] Started sequence for rule "${rule.name}" with ${sequence.length} items`);
           }
         }
       }
@@ -226,7 +454,8 @@ async function schedulerTick() {
 
 function startScheduler() {
   if (schedulerInterval) return;
-  schedulerInterval = setInterval(schedulerTick, 30000);
+  // Run every 5 seconds for more accurate sequence item timing
+  schedulerInterval = setInterval(schedulerTick, 5000);
 }
 
 // Initialize storage
@@ -312,6 +541,10 @@ io.on('connection', (socket) => {
             param.value = value;
             streamingSessions.set(sessionId, session);
             io.emit('effect-parameter-updated', { sessionId, parameterName, value, layerId });
+            try {
+              // Reset effect instance to apply changes for stateful effects
+              effectEngine.resetEffect(layer.effect.type as any);
+            } catch {}
           }
         }
       } else if (session.effect) {
@@ -321,6 +554,9 @@ io.on('connection', (socket) => {
           param.value = value;
           streamingSessions.set(sessionId, session);
           io.emit('effect-parameter-updated', { sessionId, parameterName, value });
+          try {
+            effectEngine.resetEffect(session.effect.type as any);
+          } catch {}
         }
       }
     }
@@ -638,6 +874,58 @@ app.get('/api/stream/active-devices', async (req, res) => {
   } catch (error) {
     console.error('Error resolving active devices:', error);
     res.status(500).json({ error: 'Failed to resolve active devices' });
+  }
+});
+
+// Get active schedule rules (currently running schedules)
+app.get('/api/schedules/active', async (req, res) => {
+  try {
+    const schedules: Schedule[] = await storage.loadSchedules();
+    const activeRules: Array<{
+      scheduleId: string;
+      scheduleName: string;
+      ruleId: string;
+      ruleName: string;
+      endAt: number | null;
+      startTime: number;
+      targets: StreamTarget[];
+      sequence: ScheduleSequenceItem[];
+    }> = [];
+    
+    for (const schedule of schedules) {
+      if (!schedule.enabled) continue;
+      for (const rule of schedule.rules) {
+        if (!rule.enabled) continue;
+        const ruleKey = rule.id;
+        const active = activeRuleSessions.get(ruleKey);
+        if (active) {
+          // Calculate start time from currentSequenceStartTime and sequence items
+          let startTime = active.currentSequenceStartTime;
+          for (let i = 0; i < active.currentSequenceIndex; i++) {
+            const item = active.sequence[i];
+            if (item.durationSeconds) {
+              startTime += item.durationSeconds * 1000;
+            }
+          }
+          
+          activeRules.push({
+            scheduleId: schedule.id,
+            scheduleName: schedule.name,
+            ruleId: rule.id,
+            ruleName: rule.name,
+            endAt: active.endAt,
+            startTime: startTime,
+            targets: rule.targets,
+            sequence: active.sequence
+          });
+        }
+      }
+    }
+    
+    res.json(activeRules);
+  } catch (error) {
+    console.error('Error getting active schedules:', error);
+    res.status(500).json({ error: 'Failed to get active schedules' });
   }
 });
 

@@ -51,5 +51,43 @@
     ],
     "isCustom": true,
     "description": "Custom palette"
+  },
+  {
+    "id": "custom-1761872915661-u7milzin7",
+    "name": "RGWB",
+    "colors": [
+      "#ff0000",
+      "#00ff00",
+      "#c2c2c2",
+      "#000000",
+      "#ff0000",
+      "#00ff00",
+      "#c2c2c2",
+      "#000000"
+    ],
+    "isCustom": true,
+    "description": "Custom palette"
+  },
+  {
+    "id": "custom-1761873690876-sgl9w19mj",
+    "name": "Random 7:21:30 PM",
+    "colors": [
+      "#d60a0d",
+      "#cbae20",
+      "#ff2868",
+      "#23c970",
+      "#2fcc1a",
+      "#22a2f7",
+      "#eaae0a",
+      "#e603c0",
+      "#f5fe09",
+      "#36d008",
+      "#2b1bdc",
+      "#07b8d8",
+      "#fb4c07",
+      "#90d605"
+    ],
+    "isCustom": true,
+    "description": "Generated random palette"
   }
 ]

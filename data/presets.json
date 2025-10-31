@@ -1308,5 +1308,91 @@
         "mirror": false
       }
     }
+  },
+  {
+    "id": "preset-1761873196652-150v14aq9",
+    "name": "Purple Green Wave",
+    "description": "",
+    "createdAt": "2025-10-31T01:13:16.652Z",
+    "updatedAt": "2025-10-31T01:13:16.652Z",
+    "useLayers": false,
+    "effect": {
+      "id": "wave",
+      "name": "Wave",
+      "type": "wave",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "frequency",
+          "type": "range",
+          "value": 0.05,
+          "min": 0.01,
+          "max": 0.2,
+          "step": 0.01
+        },
+        {
+          "name": "count",
+          "type": "range",
+          "value": 1,
+          "min": 1,
+          "max": 10,
+          "step": 1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00ff00"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "colorMode",
+          "type": "options",
+          "value": "palette",
+          "options": [
+            "palette",
+            "cycle"
+          ]
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.01,
+      "frequency": 0.02,
+      "count": 5,
+      "colors": [
+        "#e22400",
+        "#ff0000",
+        "#d6d6d6",
+        "#000000"
+      ],
+      "colorMode": "palette",
+      "palette": "purple-green",
+      "reverse": false,
+      "mirror": false
+    }
   }
 ]

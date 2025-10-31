@@ -22,6 +22,13 @@ export default function DeviceModal({ device, onSave, onClose }: DeviceModalProp
 
   const [segments, setSegments] = useState<LEDSegment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [bulkMode, setBulkMode] = useState<'uniform' | 'csv'>('uniform');
+  const [uniformCount, setUniformCount] = useState<number>(0);
+  const [uniformLength, setUniformLength] = useState<number>(0);
+  const [lengthsCsv, setLengthsCsv] = useState<string>('');
+  const [namePrefix, setNamePrefix] = useState<string>('Segment ');
+  const [startIndex, setStartIndex] = useState<number>(1);
+  const [namesCsv, setNamesCsv] = useState<string>('');
 
   useEffect(() => {
     if (device) {
@@ -69,6 +76,7 @@ export default function DeviceModal({ device, onSave, onClose }: DeviceModalProp
       length: 10,
       color: '#ffffff',
       brightness: 1.0,
+      name: `${namePrefix}${segments.length + startIndex}`,
     }]);
   };
 
@@ -200,6 +208,151 @@ export default function DeviceModal({ device, onSave, onClose }: DeviceModalProp
 
               {/* Segments */}
               <div>
+                {/* Bulk add controls */}
+                <div className="glass-card p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold">Bulk Add Segments</h3>
+                    <div className="flex gap-2 text-sm">
+                      <button
+                        type="button"
+                        className={`px-3 py-1 rounded ${bulkMode === 'uniform' ? 'btn-secondary' : 'hover:bg-white/10'}`}
+                        onClick={() => setBulkMode('uniform')}
+                      >
+                        Uniform
+                      </button>
+                      <button
+                        type="button"
+                        className={`px-3 py-1 rounded ${bulkMode === 'csv' ? 'btn-secondary' : 'hover:bg-white/10'}`}
+                        onClick={() => setBulkMode('csv')}
+                      >
+                        Lengths CSV
+                      </button>
+                    </div>
+                  </div>
+
+                  {bulkMode === 'uniform' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Count</label>
+                        <input
+                          type="number"
+                          value={uniformCount || ''}
+                          onChange={(e) => setUniformCount(parseInt(e.target.value) || 0)}
+                          className="input-field w-full"
+                          min="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Length per segment</label>
+                        <input
+                          type="number"
+                          value={uniformLength || ''}
+                          onChange={(e) => setUniformLength(parseInt(e.target.value) || 0)}
+                          className="input-field w-full"
+                          min="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Name prefix</label>
+                        <input
+                          type="text"
+                          value={namePrefix}
+                          onChange={(e) => setNamePrefix(e.target.value)}
+                          className="input-field w-full"
+                          placeholder="Segment "
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Start index</label>
+                        <input
+                          type="number"
+                          value={startIndex}
+                          onChange={(e) => setStartIndex(parseInt(e.target.value) || 1)}
+                          className="input-field w-full"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Lengths (comma separated)</label>
+                        <input
+                          type="text"
+                          value={lengthsCsv}
+                          onChange={(e) => setLengthsCsv(e.target.value)}
+                          className="input-field w-full"
+                          placeholder="100,25,73,11"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Names (optional, comma separated)</label>
+                        <input
+                          type="text"
+                          value={namesCsv}
+                          onChange={(e) => setNamesCsv(e.target.value)}
+                          className="input-field w-full"
+                          placeholder="Gable,Window,Garage,Outline"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => {
+                        const last = segments[segments.length - 1];
+                        let nextStart = last ? last.start + last.length : 0;
+                        const newSegments: LEDSegment[] = [];
+
+                        if (bulkMode === 'uniform') {
+                          const count = Math.max(0, uniformCount);
+                          const len = Math.max(0, uniformLength);
+                          for (let i = 0; i < count; i++) {
+                            newSegments.push({
+                              id: uuidv4(),
+                              start: nextStart,
+                              length: len,
+                              color: '#ffffff',
+                              brightness: 1.0,
+                              name: `${namePrefix}${startIndex + i}`,
+                            });
+                            nextStart += len;
+                          }
+                        } else {
+                          const lengths = lengthsCsv
+                            .split(',')
+                            .map(s => parseInt(s.trim()))
+                            .filter(n => !isNaN(n) && n > 0);
+                          const providedNames = namesCsv
+                            .split(',')
+                            .map(s => s.trim())
+                            .filter(Boolean);
+
+                          for (let i = 0; i < lengths.length; i++) {
+                            const len = lengths[i];
+                            const name = providedNames[i] || `${namePrefix}${startIndex + i}`;
+                            newSegments.push({
+                              id: uuidv4(),
+                              start: nextStart,
+                              length: len,
+                              color: '#ffffff',
+                              brightness: 1.0,
+                              name,
+                            });
+                            nextStart += len;
+                          }
+                        }
+
+                        setSegments(prev => [...prev, ...newSegments]);
+                      }}
+                    >
+                      Generate
+                    </button>
+                  </div>
+                </div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">LED Segments</h3>
                   <button
@@ -216,7 +369,7 @@ export default function DeviceModal({ device, onSave, onClose }: DeviceModalProp
                   {segments.map((segment, index) => (
                     <div key={segment.id} className="glass-card p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium">Segment {index + 1}</h4>
+                        <h4 className="font-medium">{segment.name || `Segment ${index + 1}`}</h4>
                         {segments.length > 1 && (
                           <button
                             type="button"
@@ -228,7 +381,17 @@ export default function DeviceModal({ device, onSave, onClose }: DeviceModalProp
                         )}
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Name</label>
+                          <input
+                            type="text"
+                            value={segment.name || ''}
+                            onChange={(e) => handleSegmentChange(index, 'name', e.target.value)}
+                            className="input-field w-full"
+                            placeholder={`Segment ${index + 1}`}
+                          />
+                        </div>
                         <div>
                           <label className="block text-sm font-medium mb-1">Start</label>
                           <input

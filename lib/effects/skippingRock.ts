@@ -206,7 +206,10 @@ export class SkippingRockEffect implements EffectGenerator {
     const dt = Math.max(0, time - st.lastT);
     st.lastT = time;
 
-    // Move rock and handle bounds
+    // Move rock and handle bounds (apply live speed changes while preserving direction)
+    const desiredSpeed = Math.max(10, Number(params.get('rockSpeed')) || 180);
+    const dir = st.rockV >= 0 ? 1 : -1;
+    st.rockV = dir * desiredSpeed;
     st.rockX += st.rockV * dt;
     if (st.rockX < 0) {
       st.rockX = -st.rockX;

@@ -211,7 +211,9 @@ export default function GroupModal({ devices, virtuals, group, onSave, onClose }
                                   return (
                                     <div key={segment.id} className="flex items-center justify-between text-sm py-2">
                                       <div>
-                                        <span className="font-medium">Segment {segment.start}-{segment.start + segment.length - 1}</span>
+                                        <span className="font-medium">
+                                          {segment.name || `Segment ${segment.start}-${segment.start + segment.length - 1}`}
+                                        </span>
                                         <span className="text-white/70 ml-2">({segment.length} LEDs)</span>
                                       </div>
                                       {segmentMember ? (
@@ -255,11 +257,27 @@ export default function GroupModal({ devices, virtuals, group, onSave, onClose }
                     const virtual = virtuals.find(v => v.id === member.deviceId);
                     const name = device?.name || virtual?.name || 'Unknown';
                     
+                    // Find matching segment to get its name
+                    let segmentName: string | undefined;
+                    if (device && (member.segmentId || (member.startLed !== undefined && member.endLed !== undefined))) {
+                      const segment = device.segments?.find(s => 
+                        member.segmentId 
+                          ? s.id === member.segmentId
+                          : s.start === member.startLed && s.start + s.length - 1 === member.endLed
+                      );
+                      segmentName = segment?.name;
+                    }
+                    
                     return (
                       <div key={index} className="flex items-center justify-between py-2">
                         <div className="text-sm">
                           <span className="font-medium">{name}</span>
-                          {member.startLed !== undefined && member.endLed !== undefined && (
+                          {segmentName && (
+                            <span className="text-white/70 ml-2">
+                              {segmentName}
+                            </span>
+                          )}
+                          {!segmentName && member.startLed !== undefined && member.endLed !== undefined && (
                             <span className="text-white/70 ml-2">
                               (LEDs {member.startLed}-{member.endLed})
                             </span>

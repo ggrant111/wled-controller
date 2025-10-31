@@ -262,37 +262,10 @@ export const defaultEffects: Effect[] = [
     name: 'Shockwave (Dual, Random Meet)',
     type: 'shockwave-dual',
     parameters: [
-      // Cycle
-      { name: 'minMeet', type: 'range', value: 0.20, min: 0.0, max: 1.0, step: 0.01 },
-      { name: 'maxMeet', type: 'range', value: 0.80, min: 0.0, max: 1.0, step: 0.01 },
-      { name: 'minRestMs', type: 'range', value: 400, min: 0, max: 3000, step: 50 },
-      { name: 'maxRestMs', type: 'range', value: 1400, min: 0, max: 5000, step: 50 },
-      { name: 'minHoldMs', type: 'range', value: 40, min: 0, max: 1000, step: 10 },
-      { name: 'maxHoldMs', type: 'range', value: 120, min: 0, max: 1000, step: 10 },
-
-      // Travel
-      { name: 'speedL', type: 'range', value: 140, min: 10, max: 600, step: 10 },
-      { name: 'speedR', type: 'range', value: 140, min: 10, max: 600, step: 10 },
-      { name: 'cometTrail', type: 'range', value: 0.86, min: 0.0, max: 1.0, step: 0.01 },
-
-      // Explosion
-      { name: 'waves', type: 'range', value: 3, min: 1, max: 8, step: 1 },
-      { name: 'waveSpeed', type: 'range', value: 240, min: 10, max: 1000, step: 10 },
-      { name: 'dispersion', type: 'range', value: 0.10, min: 0.0, max: 0.5, step: 0.01 },
-      { name: 'thickness', type: 'range', value: 2.1, min: 0.6, max: 4.0, step: 0.1 },
-      { name: 'decayPerWave', type: 'range', value: 0.55, min: 0.2, max: 0.99, step: 0.01 },
-      { name: 'useAdditive', type: 'boolean', value: true },
-      { name: 'globalFade', type: 'range', value: 0.965, min: 0.5, max: 0.999, step: 0.001 },
-      { name: 'gamma', type: 'range', value: 2.2, min: 1.0, max: 3.0, step: 0.1 },
-      { name: 'clamp', type: 'boolean', value: true },
-
-      // Colors
-      { name: 'hueCore', type: 'range', value: 30, min: 0, max: 360, step: 1 },
-      { name: 'hueEdge', type: 'range', value: 205, min: 0, max: 360, step: 1 },
-      { name: 'sat', type: 'range', value: 1.0, min: 0, max: 1, step: 0.01 },
-      { name: 'bright', type: 'range', value: 1.0, min: 0.1, max: 1, step: 0.05 },
-      { name: 'hueTravelL', type: 'range', value: 330, min: 0, max: 360, step: 1 },
-      { name: 'hueTravelR', type: 'range', value: 200, min: 0, max: 360, step: 1 }
+      { name: 'speed', type: 'range', value: 180, min: 20, max: 600, step: 10 },
+      { name: 'hue', type: 'range', value: 32, min: 0, max: 360, step: 1 },
+      { name: 'bright', type: 'range', value: 1.0, min: 0.1, max: 1.0, step: 0.05 },
+      { name: 'fade', type: 'range', value: 0.96, min: 0.5, max: 0.999, step: 0.001 }
     ]
   }
 ];

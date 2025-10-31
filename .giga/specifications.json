@@ -1,0 +1,22 @@
+[
+  {
+    "fileName": "main-overview.mdc",
+    "description": "Complete system overview including architecture, key components, and high-level data flow between major subsystems"
+  },
+  {
+    "fileName": "led-effects-engine.mdc",
+    "description": "Detailed documentation of the LED effect system including layer processing, blending algorithms, effect parameter handling, and real-time frame generation"
+  },
+  {
+    "fileName": "data-models.mdc",
+    "description": "Comprehensive documentation of core data models including LED devices, segments, groups, effects, palettes, and their relationships"
+  },
+  {
+    "fileName": "device-management.mdc",
+    "description": "Documentation of virtual device mapping, LED segment management, physical/logical device relationships, and group synchronization logic"
+  },
+  {
+    "fileName": "ddp-protocol.mdc",
+    "description": "Detailed specification of the custom DDP (Distributed Display Protocol) implementation, packet structure, and real-time streaming optimizations"
+  }
+]

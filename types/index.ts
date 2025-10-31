@@ -15,6 +15,7 @@ export interface LEDSegment {
   length: number;
   color: string;
   brightness: number;
+  name?: string; // Optional friendly name for UI and grouping
 }
 
 export interface GroupMember {
@@ -85,8 +86,8 @@ export type EffectType =
   | 'cylon'
   | 'color-twinkle'
   | 'pacifica'
-  | 'skipping-rock'
-  | 'shockwave-dual';
+  | 'shockwave-dual'
+  | 'skipping-rock';
 
 export interface Preset {
   id: string;

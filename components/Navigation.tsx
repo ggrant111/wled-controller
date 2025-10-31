@@ -18,13 +18,22 @@ export default function Navigation() {
         const res = await fetch('/api/stream/sessions');
         if (!res.ok) return;
         const data = await res.json();
-        if (isMounted) setActiveStreams(data.count || 0);
+        const count = data.count || 0;
+        if (isMounted) {
+          setActiveStreams(count);
+          // Sync isStreaming state with actual stream count (fallback if Socket.IO missed event)
+          if (count > 0 && !isStreaming) {
+            setIsStreaming(true);
+          } else if (count === 0 && isStreaming) {
+            setIsStreaming(false);
+          }
+        }
       } catch {}
     };
     fetchCount();
     const interval = setInterval(fetchCount, 3000);
     return () => { isMounted = false; clearInterval(interval); };
-  }, []);
+  }, [isStreaming, setIsStreaming]);
 
   const handleStartStopStreaming = async () => {
     try {

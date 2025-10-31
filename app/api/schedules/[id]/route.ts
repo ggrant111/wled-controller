@@ -31,13 +31,21 @@ async function writeSchedules(schedules: Schedule[]): Promise<void> {
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
+    const resolvedParams = await params;
+    const id = decodeURIComponent(resolvedParams.id);
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Schedule ID is required' }, { status: 400 });
+    }
+    
     const updates = await request.json() as Partial<Schedule>;
     const schedules = await readSchedules();
     const index = schedules.findIndex(s => s.id === id);
+    
     if (index === -1) {
-      return NextResponse.json({ error: 'Schedule not found' }, { status: 404 });
+      return NextResponse.json({ error: `Schedule not found with ID: ${id}` }, { status: 404 });
     }
+    
     const updated: Schedule = {
       ...schedules[index],
       ...updates,
@@ -47,23 +55,56 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     await writeSchedules(schedules);
     return NextResponse.json(updated);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to update schedule' }, { status: 500 });
+    console.error('Error updating schedule:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: `Failed to update schedule: ${errorMessage}` }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
-    const schedules = await readSchedules();
-    const index = schedules.findIndex(s => s.id === id);
-    if (index === -1) {
-      return NextResponse.json({ error: 'Schedule not found' }, { status: 404 });
+    const resolvedParams = await params;
+    const id = decodeURIComponent(resolvedParams.id);
+    
+    console.log('[DELETE] /api/schedules/[id] - Request received');
+    console.log('[DELETE] Request URL:', request.url);
+    console.log('[DELETE] Raw ID from params:', resolvedParams.id);
+    console.log('[DELETE] Decoded ID:', id);
+    
+    if (!id || id.trim() === '') {
+      console.error('[DELETE] No ID provided');
+      return NextResponse.json({ error: 'Schedule ID is required' }, { status: 400 });
     }
+    
+    const schedules = await readSchedules();
+    console.log('[DELETE] Total schedules loaded:', schedules.length);
+    if (schedules.length > 0) {
+      console.log('[DELETE] All schedule IDs:', JSON.stringify(schedules.map(s => s.id)));
+    }
+    
+    const index = schedules.findIndex(s => s.id === id);
+    console.log('[DELETE] Found schedule at index:', index);
+    
+    if (index === -1) {
+      console.log('[DELETE] Schedule not found with ID:', id);
+      console.log('[DELETE] Available IDs for comparison:', schedules.map(s => ({ id: s.id, matches: s.id === id })));
+      return NextResponse.json({ error: `Schedule not found with ID: ${id}` }, { status: 404 });
+    }
+    
+    const deletedSchedule = schedules[index];
     schedules.splice(index, 1);
     await writeSchedules(schedules);
-    return NextResponse.json({ success: true });
+    console.log('[DELETE] Schedule deleted successfully:', deletedSchedule.name);
+    return NextResponse.json({ success: true, deletedId: id });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete schedule' }, { status: 500 });
+    console.error('[DELETE] Error deleting schedule:', error);
+    if (error instanceof Error) {
+      console.error('[DELETE] Error name:', error.name);
+      console.error('[DELETE] Error message:', error.message);
+      console.error('[DELETE] Error stack:', error.stack);
+    }
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: `Failed to delete schedule: ${errorMessage}` }, { status: 500 });
   }
 }
 

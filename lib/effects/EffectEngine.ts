@@ -31,6 +31,34 @@ export class EffectEngine {
   // Effect instances
   private effects: Map<EffectType, any> = new Map();
 
+  private createEffect(type: EffectType): any {
+    switch (type) {
+      case 'solid': return new SolidEffect();
+      case 'comet': return new CometEffect();
+      case 'rainbow': return new RainbowEffect();
+      case 'fire': return new FireEffect();
+      case 'color-wipe': return new ColorWipeEffect();
+      case 'twinkle': return new TwinkleEffect();
+      case 'vu-bars': return new VUBarsEffect();
+      case 'breathing': return new BreathingEffect();
+      case 'chase': return new ChaseEffect();
+      case 'wave': return new WaveEffect();
+      case 'plasma': return new PlasmaEffect();
+      case 'matrix': return new MatrixEffect();
+      case 'confetti': return new ConfettiEffect();
+      case 'glitter': return new GlitterEffect();
+      case 'cylon': return new CylonEffect();
+      case 'color-twinkle': return new ColorTwinkleEffect();
+      case 'pacifica': return new PacificaEffect();
+      // @ts-ignore - optional effects that may be added
+      case 'skipping-rock': return new (require('./skippingRock').SkippingRockEffect)();
+      // @ts-ignore - optional effects that may be added
+      case 'shockwave-dual': return new (require('./shockwaveDual').ShockwaveDualEffect)();
+      default:
+        return undefined;
+    }
+  }
+
   constructor() {
     // Initialize effect instances
     this.effects.set('solid', new SolidEffect());
@@ -57,6 +85,13 @@ export class EffectEngine {
   updateTime(deltaTime: number): void {
     this.time += deltaTime;
     this.frameCount++;
+  }
+
+  resetEffect(type: EffectType): void {
+    const instance = this.createEffect(type);
+    if (instance) {
+      this.effects.set(type, instance);
+    }
   }
 
   generateFrame(effect: Effect, ledCount: number, width: number = 1, height: number = 1): Buffer {

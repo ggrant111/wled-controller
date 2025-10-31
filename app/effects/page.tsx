@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Play, Pause } from 'lucide-react';
 import EffectPanel from '../../components/EffectPanel';
@@ -9,7 +9,7 @@ import { useToast } from '../../components/ToastProvider';
 import { Effect, WLEDDevice, Group, VirtualDevice, EffectPreset } from '../../types';
 import { useSearchParams } from 'next/navigation';
 
-export default function EffectsPage() {
+function EffectsPageContent() {
   const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [effects, setEffects] = useState<Effect[]>([]);
@@ -177,6 +177,21 @@ export default function EffectsPage() {
         editingPreset={editingPreset}
       />
     </div>
+  );
+}
+
+export default function EffectsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="glass-card p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    }>
+      <EffectsPageContent />
+    </Suspense>
   );
 }
 

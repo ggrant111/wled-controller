@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Cpu, Users, Monitor, Zap, Wifi, WifiOff, Save, Calendar } from 'lucide-react';
-import type { Schedule, ScheduleRule, WLEDDevice, Group, VirtualDevice, EffectPreset } from '../types';
+import type { Schedule, ScheduleRule, WLEDDevice, Group, VirtualDevice, EffectPreset, ScheduleSequenceItem } from '../types';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -32,6 +32,7 @@ export default function Dashboard() {
     endAt: number | null;
     startTime: number;
     targets: any[];
+    sequence: ScheduleSequenceItem[];
   }>>([]);
   const [currentTime, setCurrentTime] = useState<number>(Date.now());
 

@@ -1290,6 +1290,8 @@ app.post('/api/stream/check-conflicts', async (req, res) => {
       sessionId: string;
       sessionTargets: StreamTarget[];
       conflictingDevices: Array<{ id: string; name: string }>;
+      canPartialStop: boolean;
+      conflictSourceType: 'device' | 'group' | 'virtual';
     }> = [];
     
     // Check each active session for conflicts

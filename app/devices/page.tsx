@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Plus, Cpu, Users, Monitor } from 'lucide-react';
@@ -16,7 +16,7 @@ import { WLEDDevice, Group, VirtualDevice } from '../../types';
 
 type TabType = 'devices' | 'groups' | 'virtuals';
 
-export default function DevicesPage() {
+function DevicesPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -482,6 +482,21 @@ export default function DevicesPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function DevicesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="glass-card p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    }>
+      <DevicesPageContent />
+    </Suspense>
   );
 }
 

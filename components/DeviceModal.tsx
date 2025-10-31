@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2, Save } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { WLEDDevice, LEDSegment } from '../types';
+import { useToast } from './ToastProvider';
 
 interface DeviceModalProps {
   device?: WLEDDevice | null;
@@ -13,6 +14,7 @@ interface DeviceModalProps {
 }
 
 export default function DeviceModal({ device, onSave, onClose }: DeviceModalProps) {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     ip: '',

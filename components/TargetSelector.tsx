@@ -21,6 +21,8 @@ export default function TargetSelector({
   onTargetsChange,
   className = ''
 }: TargetSelectorProps) {
+  const { showConfirm } = useModal();
+  
   const toggleDevice = (deviceId: string) => {
     if (selectedTargets.includes(deviceId)) {
       onTargetsChange(selectedTargets.filter(id => id !== deviceId));

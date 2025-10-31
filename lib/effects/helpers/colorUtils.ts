@@ -8,6 +8,20 @@ export interface RGBColor {
   b: number;
 }
 
+export type BlendMode =
+  | 'normal'
+  | 'add'
+  | 'multiply'
+  | 'screen'
+  | 'overlay'
+  | 'soft-light'
+  | 'hard-light'
+  | 'difference'
+  | 'exclusion'
+  | 'max'
+  | 'min'
+  | 'replace';
+
 /**
  * Parse a hex color string to RGB values
  */

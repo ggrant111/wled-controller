@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2, Monitor, Save } from 'lucide-react';
 import { VirtualDevice, WLEDDevice, VirtualLEDRange } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { useToast } from './ToastProvider';
 
 interface VirtualDeviceModalProps {
   devices: WLEDDevice[];

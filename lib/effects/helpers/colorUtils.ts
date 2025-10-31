@@ -11,12 +11,24 @@ export interface RGBColor {
 /**
  * Parse a hex color string to RGB values
  */
-export function parseColor(colorStr: string): RGBColor {
-  const hex = colorStr.replace('#', '');
+export function parseColor(colorStr: string | undefined | null): RGBColor {
+  // Handle undefined, null, or empty strings
+  if (!colorStr || typeof colorStr !== 'string' || colorStr.trim() === '') {
+    return { r: 0, g: 0, b: 0 };
+  }
+  const hex = colorStr.replace('#', '').trim();
+  // Validate hex string length
+  if (hex.length !== 6 && hex.length !== 3) {
+    return { r: 0, g: 0, b: 0 };
+  }
+  // Handle 3-digit hex (expand to 6)
+  const fullHex = hex.length === 3 
+    ? hex.split('').map(c => c + c).join('')
+    : hex;
   return {
-    r: parseInt(hex.substr(0, 2), 16),
-    g: parseInt(hex.substr(2, 2), 16),
-    b: parseInt(hex.substr(4, 2), 16)
+    r: parseInt(fullHex.substr(0, 2), 16) || 0,
+    g: parseInt(fullHex.substr(2, 2), 16) || 0,
+    b: parseInt(fullHex.substr(4, 2), 16) || 0
   };
 }
 

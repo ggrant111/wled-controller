@@ -203,6 +203,7 @@ export interface StreamingSession {
   isActive: boolean;
   startTime: Date;
   selectedTargets?: string[];
+  excludedDevices?: string[]; // Devices to exclude from group/virtual streams
   // Legacy support - if effect is provided, create a single layer
   effect?: Effect;
 }
@@ -224,6 +225,16 @@ export interface Palette {
   colors: string[];
   isCustom?: boolean;
   description?: string;
+}
+
+export interface LocationSettings {
+  latitude?: number;
+  longitude?: number;
+  timezone?: string; // IANA timezone ID (e.g., 'America/Los_Angeles')
+  city?: string;
+  country?: string;
+  countryCode?: string; // ISO country code (e.g., 'US', 'CA')
+  autoDetected?: boolean;
 }
 
 export interface EffectPreset {

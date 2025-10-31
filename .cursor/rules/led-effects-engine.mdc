@@ -1,54 +1,54 @@
 ---
-description: Specifications for LED animation and effect processing system including layering, blending, and frame generation
+description: Specification for LED effect generation, blending, and real-time frame processing system
 ---
 
 
 # led-effects-engine
 
-The LED effects engine implements a multi-layered animation system for controlling LED light displays:
+Importance Score: 90/100
 
-## Core Effect Processing (Importance Score: 95)
-- Layer-based effect composition with real-time blending
-- Frame generation pipeline supporting multiple output targets
-- Effect parameter interpolation and hot-reloading
-- Complex blend modes including multiply, screen, overlay
+## Effect Generation System
+- Real-time LED effect computation pipeline
+- Multi-layer blending system supporting 12 blend modes
+- Effect parameter interpolation and inheritance
+- Frame generation with concurrent effect support
 
-## Effect Types (Importance Score: 85)
-1. Static Effects
-- Solid color fills
-- Rainbow gradients
-- Color wave patterns
+## Core Effect Types
+1. Dynamic Effects
+- Rainbow: Continuous color cycling with speed control
+- Comet: Moving light trail with configurable tail decay
+- Fire: Dynamic flame simulation with intensity parameters
+- Matrix: Falling character animation with custom symbols
 
-2. Dynamic Effects
-- Fire simulation
-- Matrix rain effect
-- Wave propagation
-- Shockwave generation
+2. Static Effects  
+- Color Wipe: Progressive color filling
+- Breathing: Smooth brightness pulsing
+- Wave: Sinusoidal color movement
+- Twinkle: Random LED sparkle patterns
 
-3. Interactive Effects
-- Audio reactive visualizations
-- Motion triggered patterns
-- Touch responsive animations
+## Layer Processing
+- Hierarchical layer management
+- Opacity-based blending between effects
+- Parameter override system
+- Real-time layer reordering
 
-## Parameter System (Importance Score: 80)
-- Dynamic parameter adjustment
-- Real-time value interpolation
-- Effect-specific constraints
-- Preset management
+## Effect Parameters
+- Color palette management
+- Speed and intensity controls
+- Direction and movement patterns
+- Segment targeting and mapping
 
-## Layer Management (Importance Score: 75)
-- Multiple effect layer support
-- Layer opacity control
-- Layer blend mode selection
-- Layer ordering and priority
+## Frame Generation
+- Synchronized frame timing
+- WebSocket-based streaming
+- Frame rate management (30-120 FPS)
+- Multi-target frame distribution
 
-## Color Processing (Importance Score: 70)
-- FastLED-inspired palette system
-- Color interpolation algorithms
-- Dynamic palette transitions
-- Custom palette creation
-
-The engine generates frame data that gets transmitted via DDP protocol to physical LED devices, with support for virtual device mapping and segment control.
+## Effect Presets
+- Parameter grouping and storage
+- Hot-reload support during active streams
+- Preset inheritance system
+- Real-time parameter updates
 
 $END$
 

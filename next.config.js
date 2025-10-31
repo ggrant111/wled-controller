@@ -30,6 +30,14 @@ const nextConfig = {
         source: "/api/schedules/active",
         destination: "http://localhost:3001/api/schedules/active",
       },
+      {
+        source: "/api/settings/:path*",
+        destination: "http://localhost:3001/api/settings/:path*",
+      },
+      {
+        source: "/api/brightness",
+        destination: "http://localhost:3001/api/brightness",
+      },
       // Schedules (except /active), presets, and palettes are handled by Next.js API routes
     ];
   },

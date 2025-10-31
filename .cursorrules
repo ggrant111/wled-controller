@@ -382,60 +382,47 @@ When adding a new effect, you must modify these files:
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-LED Control System with layered effect processing and virtual device management capabilities.
+## Core Business Systems Architecture
 
-Core Business Components:
+### LED Effect System (Importance: 85/100)
+- Real-time LED visualization and effect rendering engine
+- Custom effect algorithms implementation suite:
+  - Rainbow, Color Wipe, Comet, Chase
+  - Breathing, Wave, Twinkle, Fire
+  - Matrix, Confetti
+- Multi-layer effect blending system
+- Real-time frame generation with WebSocket streaming
 
-1. LED Effect System (Importance Score: 90)
-- Multi-layer effect processing engine
-- Real-time parameter updates and streaming
-- Effect blending modes and compositing
-- Preset management system
+### Layer Management (Importance: 80/100)
+- Effect compositing system with inheritance
+- Layer blending modes and opacity control
+- Parameter override mechanics
+- Real-time parameter update streaming
 
-2. Virtual Device Management (Importance Score: 85)
-- LED range mapping and segment composition
-- Overlap detection and validation
-- Physical device distribution
-- Group synchronization
+### Virtual Device Control (Importance: 75/100)
+- LED device virtualization with range mapping
+- Segment allocation and validation
+- Conflict detection for overlapping LED ranges
+- Dynamic LED mapping reconfiguration
 
-3. Effect Preview Engine (Importance Score: 80)
-- Real-time effect simulation
-- Multiple effect algorithms (rainbow, wave, fire, matrix)
-- Color interpolation system
-- Multi-layer visualization
+### Streaming Control (Importance: 70/100)
+- Multi-target effect streaming management
+- Hot-reloading of parameters during active streams
+- Preset system with parameter application
+- Stream conflict resolution
 
-4. DDP Protocol Handler (Importance Score: 80)
-- Custom DDP packet construction
-- LED data chunking
-- Device segment management
-- Real-time streaming optimization
+### Device Groups (Importance: 65/100)
+- Hierarchical device organization
+- Segment-level grouping logic
+- Partial device inclusion handling
+- Circular reference prevention
 
-5. Schedule Management (Importance Score: 75)
-- Sunrise/sunset-based scheduling
-- Holiday detection system
-- Multi-target effect coordination
-- Complex sequence management
+## Integration Points
 
-Key Domain Workflows:
-- Effect layer composition and blending
-- Virtual device mapping to physical LEDs
-- Multi-device synchronization
-- Color palette management
-- Real-time effect streaming
-
-Business Domain Model:
-- LED devices with configurable segments
-- Effect layers with blend modes
-- Virtual device abstractions
-- Group-based control hierarchies
-- Complex parameter systems
-
-Integration Points:
-- DDP protocol implementation
-- Real-time WebSocket streaming
-- Astronomical event calculations
-- Holiday detection service
-- Frame delivery monitoring
+- Effect system coordinates with layer management for real-time rendering
+- Virtual device mappings feed into streaming control system
+- Device groups integrate with streaming targets for coordinated updates
+- Parameter system bridges effects and layer management
 
 $END$
 

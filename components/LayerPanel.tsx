@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Effect, EffectLayer, BLEND_MODES, EffectParameter } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { useModal } from './ModalProvider';
 import PaletteSelector from './PaletteSelector';
 
 interface LayerPanelProps {
@@ -41,6 +42,7 @@ export default function LayerPanel({
   isStreaming = false,
   streamingSessionId = null
 }: LayerPanelProps) {
+  const { showConfirm } = useModal();
   const [expandedLayer, setExpandedLayer] = useState<string | null>(layers.length > 0 ? layers[0].id : null);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(layers.length > 0 ? layers[0].id : null);
 
@@ -154,20 +156,20 @@ export default function LayerPanel({
     switch (param.type) {
       case 'color':
         return (
-          <div key={param.name} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-300">{param.name}</label>
-            <div className="flex items-center gap-3">
+          <div key={param.name} className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-200">{param.name}</label>
+            <div className="flex items-center gap-2">
               <input
                 type="color"
                 value={paramValue}
                 onChange={(e) => handleLayerParameterChange(layer.id, param.name, e.target.value)}
-                className="w-12 h-8 rounded border border-gray-600 bg-gray-700"
+                className="w-10 h-8 rounded border border-white/20 bg-transparent cursor-pointer"
               />
               <input
                 type="text"
                 value={paramValue}
                 onChange={(e) => handleLayerParameterChange(layer.id, param.name, e.target.value)}
-                className="bg-gray-700 text-gray-200 px-3 py-1.5 rounded border border-gray-600 focus:border-blue-500 focus:outline-none flex-1 font-mono text-sm"
+                className="input-field flex-1 font-mono text-sm"
               />
             </div>
           </div>
@@ -175,10 +177,13 @@ export default function LayerPanel({
 
       case 'range':
         return (
-          <div key={param.name} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-300">
-              {param.name}: {paramValue}
-            </label>
+          <div key={param.name} className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-200">{param.name}</label>
+              <span className="text-sm text-primary-400 font-mono min-w-[60px] text-right">
+                {paramValue}
+              </span>
+            </div>
             <input
               type="range"
               min={param.min || 0}
@@ -186,15 +191,15 @@ export default function LayerPanel({
               step={param.step || 1}
               value={paramValue}
               onChange={(e) => handleLayerParameterChange(layer.id, param.name, parseFloat(e.target.value))}
-              className="w-full"
+              className="slider w-full"
             />
           </div>
         );
 
       case 'number':
         return (
-          <div key={param.name} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-300">{param.name}</label>
+          <div key={param.name} className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-200">{param.name}</label>
             <input
               type="number"
               min={param.min}
@@ -202,19 +207,19 @@ export default function LayerPanel({
               step={param.step}
               value={paramValue}
               onChange={(e) => handleLayerParameterChange(layer.id, param.name, parseFloat(e.target.value))}
-              className="bg-gray-700 text-gray-200 px-3 py-1.5 rounded border border-gray-600 focus:border-blue-500 focus:outline-none w-full"
+              className="input-field w-full"
             />
           </div>
         );
 
       case 'boolean':
         return (
-          <div key={param.name} className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-300">{param.name}</label>
+          <div key={param.name} className="flex items-center justify-between py-1">
+            <label className="text-sm font-medium text-gray-200">{param.name}</label>
             <button
               onClick={() => handleLayerParameterChange(layer.id, param.name, !paramValue)}
               className={`w-12 h-6 rounded-full transition-colors ${
-                paramValue ? 'bg-blue-600' : 'bg-gray-600'
+                paramValue ? 'bg-primary-500' : 'bg-white/20'
               }`}
             >
               <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
@@ -226,8 +231,8 @@ export default function LayerPanel({
 
       case 'options':
         return (
-          <div key={param.name} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-300">{param.name}</label>
+          <div key={param.name} className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-200">{param.name}</label>
             <div className="flex gap-2 flex-wrap">
               {param.options?.map((option) => (
                 <button
@@ -235,8 +240,8 @@ export default function LayerPanel({
                   onClick={() => handleLayerParameterChange(layer.id, param.name, option)}
                   className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
                     paramValue === option || (!layerParams.has(param.name) && param.value === option)
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-white/10 hover:bg-white/20 text-white/70'
                   }`}
                 >
                   {option}
@@ -250,20 +255,20 @@ export default function LayerPanel({
         if (param.isColorArray) {
           const colorArray = Array.isArray(paramValue) ? paramValue : param.value || [];
           return (
-            <div key={param.name} className="space-y-3">
+            <div key={param.name} className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-300">{param.name}</label>
+                <label className="block text-sm font-medium text-gray-200">{param.name}</label>
                 <button
                   onClick={() => {
                     const newArray = [...colorArray, '#ff0000'];
                     handleLayerParameterChange(layer.id, param.name, newArray);
                   }}
-                  className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
+                  className="btn-secondary text-xs px-2 py-1"
                 >
                   Add Color
                 </button>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {colorArray.map((color: string, index: number) => (
                   <div key={index} className="flex items-center gap-2">
                     <input
@@ -274,7 +279,7 @@ export default function LayerPanel({
                         newArray[index] = e.target.value;
                         handleLayerParameterChange(layer.id, param.name, newArray);
                       }}
-                      className="w-12 h-8 rounded border border-gray-600 bg-gray-700"
+                      className="w-10 h-8 rounded border border-white/20 bg-transparent cursor-pointer"
                     />
                     <input
                       type="text"
@@ -284,15 +289,16 @@ export default function LayerPanel({
                         newArray[index] = e.target.value;
                         handleLayerParameterChange(layer.id, param.name, newArray);
                       }}
-                      className="bg-gray-700 text-gray-200 px-3 py-1.5 rounded border border-gray-600 focus:border-blue-500 focus:outline-none flex-1 font-mono text-sm"
+                      className="input-field flex-1 font-mono text-sm"
                     />
                     <button
                       onClick={() => {
                         const newArray = colorArray.filter((_: any, i: number) => i !== index);
                         handleLayerParameterChange(layer.id, param.name, newArray);
                       }}
-                      className="p-1.5 hover:bg-red-900/30 text-red-400 rounded transition-colors"
+                      className="p-1.5 hover:bg-red-500/20 text-red-400 rounded transition-colors"
                       disabled={colorArray.length <= 1}
+                      title="Remove color"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -306,8 +312,8 @@ export default function LayerPanel({
 
       case 'palette':
         return (
-          <div key={param.name} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-300">{param.name}</label>
+          <div key={param.name} className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-200">{param.name}</label>
             <PaletteSelector
               value={paramValue || param.value || 'rainbow'}
               onChange={(paletteId) => handleLayerParameterChange(layer.id, param.name, paletteId)}
@@ -322,7 +328,7 @@ export default function LayerPanel({
 
   if (layers.length === 0) {
     return (
-      <div className="bg-gray-800 rounded-lg p-8 text-center border border-gray-700">
+      <div className="glass-card p-8 text-center">
         <Layers className="w-12 h-12 text-gray-500 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-gray-300 mb-2">No Layers</h3>
         <p className="text-gray-400 mb-4">Add layers to create complex blended effects</p>
@@ -333,7 +339,7 @@ export default function LayerPanel({
             addLayer();
           }}
           type="button"
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4 inline mr-2" />
           Add First Layer
@@ -343,11 +349,11 @@ export default function LayerPanel({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between mb-4">
+    <div className="space-y-2">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Layers className="w-5 h-5 text-gray-400" />
-          <h3 className="text-lg font-semibold text-gray-200">Effect Layers</h3>
+          <Layers className="w-5 h-5 text-primary-500" />
+          <h3 className="text-lg font-bold text-gray-200">Effect Layers</h3>
           <span className="text-sm text-gray-400">({layers.length})</span>
         </div>
         <button
@@ -357,14 +363,14 @@ export default function LayerPanel({
             addLayer();
           }}
           type="button"
-          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+          className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add Layer
         </button>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {layers.map((layer, index) => {
           const effect = getEffectForLayer(layer);
           const isExpanded = expandedLayer === layer.id;
@@ -373,15 +379,15 @@ export default function LayerPanel({
             <motion.div
               key={layer.id}
               initial={false}
-              className={`bg-gray-800 rounded-lg border ${
+              className={`glass-card border ${
                 selectedLayerId === layer.id 
-                  ? 'border-blue-500 ring-2 ring-blue-500/20' 
-                  : 'border-gray-700'
+                  ? 'border-primary-500 ring-2 ring-primary-500/20' 
+                  : 'border-white/10'
               } transition-all`}
             >
               {/* Layer Header */}
               <div 
-                className="p-4 cursor-pointer"
+                className="p-3 cursor-pointer"
                 onClick={() => {
                   setSelectedLayerId(layer.id);
                   toggleLayerExpanded(layer.id);
@@ -391,7 +397,7 @@ export default function LayerPanel({
                   <div className="flex items-center gap-3 flex-1">
                     <GripVertical className="w-5 h-5 text-gray-500" />
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400 bg-gray-700 px-2 py-0.5 rounded">
+                      <span className="text-xs text-gray-400 bg-white/10 px-2 py-0.5 rounded">
                         Layer {index + 1}
                       </span>
                       <input
@@ -399,11 +405,11 @@ export default function LayerPanel({
                         value={layer.name || `${effect?.name || 'Effect'} Layer`}
                         onChange={(e) => updateLayer(layer.id, { name: e.target.value })}
                         onClick={(e) => e.stopPropagation()}
-                        className="bg-gray-700 text-gray-200 px-2 py-1 rounded text-sm flex-1 max-w-xs border border-gray-600 focus:border-blue-500 focus:outline-none"
+                        className="input-field px-2 py-1 text-sm flex-1 max-w-xs"
                         placeholder="Layer name..."
                       />
                     </div>
-                    <span className="text-sm text-gray-400">
+                    <span className="text-sm text-gray-300 font-medium">
                       {effect?.name || 'Unknown Effect'}
                     </span>
                   </div>
@@ -415,7 +421,7 @@ export default function LayerPanel({
                         e.stopPropagation();
                         updateLayer(layer.id, { enabled: !layer.enabled });
                       }}
-                      className={`p-1.5 rounded hover:bg-gray-700 transition-colors ${
+                      className={`p-1.5 rounded hover:bg-white/10 transition-colors ${
                         layer.enabled ? 'text-green-400' : 'text-gray-500'
                       }`}
                       title={layer.enabled ? 'Disable layer' : 'Enable layer'}
@@ -433,7 +439,7 @@ export default function LayerPanel({
                         moveLayer(layer.id, 'up');
                       }}
                       disabled={index === 0}
-                      className="p-1.5 rounded hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-400"
+                      className="p-1.5 rounded hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-400"
                       title="Move up"
                     >
                       <ChevronUp className="w-4 h-4" />
@@ -454,11 +460,18 @@ export default function LayerPanel({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm('Remove this layer?')) {
-                          removeLayer(layer.id);
-                        }
+                        showConfirm({
+                          message: 'Remove this layer?',
+                          title: 'Remove Layer',
+                          variant: 'warning',
+                          confirmText: 'Remove',
+                          cancelText: 'Cancel',
+                          onConfirm: () => {
+                            removeLayer(layer.id);
+                          }
+                        });
                       }}
-                      className="p-1.5 rounded hover:bg-red-900/30 text-red-400 transition-colors"
+                      className="p-1.5 rounded hover:bg-red-500/20 text-red-400 transition-colors"
                       title="Remove layer"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -469,7 +482,7 @@ export default function LayerPanel({
                         e.stopPropagation();
                         toggleLayerExpanded(layer.id);
                       }}
-                      className="p-1.5 rounded hover:bg-gray-700 transition-colors text-gray-400"
+                      className="p-1.5 rounded hover:bg-white/10 transition-colors text-gray-400"
                     >
                       {isExpanded ? (
                         <ChevronUp className="w-4 h-4" />
@@ -492,10 +505,10 @@ export default function LayerPanel({
                     className="overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="px-4 pb-4 pt-0 space-y-4 border-t border-gray-700 mt-2 pt-4">
+                    <div className="px-3 pb-3 pt-0 space-y-2.5 border-t border-white/10 mt-2 pt-3">
                       {/* Blend Mode Selector */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                        <label className="block text-sm font-medium text-gray-200 mb-1.5 flex items-center gap-2">
                           Blend Mode
                           <div className="group relative">
                             <Info className="w-4 h-4 text-gray-400 cursor-help" />
@@ -507,7 +520,7 @@ export default function LayerPanel({
                         <select
                           value={layer.blendMode}
                           onChange={(e) => updateLayer(layer.id, { blendMode: e.target.value as any })}
-                          className="w-full bg-gray-700 text-gray-200 px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                          className="input-field w-full"
                         >
                           {BLEND_MODES.map(mode => (
                             <option key={mode.value} value={mode.value}>
@@ -524,22 +537,25 @@ export default function LayerPanel({
 
                       {/* Opacity Slider */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Opacity: {Math.round(layer.opacity * 100)}%
-                        </label>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-sm font-medium text-gray-200">Opacity</label>
+                          <span className="text-sm text-primary-400 font-mono min-w-[50px] text-right">
+                            {Math.round(layer.opacity * 100)}%
+                          </span>
+                        </div>
                         <input
                           type="range"
                           min="0"
                           max="100"
                           value={layer.opacity * 100}
                           onChange={(e) => updateLayer(layer.id, { opacity: parseFloat(e.target.value) / 100 })}
-                          className="w-full"
+                          className="slider w-full"
                         />
                       </div>
 
                       {/* Effect Selector */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-200 mb-1.5">
                           Effect
                         </label>
                         <select
@@ -554,7 +570,7 @@ export default function LayerPanel({
                               onLayerEffectSelect?.(layer.id, newEffect);
                             }
                           }}
-                          className="w-full bg-gray-700 text-gray-200 px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                          className="input-field w-full"
                         >
                           {availableEffects.map(effect => (
                             <option key={effect.id} value={effect.type}>
@@ -566,9 +582,9 @@ export default function LayerPanel({
 
                       {/* Effect Parameters */}
                       {effect && effect.parameters && effect.parameters.length > 0 && (
-                        <div className="border-t border-gray-700 pt-4 mt-4">
-                          <h4 className="text-sm font-semibold text-gray-300 mb-3">Effect Parameters</h4>
-                          <div className="space-y-4">
+                        <div className="border-t border-white/10 pt-3 mt-3">
+                          <h4 className="text-sm font-semibold text-gray-200 mb-2">Effect Parameters</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {effect.parameters.map(param => renderParameterControl(layer, param))}
                           </div>
                         </div>
@@ -583,7 +599,7 @@ export default function LayerPanel({
       </div>
 
       {/* Help Text */}
-      <div className="bg-gray-800/50 rounded-lg p-4 text-sm text-gray-400 border border-gray-700 mt-4">
+      <div className="glass-card p-4 text-sm text-gray-400 mt-4">
         <div className="flex items-start gap-2">
           <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <div>

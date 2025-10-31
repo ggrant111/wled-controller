@@ -1,42 +1,50 @@
 ---
-description: Specifies the Distributed Display Protocol implementation for real-time LED control and data streaming
+description: DDP protocol implementation for real-time LED control and streaming
 ---
 
 
 # ddp-protocol
 
-DDP Protocol Core Components (Importance Score: 90)
-- Custom packet structure for LED control data transmission
-- Real-time frame streaming optimizations
-- Segment-based addressing for LED ranges
-- Device synchronization packet handling
+Importance Score: 85/100
 
-Protocol Data Structure
-1. Packet Header Format
-- Push data command identifier
-- LED segment identifiers
-- Frame sequencing information
-- Device target addressing
+## Core Protocol Implementation
 
-2. LED Data Chunking System (Importance Score: 85) 
-- Frame data segmentation
-- Color channel mapping
-- LED range validation
-- Buffer size optimization
+DDP (Distributed Display Protocol) for LED control implements:
+- Custom packet framing for real-time LED data streaming
+- Segment-based addressing with brightness control
+- Multi-target streaming coordination
+- Frame synchronization across device groups
 
-Device Synchronization (Importance Score: 80)
-- Multi-device packet coordination
-- Frame timing synchronization
-- Segment overlap handling
-- Virtual device mapping support
+## Packet Structure
+1. Header Section
+- Protocol version identifier
+- Segment addressing information
+- Device target ID
+- Brightness scaling factor
 
-Real-time Streaming Features
-- Frame buffering control
-- Data integrity verification
-- Connection state management
-- Packet retransmission logic
+2. Payload Section
+- LED color data in RGB format
+- Segment mapping information
+- Frame sequence numbers
+- Control flags for device synchronization
 
-The DDP protocol implementation focuses on efficient LED control data transmission with support for virtual device mapping and synchronized multi-device control.
+## Streaming Optimizations
+- Packet chunking for large LED arrays
+- Segment-based updates for partial frame transmission
+- Frame rate control (30-120 FPS)
+- Real-time parameter updates during active streams
+
+## Device Integration
+- Virtual device mapping to physical segments
+- Synchronized control across multiple targets
+- Dynamic reconfiguration support
+- Stream status monitoring
+
+The protocol focuses on efficient real-time LED control with support for:
+- Multi-device coordination
+- Segment-level addressing
+- Dynamic brightness control
+- Frame synchronization
 
 $END$
 

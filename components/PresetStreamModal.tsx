@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { X, Play, Pause, Zap, Layers } from 'lucide-react';
 import { EffectPreset, WLEDDevice, Group, VirtualDevice } from '../types';
 import TargetSelector from './TargetSelector';
+import StreamConflictModal from './StreamConflictModal';
 import { useStreaming } from '../contexts/StreamingContext';
 import { useToast } from './ToastProvider';
 
@@ -31,6 +32,9 @@ export default function PresetStreamModal({
   const { showToast } = useToast();
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [isStarting, setIsStarting] = useState(false);
+  const [conflictModalOpen, setConflictModalOpen] = useState(false);
+  const [pendingStreamConfig, setPendingStreamConfig] = useState<{ requestBody: any; targets: any[] } | null>(null);
+  const [conflictData, setConflictData] = useState<any>(null);
 
   // Reset selected targets when modal opens
   useEffect(() => {
@@ -41,37 +45,12 @@ export default function PresetStreamModal({
 
   const handleStartStreaming = async () => {
     if (selectedTargets.length === 0) {
-      alert('Please select at least one device, group, or virtual to stream to.');
+      showToast('Please select at least one device, group, or virtual to stream to.', 'error');
       return;
     }
 
     setIsStarting(true);
     try {
-      // Check for existing active streaming session
-      let existingSessionId: string | null = null;
-      try {
-        const stateRes = await fetch('/api/stream/state');
-        if (stateRes.ok) {
-          const state = await stateRes.json();
-          if (state?.hasActiveSession && state?.session?.id) {
-            // If any selected target is already in the active session, update that session
-            const activeTargets: Array<{ type: string; id: string }> = state.session.targets || [];
-            const selectedTargetObjs = selectedTargets.map(targetId => {
-              if (targetId.startsWith('group-')) return { type: 'group', id: targetId.replace('group-', '') };
-              if (targetId.startsWith('virtual-')) return { type: 'virtual', id: targetId.replace('virtual-', '') };
-              return { type: 'device', id: targetId };
-            });
-            const overlaps = selectedTargetObjs.some(sel => activeTargets.some((t: any) => t.type === sel.type && t.id === sel.id));
-            if (overlaps) {
-              existingSessionId = state.session.id as string;
-            }
-          }
-        }
-      } catch (e) {
-        // Non-blocking; proceed to start a new session if this fails
-        console.warn('Could not read stream state:', e);
-      }
-
       // Create targets array from selected targets
       const targets = selectedTargets.map(targetId => {
         if (targetId.startsWith('group-')) {
@@ -91,7 +70,32 @@ export default function PresetStreamModal({
           };
         }
       });
-
+      
+      // Check for conflicts before starting stream
+      let hasConflicts = false;
+      let conflictCheck: any = null;
+      
+      try {
+        const conflictResponse = await fetch('/api/stream/check-conflicts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targets })
+        });
+        
+        if (conflictResponse.ok) {
+          conflictCheck = await conflictResponse.json();
+          console.log('Preset conflict check result:', conflictCheck);
+          hasConflicts = conflictCheck.hasConflicts && conflictCheck.conflicts && conflictCheck.conflicts.length > 0;
+        } else {
+          console.warn('Conflict check failed:', conflictResponse.status, conflictResponse.statusText);
+        }
+      } catch (error) {
+        console.error('Error checking conflicts:', error);
+        // Continue without conflict check if it fails
+      }
+      
+      let existingSessionId: string | null = null;
+      
       // Prepare request body based on preset type
       let requestBody: any;
       if (preset.useLayers && preset.layers) {
@@ -135,9 +139,39 @@ export default function PresetStreamModal({
           sessionId: existingSessionId || undefined
         };
       } else {
-        alert('Invalid preset: no effect or layers found');
+        showToast('Invalid preset: no effect or layers found', 'error');
         setIsStarting(false);
         return;
+      }
+      
+      // Check for conflicts
+      if (hasConflicts) {
+        // Show conflict modal
+        console.log('Showing preset conflict modal with conflicts:', conflictCheck.conflicts);
+        setConflictData(conflictCheck);
+        setPendingStreamConfig({ requestBody, targets });
+        setConflictModalOpen(true);
+        setIsStarting(false);
+        return;
+      } else {
+        // Check if there's an existing session with same targets (for updating)
+        try {
+          const stateRes = await fetch('/api/stream/state');
+          if (stateRes.ok) {
+            const state = await stateRes.json();
+            if (state?.hasActiveSession && state?.session?.id) {
+              const activeTargets: Array<{ type: string; id: string }> = state.session.targets || [];
+              const selectedTargetObjs = targets;
+              const overlaps = selectedTargetObjs.some(sel => activeTargets.some((t: any) => t.type === sel.type && t.id === sel.id));
+              if (overlaps) {
+                existingSessionId = state.session.id as string;
+                requestBody.sessionId = existingSessionId;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Could not read stream state:', e);
+        }
       }
 
       const response = await fetch('/api/stream/start', {
@@ -174,6 +208,142 @@ export default function PresetStreamModal({
   if (!isOpen) return null;
 
   return (
+    <>
+      {/* Stream Conflict Modal */}
+      <StreamConflictModal
+        isOpen={conflictModalOpen}
+        conflicts={conflictData?.conflicts || []}
+        devices={devices.map(d => ({ id: d.id, name: d.name }))}
+        groups={groups.map(g => ({ id: g.id, name: g.name }))}
+        virtuals={virtuals.map(v => ({ id: v.id, name: v.name }))}
+        targetDeviceId={
+          (() => {
+            if (!pendingStreamConfig?.targets || pendingStreamConfig.targets.length !== 1) {
+              console.log('[PresetStreamModal] Not single target:', pendingStreamConfig?.targets);
+              return undefined;
+            }
+            const target = pendingStreamConfig.targets[0];
+            if (target.type === 'device') {
+              console.log('[PresetStreamModal] Single device target:', target.id);
+              return target.id;
+            }
+            console.log('[PresetStreamModal] Single target but not device:', target);
+            return undefined;
+          })()
+        }
+        onPartialStop={async (deviceId) => {
+          if (!pendingStreamConfig || !conflictData?.conflicts?.[0]) {
+            setConflictModalOpen(false);
+            return;
+          }
+          
+          setIsStarting(true);
+          try {
+            // Exclude this device from the conflicting group/virtual stream
+            const conflict = conflictData.conflicts[0];
+            await fetch('/api/stream/exclude-device', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                sessionId: conflict.sessionId,
+                deviceId: deviceId
+              })
+            });
+            
+            // Start the new stream
+            const response = await fetch('/api/stream/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(pendingStreamConfig.requestBody)
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || 'Failed to start streaming');
+            }
+
+            const session = await response.json();
+            console.log('Preset streaming started:', session);
+
+            setIsStreaming(true);
+            setStreamingSessionId(session.id);
+            showToast('Streaming started', 'success');
+            
+            if (onStreamStarted) {
+              onStreamStarted();
+            }
+            
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+            onClose();
+          } catch (error: any) {
+            console.error('Error starting preset streaming after partial stop:', error);
+            showToast(error.message || 'Failed to start streaming', 'error');
+          } finally {
+            setIsStarting(false);
+          }
+        }}
+        onConfirm={async () => {
+          if (!pendingStreamConfig) {
+            setConflictModalOpen(false);
+            return;
+          }
+          
+          setIsStarting(true);
+          try {
+            // Stop conflicting sessions
+            if (conflictData?.conflicts) {
+              for (const conflict of conflictData.conflicts) {
+                try {
+                  await fetch(`/api/stream/stop/${conflict.sessionId}`, { method: 'POST' });
+                } catch (e) {
+                  console.error('Error stopping conflicting session:', e);
+                }
+              }
+            }
+            
+            // Start the new stream
+            const response = await fetch('/api/stream/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(pendingStreamConfig.requestBody)
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || 'Failed to start streaming');
+            }
+
+            const session = await response.json();
+            console.log('Preset streaming started:', session);
+
+            setIsStreaming(true);
+            setStreamingSessionId(session.id);
+            showToast('Streaming started', 'success');
+            
+            if (onStreamStarted) {
+              onStreamStarted();
+            }
+            
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+            onClose();
+          } catch (error: any) {
+            console.error('Error starting preset streaming:', error);
+            showToast(error.message || 'Failed to start streaming', 'error');
+          } finally {
+            setIsStarting(false);
+          }
+        }}
+        onCancel={() => {
+          setConflictModalOpen(false);
+          setPendingStreamConfig(null);
+          setConflictData(null);
+        }}
+      />
+    
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -274,6 +444,7 @@ export default function PresetStreamModal({
         </div>
       </motion.div>
     </div>
+    </>
   );
 }
 

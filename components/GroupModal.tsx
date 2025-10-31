@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { WLEDDevice, Group, GroupMember } from '../types';
+import { useToast } from './ToastProvider';
 
 interface GroupModalProps {
   devices: WLEDDevice[];
@@ -14,6 +15,7 @@ interface GroupModalProps {
 }
 
 export default function GroupModal({ devices, virtuals, group, onSave, onClose }: GroupModalProps) {
+  const { showToast } = useToast();
   const [name, setName] = useState(group?.name || '');
   const [members, setMembers] = useState<GroupMember[]>(group?.members || []);
   const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export default function GroupModal({ devices, virtuals, group, onSave, onClose }
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert('Please enter a group name');
+      showToast('Please enter a group name', 'error');
       return;
     }
 

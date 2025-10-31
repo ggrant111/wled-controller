@@ -1,11 +1,16 @@
 "use client";
 import { useEffect, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Edit, Trash2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import type { Schedule, ScheduleRule, StreamTarget, EffectPreset } from '../../types';
+import type { Schedule, ScheduleRule, StreamTarget, EffectPreset, LocationSettings } from '../../types';
 import { useToast } from '../../components/ToastProvider';
+import { useModal } from '../../components/ModalProvider';
+import Toggle from '../../components/Toggle';
 
 export default function SchedulePage() {
   const { showToast } = useToast();
+  const { showConfirm } = useModal();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -14,16 +19,18 @@ export default function SchedulePage() {
   const [devices, setDevices] = useState<Array<{ id: string; name: string }>>([]);
   const [groups, setGroups] = useState<Array<{ id: string; name: string }>>([]);
   const [virtuals, setVirtuals] = useState<Array<{ id: string; name: string }>>([]);
+  const [locationSettings, setLocationSettings] = useState<LocationSettings>({});
 
   useEffect(() => {
     (async () => {
       try {
-        const [sRes, pRes, dRes, gRes, vRes] = await Promise.all([
+        const [sRes, pRes, dRes, gRes, vRes, locRes] = await Promise.all([
           fetch('/api/schedules'),
           fetch('/api/presets'),
           fetch('/api/devices'),
           fetch('/api/groups'),
-          fetch('/api/virtuals')
+          fetch('/api/virtuals'),
+          fetch('/api/settings/location')
         ]);
         if (sRes.ok) setSchedules(await sRes.json());
         if (pRes.ok) setPresets(await pRes.json());
@@ -38,6 +45,10 @@ export default function SchedulePage() {
         if (vRes.ok) {
           const v = await vRes.json();
           setVirtuals(v.map((x: any) => ({ id: x.id, name: x.name })));
+        }
+        if (locRes.ok) {
+          const loc = await locRes.json();
+          setLocationSettings(loc || {});
         }
       } finally {
         setLoading(false);
@@ -99,7 +110,13 @@ export default function SchedulePage() {
   };
 
   const removeSchedule = async (id: string) => {
-    if (!confirm('Delete schedule?')) return;
+    showConfirm({
+      message: 'Delete schedule?',
+      title: 'Delete Schedule',
+      variant: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
     try {
       console.log('Attempting to delete schedule with ID:', id);
       const res = await fetch(`/api/schedules/${id}`, { method: 'DELETE' });
@@ -130,19 +147,21 @@ export default function SchedulePage() {
           errorMessage = text || `Server returned ${res.status} ${res.statusText}`;
         }
         
-        alert(`Failed to delete schedule: ${errorMessage}`);
+        showToast(`Failed to delete schedule: ${errorMessage}`, 'error');
       }
     } catch (error) {
       console.error('Error deleting schedule:', error);
-      alert(`Error deleting schedule: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showToast(`Error deleting schedule: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
     }
+      }
+    });
   };
 
   if (loading) return <div className="p-6">Loading…</div>;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6 max-w-full overflow-x-hidden">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-2xl font-semibold">Schedules</h2>
         <button onClick={handleCreate} className="btn-primary">New Schedule</button>
       </div>
@@ -154,6 +173,7 @@ export default function SchedulePage() {
           saving={saving}
           onCancel={() => setEditing(null)}
           onSave={saveSchedule}
+          locationSettings={locationSettings}
         />
       ) : (
         <ScheduleList
@@ -245,65 +265,86 @@ function ScheduleList({
   return (
     <div className="space-y-4">
       {items.map(s => (
-        <div key={s.id} className="rounded border border-gray-700 p-4 bg-gray-800/50">
+        <div key={s.id} className="glass-card glass-card-hover p-4">
           <div className="flex items-start justify-between mb-3">
-            <div>
-              <div className="font-medium text-lg">{s.name}</div>
-              <div className="text-sm text-gray-400 mt-1">
-                {s.enabled ? (
-                  <span className="text-green-400">● Enabled</span>
-                ) : (
-                  <span className="text-gray-500">○ Disabled</span>
-                )}
-                {' · '}
-                {s.rules.length} rule{s.rules.length !== 1 ? 's' : ''}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-bold truncate">{s.name}</h3>
+                <span className={`px-2 py-0.5 rounded-full text-xs flex-shrink-0 ${
+                  s.enabled 
+                    ? 'bg-green-500/20 text-green-400' 
+                    : 'bg-gray-500/20 text-gray-400'
+                }`}>
+                  {s.enabled ? 'Enabled' : 'Disabled'}
+                </span>
               </div>
+              <p className="text-sm text-white/70">{s.rules.length} rule{s.rules.length !== 1 ? 's' : ''}</p>
             </div>
-            <div className="flex gap-2">
-              <button onClick={()=>onEdit(s)} className="btn-secondary">Edit</button>
-              <button onClick={()=>onDelete(s.id)} className="btn-danger">Delete</button>
+            <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+              <button 
+                onClick={()=>onEdit(s)} 
+                className="p-1.5 hover:bg-white/20 rounded transition-colors"
+                title="Edit schedule"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+              <button 
+                onClick={()=>onDelete(s.id)} 
+                className="p-1.5 hover:bg-red-500/20 rounded transition-colors"
+                title="Delete schedule"
+              >
+                <Trash2 className="h-4 w-4 text-red-400" />
+              </button>
             </div>
           </div>
           
-          <div className="space-y-3 mt-4">
+          <div className="space-y-2 mt-3 pt-3 border-t border-white/10">
             {s.rules.map((rule, idx) => (
-              <div key={rule.id || idx} className="bg-gray-900/50 rounded p-3 border border-gray-700">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="font-medium text-base">{rule.name}</div>
-                  <div className="text-xs text-gray-400">
-                    {rule.enabled ? (
-                      <span className="text-green-400">Enabled</span>
-                    ) : (
-                      <span className="text-gray-500">Disabled</span>
-                    )}
+              <div key={rule.id || idx} className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm text-white/90">{rule.name}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-xs ${
+                      rule.enabled 
+                        ? 'bg-green-500/20 text-green-400' 
+                        : 'bg-gray-500/20 text-gray-400'
+                    }`}>
+                      {rule.enabled ? 'On' : 'Off'}
+                    </span>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                   {/* Days */}
-                  <div>
-                    <span className="text-gray-400">Days: </span>
+                  <div className="flex justify-between">
+                    <span className="text-white/70">Days:</span>
                     <span className="text-white">
                       {rule.daysOfWeek && rule.daysOfWeek.length > 0 ? (
-                        rule.daysOfWeek.map(d => daysOfWeek[d]).join(', ')
+                        <span className="flex flex-wrap gap-1">
+                          {rule.daysOfWeek.map(d => (
+                            <span key={d} className="px-1.5 py-0.5 rounded bg-primary-500/20 text-primary-300 text-xs">
+                              {daysOfWeek[d].substring(0, 3)}
+                            </span>
+                          ))}
+                        </span>
                       ) : (
-                        'Every day'
+                        <span className="text-white/50">Every day</span>
                       )}
                     </span>
                   </div>
                   
                   {/* Time */}
-                  <div>
-                    <span className="text-gray-400">Start Time: </span>
-                    <span className="text-white">{formatTime(rule)}</span>
+                  <div className="flex justify-between">
+                    <span className="text-white/70">Start:</span>
+                    <span className="text-white font-medium">{formatTime(rule)}</span>
                   </div>
                   
                   {/* Duration/End */}
-                  <div>
-                    <span className="text-gray-400">
-                      {rule.endType ? 'End Time' : 'Duration'}: 
+                  <div className="flex justify-between">
+                    <span className="text-white/70">
+                      {rule.endType ? 'End:' : 'Duration:'}
                     </span>
-                    <span className="text-white ml-1">
+                    <span className="text-white">
                       {rule.endType === 'time' && rule.endTime ? rule.endTime :
                        rule.endType === 'sunrise' ? `Sunrise${rule.endOffsetMinutes ? ` ${rule.endOffsetMinutes > 0 ? '+' : ''}${rule.endOffsetMinutes}m` : ''}` :
                        rule.endType === 'sunset' ? `Sunset${rule.endOffsetMinutes ? ` ${rule.endOffsetMinutes > 0 ? '+' : ''}${rule.endOffsetMinutes}m` : ''}` :
@@ -313,79 +354,94 @@ function ScheduleList({
                   
                   {/* FPS */}
                   {rule.fps && (
-                    <div>
-                      <span className="text-gray-400">FPS: </span>
+                    <div className="flex justify-between">
+                      <span className="text-white/70">FPS:</span>
                       <span className="text-white">{rule.fps}</span>
                     </div>
                   )}
                   
                   {/* Targets */}
                   <div className="md:col-span-2">
-                    <span className="text-gray-400">Targets: </span>
-                    <span className="text-white">
-                      {rule.targets.length > 0 ? (
-                        getTargetNames(rule.targets).join(', ')
-                      ) : (
-                        <span className="text-gray-500">None</span>
-                      )}
-                    </span>
-                  </div>
-                  
-                  {/* Sequence */}
-                  <div className="md:col-span-2">
-                    <span className="text-gray-400">Effects/Presets: </span>
-                    <div className="mt-1 space-y-1">
-                      {rule.sequence.length > 0 ? (
-                        rule.sequence.map((item, seqIdx) => {
-                          const effectName = item.presetId 
-                            ? (presets.find(p => p.id === item.presetId)?.name || `Preset: ${item.presetId}`)
-                            : item.effect?.name || item.layers ? `${item.layers?.length || 0} layer(s)` : 'Unknown';
-                          return (
-                            <div key={seqIdx} className="text-white flex items-center gap-2">
-                              <span className="text-gray-500">•</span>
-                              <span>{effectName}</span>
-                              {item.durationSeconds && (
-                                <span className="text-gray-400 text-xs">
-                                  ({formatDuration(item.durationSeconds)})
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <span className="text-gray-500">None</span>
-                      )}
-                      {(rule.sequenceLoop || rule.sequenceShuffle) && (
-                        <div className="text-xs text-gray-400 mt-1">
-                          {rule.sequenceLoop && <span>Loop</span>}
-                          {rule.sequenceLoop && rule.sequenceShuffle && <span> · </span>}
-                          {rule.sequenceShuffle && <span>Shuffle</span>}
-                        </div>
-                      )}
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-white/70">Targets:</span>
+                      <span className="text-white text-right flex-1">
+                        {rule.targets.length > 0 ? (
+                          <span className="inline-flex flex-wrap gap-1 justify-end">
+                            {getTargetNames(rule.targets).map((name, i) => (
+                              <span key={i} className="px-1.5 py-0.5 rounded bg-white/10 text-xs">
+                                {name}
+                              </span>
+                            ))}
+                          </span>
+                        ) : (
+                          <span className="text-white/50">None</span>
+                        )}
+                      </span>
                     </div>
                   </div>
                   
+                  {/* Sequence */}
+                  {rule.sequence.length > 0 && (
+                    <div className="md:col-span-2">
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="text-white/70">Sequence:</span>
+                        <div className="flex-1 text-right space-y-0.5">
+                          {rule.sequence.map((item, seqIdx) => {
+                            const effectName = item.presetId 
+                              ? (presets.find(p => p.id === item.presetId)?.name || `Preset: ${item.presetId}`)
+                              : item.effect?.name || item.layers ? `${item.layers?.length || 0} layer(s)` : 'Unknown';
+                            return (
+                              <div key={seqIdx} className="text-white text-xs flex items-center justify-end gap-1">
+                                <span>{effectName}</span>
+                                {item.durationSeconds && (
+                                  <span className="text-white/50">
+                                    ({formatDuration(item.durationSeconds)})
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                          {(rule.sequenceLoop || rule.sequenceShuffle) && (
+                            <div className="text-xs text-white/50 mt-1 flex justify-end gap-1">
+                              {rule.sequenceLoop && <span>Loop</span>}
+                              {rule.sequenceLoop && rule.sequenceShuffle && <span>·</span>}
+                              {rule.sequenceShuffle && <span>Shuffle</span>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Ramp Settings */}
                   {(rule.rampOnStart || rule.rampOffEnd) && (
-                    <div className="md:col-span-2 text-xs text-gray-400">
-                      {rule.rampOnStart && <span>Ramp up on start</span>}
-                      {rule.rampOnStart && rule.rampOffEnd && <span> · </span>}
-                      {rule.rampOffEnd && <span>Ramp down on end</span>}
-                      {rule.rampDurationSeconds && (
-                        <span> ({rule.rampDurationSeconds}s)</span>
-                      )}
+                    <div className="md:col-span-2 flex justify-between items-center">
+                      <span className="text-white/70 text-xs">Ramp:</span>
+                      <div className="text-xs text-white/60">
+                        {rule.rampOnStart && <span>Up</span>}
+                        {rule.rampOnStart && rule.rampOffEnd && <span className="mx-1">/</span>}
+                        {rule.rampOffEnd && <span>Down</span>}
+                        {rule.rampDurationSeconds && (
+                          <span className="ml-1">({rule.rampDurationSeconds}s)</span>
+                        )}
+                      </div>
                     </div>
                   )}
                   
                   {/* Holiday Settings */}
                   {(rule.onHolidaysOnly || rule.skipOnHolidays) && (
-                    <div className="md:col-span-2 text-xs text-gray-400">
-                      {rule.onHolidaysOnly && <span>Only on holidays</span>}
-                      {rule.onHolidaysOnly && rule.skipOnHolidays && <span> · </span>}
-                      {rule.skipOnHolidays && <span>Skip on holidays</span>}
-                      {(rule.holidayCountry || rule.holidayState) && (
-                        <span> ({rule.holidayCountry || ''}{rule.holidayCountry && rule.holidayState ? ', ' : ''}{rule.holidayState || ''})</span>
-                      )}
+                    <div className="md:col-span-2 flex justify-between items-center">
+                      <span className="text-white/70 text-xs">Holidays:</span>
+                      <div className="text-xs text-white/60">
+                        {rule.onHolidaysOnly && <span>Only</span>}
+                        {rule.onHolidaysOnly && rule.skipOnHolidays && <span className="mx-1">·</span>}
+                        {rule.skipOnHolidays && <span>Skip</span>}
+                        {(rule.holidayCountry || rule.holidayState) && (
+                          <span className="ml-1">
+                            ({rule.holidayCountry || ''}{rule.holidayCountry && rule.holidayState ? ', ' : ''}{rule.holidayState || ''})
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -398,161 +454,346 @@ function ScheduleList({
   );
 }
 
-function ScheduleEditor({ value, onCancel, onSave, presets, saving }: { value: Schedule; onCancel: ()=>void; onSave: (s: Schedule)=>void; presets: EffectPreset[]; saving: boolean; }) {
+function ScheduleEditor({ value, onCancel, onSave, presets, saving, locationSettings }: { value: Schedule; onCancel: ()=>void; onSave: (s: Schedule)=>void; presets: EffectPreset[]; saving: boolean; locationSettings?: LocationSettings }) {
   const [sched, setSched] = useState<Schedule>(value);
   const update = (patch: Partial<Schedule>) => setSched(prev => ({ ...prev, ...patch, updatedAt: new Date().toISOString() }));
   const updateRule = (idx: number, patch: Partial<ScheduleRule>) => {
     const rules = [...sched.rules];
-    rules[idx] = { ...rules[idx], ...patch } as ScheduleRule;
+    const currentRule = rules[idx];
+    const updatedRule = { ...currentRule, ...patch } as ScheduleRule;
+    
+    // Auto-populate lat/lon from location settings when sunrise/sunset is selected and lat/lon not set
+    const isStartSunriseSunset = (patch.startType === 'sunrise' || patch.startType === 'sunset') || 
+                                  (currentRule.startType === 'sunrise' || currentRule.startType === 'sunset');
+    if (isStartSunriseSunset && 
+        locationSettings?.latitude && locationSettings?.longitude &&
+        !updatedRule.latitude && !updatedRule.longitude) {
+      updatedRule.latitude = locationSettings.latitude;
+      updatedRule.longitude = locationSettings.longitude;
+    }
+    
+    // Auto-populate lat/lon for endType sunrise/sunset if not set
+    const isEndSunriseSunset = (patch.endType === 'sunrise' || patch.endType === 'sunset') ||
+                                (currentRule.endType === 'sunrise' || currentRule.endType === 'sunset');
+    if (isEndSunriseSunset && 
+        locationSettings?.latitude && locationSettings?.longitude &&
+        !updatedRule.latitude && !updatedRule.longitude) {
+      updatedRule.latitude = locationSettings.latitude;
+      updatedRule.longitude = locationSettings.longitude;
+    }
+    
+    // Auto-populate country from location settings for holidays if not set
+    const hasHolidaySetting = patch.onHolidaysOnly !== undefined || patch.skipOnHolidays !== undefined ||
+                              currentRule.onHolidaysOnly || currentRule.skipOnHolidays;
+    if (hasHolidaySetting && 
+        locationSettings?.countryCode && !updatedRule.holidayCountry) {
+      updatedRule.holidayCountry = locationSettings.countryCode.toUpperCase();
+    }
+    
+    rules[idx] = updatedRule;
     update({ rules });
   };
-  const inputClass = "bg-gray-700 text-gray-200 px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none";
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <input value={sched.name} onChange={(e)=>update({ name: e.target.value })} className={inputClass} placeholder="Schedule name" />
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={sched.enabled} onChange={(e)=>update({ enabled: e.target.checked })} /><span>Enabled</span></label>
+    <div className="space-y-6">
+      <div className="glass-card p-6">
+        <div className="flex items-center gap-3 flex-wrap">
+          <input 
+            value={sched.name} 
+            onChange={(e)=>update({ name: e.target.value })} 
+            className="input-field flex-1 min-w-[200px]" 
+            placeholder="Schedule name" 
+          />
+          <Toggle 
+            checked={sched.enabled} 
+            onChange={(checked)=>update({ enabled: checked })} 
+            label="Enabled"
+          />
+        </div>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {sched.rules.map((r, i) => (
-          <div key={r.id} className="rounded border border-gray-700 p-4 bg-gray-900">
-            <div className="flex items-center gap-2 mb-3">
-              <input value={r.name} onChange={(e)=>updateRule(i, { name: e.target.value })} className={inputClass} placeholder="Rule name" />
-              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={r.enabled} onChange={(e)=>updateRule(i, { enabled: e.target.checked })} /><span>Enabled</span></label>
+          <div key={r.id} className="glass-card p-6 overflow-x-hidden">
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
+              <input 
+                value={r.name} 
+                onChange={(e)=>updateRule(i, { name: e.target.value })} 
+                className="input-field flex-1 min-w-[200px]" 
+                placeholder="Rule name" 
+              />
+              <Toggle 
+                checked={r.enabled} 
+                onChange={(checked)=>updateRule(i, { enabled: checked })} 
+                label="Enabled"
+                size="sm"
+              />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <div className="text-sm text-gray-400">Days</div>
+                <div className="text-sm text-white/70 font-medium">Days</div>
                 <div className="flex flex-wrap gap-2">
                   {[0,1,2,3,4,5,6].map(d => (
-                    <button key={d} onClick={()=>{
-                      const days = new Set(r.daysOfWeek || []);
-                      if (days.has(d)) days.delete(d); else days.add(d);
-                      updateRule(i, { daysOfWeek: Array.from(days).sort() });
-                    }} className={`px-2 py-1 rounded border ${r.daysOfWeek?.includes(d) ? 'bg-blue-600 border-blue-500' : 'border-gray-700'}`}>
+                    <button 
+                      key={d} 
+                      onClick={()=>{
+                        const days = new Set(r.daysOfWeek || []);
+                        if (days.has(d)) days.delete(d); else days.add(d);
+                        updateRule(i, { daysOfWeek: Array.from(days).sort() });
+                      }} 
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        r.daysOfWeek?.includes(d) 
+                          ? 'bg-primary-500/30 border border-primary-500/50 text-primary-300' 
+                          : 'bg-white/10 border border-white/20 text-white/70 hover:bg-white/20'
+                      }`}
+                    >
                       {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="text-sm text-gray-400">Start</div>
-                <div className="flex gap-2">
-                  <select value={r.startType} onChange={(e)=>updateRule(i, { startType: e.target.value as any })} className={inputClass}>
+                <div className="text-sm text-white/70 font-medium">Start</div>
+                <div className="flex flex-wrap gap-2">
+                  <select 
+                    value={r.startType} 
+                    onChange={(e)=>updateRule(i, { startType: e.target.value as any })} 
+                    className="input-field flex-1 min-w-[100px]"
+                  >
                     <option value="time">Time</option>
                     <option value="sunrise">Sunrise</option>
                     <option value="sunset">Sunset</option>
                   </select>
                   {r.startType === 'time' ? (
-                    <input type="time" value={r.startTime || ''} onChange={(e)=>updateRule(i, { startTime: e.target.value })} className={inputClass} />
+                    <input 
+                      type="time" 
+                      value={r.startTime || ''} 
+                      onChange={(e)=>updateRule(i, { startTime: e.target.value })} 
+                      className="input-field flex-1 min-w-[120px]" 
+                    />
                   ) : (
-                    <>
-                      <input type="number" placeholder="Lat" value={r.latitude ?? ''} onChange={(e)=>updateRule(i, { latitude: e.target.value === '' ? undefined : Number(e.target.value) })} className={inputClass} />
-                      <input type="number" placeholder="Lon" value={r.longitude ?? ''} onChange={(e)=>updateRule(i, { longitude: e.target.value === '' ? undefined : Number(e.target.value) })} className={inputClass} />
-                      <input type="number" placeholder="Offset (min)" value={r.startOffsetMinutes ?? 0} onChange={(e)=>updateRule(i, { startOffsetMinutes: Number(e.target.value) })} className={inputClass} />
-                    </>
+                    <div className="flex flex-wrap gap-2 w-full">
+                      <input 
+                        type="number" 
+                        step="any"
+                        placeholder={locationSettings?.latitude ? `Lat (${locationSettings.latitude})` : 'Lat'} 
+                        value={r.latitude ?? locationSettings?.latitude ?? ''} 
+                        onChange={(e)=>updateRule(i, { latitude: e.target.value === '' ? undefined : Number(e.target.value) })} 
+                        className="input-field flex-1 min-w-[100px]"
+                        title={locationSettings?.latitude ? `Default: ${locationSettings.latitude}` : 'Enter latitude'}
+                      />
+                      <input 
+                        type="number" 
+                        step="any"
+                        placeholder={locationSettings?.longitude ? `Lon (${locationSettings.longitude})` : 'Lon'} 
+                        value={r.longitude ?? locationSettings?.longitude ?? ''} 
+                        onChange={(e)=>updateRule(i, { longitude: e.target.value === '' ? undefined : Number(e.target.value) })} 
+                        className="input-field flex-1 min-w-[100px]"
+                        title={locationSettings?.longitude ? `Default: ${locationSettings.longitude}` : 'Enter longitude'}
+                      />
+                      <input 
+                        type="number" 
+                        placeholder="Offset (min)" 
+                        value={r.startOffsetMinutes ?? 0} 
+                        onChange={(e)=>updateRule(i, { startOffsetMinutes: Number(e.target.value) })} 
+                        className="input-field w-24" 
+                      />
+                    </div>
                   )}
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="text-sm text-gray-400">End/Duration</div>
-                <div className="flex gap-2">
-                  <select value={r.endType || ''} onChange={(e)=>updateRule(i, { endType: (e.target.value || undefined) as any })} className={inputClass}>
+                <div className="text-sm text-white/70 font-medium">End/Duration</div>
+                <div className="flex flex-wrap gap-2">
+                  <select 
+                    value={r.endType || ''} 
+                    onChange={(e)=>updateRule(i, { endType: (e.target.value || undefined) as any })} 
+                    className="input-field flex-1 min-w-[100px]"
+                  >
                     <option value="">Use duration</option>
                     <option value="time">Time</option>
                     <option value="sunrise">Sunrise</option>
                     <option value="sunset">Sunset</option>
                   </select>
                   {r.endType === 'time' ? (
-                    <input type="time" value={r.endTime || ''} onChange={(e)=>updateRule(i, { endTime: e.target.value })} className={inputClass} />
+                    <input 
+                      type="time" 
+                      value={r.endTime || ''} 
+                      onChange={(e)=>updateRule(i, { endTime: e.target.value })} 
+                      className="input-field flex-1 min-w-[120px]" 
+                    />
                   ) : r.endType === 'sunrise' || r.endType === 'sunset' ? (
-                    <input type="number" placeholder="Offset (min)" value={r.endOffsetMinutes ?? 0} onChange={(e)=>updateRule(i, { endOffsetMinutes: Number(e.target.value) })} className={inputClass} />
+                    <div className="w-full space-y-2">
+                      {(!r.latitude || !r.longitude) && locationSettings?.latitude && locationSettings?.longitude ? (
+                        <div className="text-xs text-white/60">Using location settings: {locationSettings.latitude.toFixed(4)}, {locationSettings.longitude.toFixed(4)}</div>
+                      ) : null}
+                      <input 
+                        type="number" 
+                        placeholder="Offset (min)" 
+                        value={r.endOffsetMinutes ?? 0} 
+                        onChange={(e)=>updateRule(i, { endOffsetMinutes: Number(e.target.value) })} 
+                        className="input-field w-full" 
+                      />
+                    </div>
                   ) : (
-                    <input type="number" placeholder="Duration (sec)" value={r.durationSeconds ?? 0} onChange={(e)=>updateRule(i, { durationSeconds: Number(e.target.value) })} className={inputClass} />
+                    <input 
+                      type="number" 
+                      placeholder="Duration (sec)" 
+                      value={r.durationSeconds ?? 0} 
+                      onChange={(e)=>updateRule(i, { durationSeconds: Number(e.target.value) })} 
+                      className="input-field flex-1 min-w-[120px]" 
+                    />
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-white/10">
               <div className="space-y-2">
-                <div className="text-sm text-gray-400">Holidays</div>
-                <div className="flex items-center gap-3 text-sm">
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={!!r.onHolidaysOnly} onChange={(e)=>updateRule(i, { onHolidaysOnly: e.target.checked })} />Only on holidays</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={!!r.skipOnHolidays} onChange={(e)=>updateRule(i, { skipOnHolidays: e.target.checked })} />Skip on holidays</label>
+                <div className="text-sm text-white/70 font-medium">Holidays</div>
+                <div className="flex items-center gap-3 text-sm flex-wrap">
+                  <Toggle 
+                    checked={!!r.onHolidaysOnly} 
+                    onChange={(checked)=>updateRule(i, { onHolidaysOnly: checked })} 
+                    label="Only on holidays"
+                    size="sm"
+                  />
+                  <Toggle 
+                    checked={!!r.skipOnHolidays} 
+                    onChange={(checked)=>updateRule(i, { skipOnHolidays: checked })} 
+                    label="Skip on holidays"
+                    size="sm"
+                  />
                 </div>
-                <div className="flex gap-2">
-                  <input className="input" placeholder="Country (e.g. US)" value={r.holidayCountry || ''} onChange={(e)=>updateRule(i, { holidayCountry: e.target.value || undefined })} />
-                  <input className="input" placeholder="State (optional)" value={r.holidayState || ''} onChange={(e)=>updateRule(i, { holidayState: e.target.value || undefined })} />
+                <div className="flex gap-2 flex-wrap">
+                  <input 
+                    className="input-field flex-1 min-w-[120px]" 
+                    placeholder={locationSettings?.countryCode ? `Country (e.g. ${locationSettings.countryCode.toUpperCase()})` : 'Country (e.g. US)'} 
+                    value={r.holidayCountry || locationSettings?.countryCode?.toUpperCase() || ''} 
+                    onChange={(e)=>updateRule(i, { holidayCountry: e.target.value || undefined })} 
+                  />
+                  <input 
+                    className="input-field flex-1 min-w-[120px]" 
+                    placeholder="State (optional)" 
+                    value={r.holidayState || ''} 
+                    onChange={(e)=>updateRule(i, { holidayState: e.target.value || undefined })} 
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <div className="text-sm text-gray-400">Brightness Ramps</div>
-                <div className="flex items-center gap-3 text-sm">
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={!!r.rampOnStart} onChange={(e)=>updateRule(i, { rampOnStart: e.target.checked })} />Ramp up on start</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={!!r.rampOffEnd} onChange={(e)=>updateRule(i, { rampOffEnd: e.target.checked })} />Ramp down on end</label>
+                <div className="text-sm text-white/70 font-medium">Brightness Ramps</div>
+                <div className="flex items-center gap-3 text-sm flex-wrap">
+                  <Toggle 
+                    checked={!!r.rampOnStart} 
+                    onChange={(checked)=>updateRule(i, { rampOnStart: checked })} 
+                    label="Ramp up on start"
+                    size="sm"
+                  />
+                  <Toggle 
+                    checked={!!r.rampOffEnd} 
+                    onChange={(checked)=>updateRule(i, { rampOffEnd: checked })} 
+                    label="Ramp down on end"
+                    size="sm"
+                  />
                 </div>
-                <input type="number" className={inputClass} placeholder="Ramp duration (sec)" value={r.rampDurationSeconds ?? 10} onChange={(e)=>updateRule(i, { rampDurationSeconds: Number(e.target.value) })} />
+                <input 
+                  type="number" 
+                  className="input-field w-full" 
+                  placeholder="Ramp duration (sec)" 
+                  value={r.rampDurationSeconds ?? 10} 
+                  onChange={(e)=>updateRule(i, { rampDurationSeconds: Number(e.target.value) })} 
+                />
               </div>
 
               <div className="space-y-2">
-                <div className="text-sm text-gray-400">Targets</div>
-                <TargetPicker value={r.targets} onChange={(targets)=>updateRule(i, { targets })} />
+                <div className="text-sm text-white/70 font-medium">Targets</div>
+                <div className="overflow-x-auto">
+                  <TargetPicker value={r.targets} onChange={(targets)=>updateRule(i, { targets })} />
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-400">Sequence (presets)</div>
-                <button className="btn-secondary" onClick={()=>{
-                  const rules = [...sched.rules];
-                  rules[i] = { ...rules[i], sequence: [...(rules[i].sequence||[]), { presetId: presets[0]?.id, durationSeconds: 60 }] } as any;
-                  update({ rules });
-                }}>Add Preset</button>
+            <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="text-sm text-white/70 font-medium">Sequence (presets)</div>
+                <button 
+                  className="btn-secondary text-sm" 
+                  onClick={()=>{
+                    const rules = [...sched.rules];
+                    rules[i] = { ...rules[i], sequence: [...(rules[i].sequence||[]), { presetId: presets[0]?.id, durationSeconds: 60 }] } as any;
+                    update({ rules });
+                  }}
+                >
+                  Add Preset
+                </button>
               </div>
               <div className="space-y-2">
                 {(r.sequence || []).map((item, idx) => (
-                  <div key={idx} className="flex gap-2 items-center">
-                    <select className={inputClass} value={item.presetId || ''} onChange={(e)=>{
-                      const rules = [...sched.rules];
-                      const seq = [...(rules[i].sequence||[])];
-                      seq[idx] = { ...seq[idx], presetId: e.target.value };
-                      rules[i] = { ...rules[i], sequence: seq } as any;
-                      update({ rules });
-                    }}>
+                  <div key={idx} className="flex gap-2 items-center flex-wrap">
+                    <select 
+                      className="input-field flex-1 min-w-[200px]" 
+                      value={item.presetId || ''} 
+                      onChange={(e)=>{
+                        const rules = [...sched.rules];
+                        const seq = [...(rules[i].sequence||[])];
+                        seq[idx] = { ...seq[idx], presetId: e.target.value };
+                        rules[i] = { ...rules[i], sequence: seq } as any;
+                        update({ rules });
+                      }}
+                    >
                       <option value="">Select preset…</option>
                       {presets.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
                     </select>
-                    <input className={inputClass} type="number" value={item.durationSeconds ?? 60} onChange={(e)=>{
-                      const rules = [...sched.rules];
-                      const seq = [...(rules[i].sequence||[])];
-                      seq[idx] = { ...seq[idx], durationSeconds: Number(e.target.value) };
-                      rules[i] = { ...rules[i], sequence: seq } as any;
-                      update({ rules });
-                    }} />
-                    <button className="btn-danger" onClick={()=>{
-                      const rules = [...sched.rules];
-                      const seq = [...(rules[i].sequence||[])];
-                      seq.splice(idx, 1);
-                      rules[i] = { ...rules[i], sequence: seq } as any;
-                      update({ rules });
-                    }}>Remove</button>
+                    <input 
+                      className="input-field w-24" 
+                      type="number" 
+                      placeholder="Duration"
+                      value={item.durationSeconds ?? 60} 
+                      onChange={(e)=>{
+                        const rules = [...sched.rules];
+                        const seq = [...(rules[i].sequence||[])];
+                        seq[idx] = { ...seq[idx], durationSeconds: Number(e.target.value) };
+                        rules[i] = { ...rules[i], sequence: seq } as any;
+                        update({ rules });
+                      }} 
+                    />
+                    <button 
+                      className="btn-secondary text-sm px-3 py-1.5 text-red-400 hover:bg-red-500/20" 
+                      onClick={()=>{
+                        const rules = [...sched.rules];
+                        const seq = [...(rules[i].sequence||[])];
+                        seq.splice(idx, 1);
+                        rules[i] = { ...rules[i], sequence: seq } as any;
+                        update({ rules });
+                      }}
+                    >
+                      Remove
+                    </button>
                   </div>
                 ))}
               </div>
               <div className="flex items-center gap-4 text-sm">
-                <label className="flex items-center gap-2"><input type="checkbox" checked={!!r.sequenceLoop} onChange={(e)=>updateRule(i, { sequenceLoop: e.target.checked })} />Loop</label>
-                <label className="flex items-center gap-2"><input type="checkbox" checked={!!r.sequenceShuffle} onChange={(e)=>updateRule(i, { sequenceShuffle: e.target.checked })} />Shuffle</label>
+                <Toggle 
+                  checked={!!r.sequenceLoop} 
+                  onChange={(checked)=>updateRule(i, { sequenceLoop: checked })} 
+                  label="Loop"
+                  size="sm"
+                />
+                <Toggle 
+                  checked={!!r.sequenceShuffle} 
+                  onChange={(checked)=>updateRule(i, { sequenceShuffle: checked })} 
+                  label="Shuffle"
+                  size="sm"
+                />
               </div>
             </div>
           </div>
         ))}
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-3 justify-end pt-4">
         <button className="btn-secondary" onClick={onCancel}>Cancel</button>
-        <button className="btn-primary" disabled={saving} onClick={()=>onSave(sched)}>{saving ? 'Saving…' : 'Save'}</button>
+        <button className="btn-primary" disabled={saving} onClick={()=>onSave(sched)}>
+          {saving ? 'Saving…' : 'Save'}
+        </button>
       </div>
     </div>
   );
@@ -562,7 +803,6 @@ function TargetPicker({ value, onChange }: { value: StreamTarget[]; onChange: (v
   const [devices, setDevices] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [virtuals, setVirtuals] = useState<any[]>([]);
-  const inputClass = "bg-gray-700 text-gray-200 px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none";
   useEffect(()=>{ (async()=>{
     const [d,g,v] = await Promise.all([
       fetch('/api/devices'),
@@ -579,28 +819,28 @@ function TargetPicker({ value, onChange }: { value: StreamTarget[]; onChange: (v
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-2">
-        <select className={inputClass} onChange={(e)=>{ const id=e.target.value; if (id) add({ type:'device', id}); e.target.value=''; }}>
+      <div className="flex gap-2 flex-wrap">
+        <select className="input-field flex-1 min-w-[120px]" onChange={(e)=>{ const id=e.target.value; if (id) add({ type:'device', id}); e.target.value=''; }}>
           <option value="">Add device…</option>
           {devices.map(d => (<option key={d.id} value={d.id}>{d.name}</option>))}
         </select>
-        <select className={inputClass} onChange={(e)=>{ const id=e.target.value; if (id) add({ type:'group', id}); e.target.value=''; }}>
+        <select className="input-field flex-1 min-w-[120px]" onChange={(e)=>{ const id=e.target.value; if (id) add({ type:'group', id}); e.target.value=''; }}>
           <option value="">Add group…</option>
           {groups.map(d => (<option key={d.id} value={d.id}>{d.name}</option>))}
         </select>
-        <select className={inputClass} onChange={(e)=>{ const id=e.target.value; if (id) add({ type:'virtual', id}); e.target.value=''; }}>
+        <select className="input-field flex-1 min-w-[120px]" onChange={(e)=>{ const id=e.target.value; if (id) add({ type:'virtual', id}); e.target.value=''; }}>
           <option value="">Add virtual…</option>
           {virtuals.map(d => (<option key={d.id} value={d.id}>{d.name}</option>))}
         </select>
       </div>
       <div className="space-y-1">
         {value?.map((t, idx) => (
-          <div key={idx} className="flex items-center justify-between border border-gray-700 rounded px-2 py-1">
-            <div className="text-sm">
-              <span className="uppercase text-gray-400 mr-2">{t.type}</span>
+          <div key={idx} className="flex items-center justify-between bg-white/10 border border-white/20 rounded-lg px-3 py-2">
+            <div className="text-sm text-white/90">
+              <span className="uppercase text-white/60 mr-2 text-xs font-medium">{t.type}</span>
               <span>{t.id}</span>
             </div>
-            <button className="btn-danger" onClick={()=>remove(idx)}>Remove</button>
+            <button className="btn-secondary text-sm px-3 py-1 text-red-400 hover:bg-red-500/20" onClick={()=>remove(idx)}>Remove</button>
           </div>
         ))}
       </div>

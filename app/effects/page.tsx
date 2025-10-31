@@ -5,17 +5,21 @@ import { motion } from 'framer-motion';
 import { Zap, Play, Pause } from 'lucide-react';
 import EffectPanel from '../../components/EffectPanel';
 import { useStreaming } from '../../contexts/StreamingContext';
+import { useToast } from '../../components/ToastProvider';
 import { Effect, WLEDDevice, Group, VirtualDevice, EffectPreset } from '../../types';
 import { useSearchParams } from 'next/navigation';
 
 export default function EffectsPage() {
   const searchParams = useSearchParams();
+  const { showToast } = useToast();
   const [effects, setEffects] = useState<Effect[]>([]);
   const [devices, setDevices] = useState<WLEDDevice[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [virtuals, setVirtuals] = useState<VirtualDevice[]>([]);
   const [selectedEffect, setSelectedEffect] = useState<Effect | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingPresetId, setEditingPresetId] = useState<string | undefined>(undefined);
+  const [editingPreset, setEditingPreset] = useState<EffectPreset | null>(null);
   
   const { currentSession, isStreaming } = useStreaming();
 
@@ -26,13 +30,16 @@ export default function EffectsPage() {
   // Load preset from URL query param
   useEffect(() => {
     const presetId = searchParams?.get('preset');
+    const isEdit = searchParams?.get('edit') === 'true';
+    
     if (presetId && effects.length > 0) {
-      console.log('Loading preset with ID:', presetId);
-      loadPreset(presetId);
+      console.log('Loading preset with ID:', presetId, 'edit mode:', isEdit);
+      setEditingPresetId(isEdit ? presetId : undefined);
+      loadPreset(presetId, isEdit);
     }
   }, [searchParams, effects]);
 
-  const loadPreset = async (presetId: string) => {
+  const loadPreset = async (presetId: string, isEdit: boolean = false) => {
     try {
       // URL encode the preset ID in case it has special characters
       const encodedPresetId = encodeURIComponent(presetId);
@@ -56,21 +63,23 @@ export default function EffectsPage() {
           errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
         console.error('Failed to load preset:', errorMessage);
-        alert(`Failed to load preset: ${errorMessage}`);
+        showToast(`Failed to load preset: ${errorMessage}`, 'error');
         return;
       }
 
       const preset: EffectPreset = await response.json();
       console.log('Loaded preset:', preset);
       
+      // Store preset for EffectPanel to load
+      if (isEdit) {
+        setEditingPreset(preset);
+      }
+      
       // Convert plain objects back to Maps for component state
       if (preset.useLayers && preset.layers) {
-        // Load layers mode
-        // Note: This requires EffectPanel to expose a prop/method to load presets
-        // For now, we'll just log it - would need refactoring to properly load layers
+        // Load layers mode - EffectPanel will handle loading the layers
         console.log('Loading preset with layers:', preset);
-        alert('Layer presets are not yet fully supported. Please use single effect presets for now.');
-        // TODO: Expose preset loading method in EffectPanel
+        // Don't show alert anymore - we'll support it now
       } else if (preset.effect) {
         // Load single effect mode
         const matchingEffect = effects.find(e => e.id === preset.effect?.id);
@@ -86,15 +95,15 @@ export default function EffectsPage() {
           setSelectedEffect(effectWithParams);
         } else {
           console.error('Effect not found for preset:', preset.effect.id);
-          alert('Effect not found. The preset may reference a removed effect.');
+          showToast('Effect not found. The preset may reference a removed effect.', 'error');
         }
       } else {
         console.error('Invalid preset: no effect or layers');
-        alert('Invalid preset format');
+        showToast('Invalid preset format', 'error');
       }
     } catch (error: any) {
       console.error('Error loading preset:', error);
-      alert(`Error loading preset: ${error.message || 'Unknown error'}`);
+      showToast(`Error loading preset: ${error.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -164,6 +173,8 @@ export default function EffectsPage() {
         devices={devices}
         groups={groups}
         virtuals={virtuals}
+        editingPresetId={editingPresetId}
+        editingPreset={editingPreset}
       />
     </div>
   );

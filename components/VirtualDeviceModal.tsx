@@ -14,6 +14,7 @@ interface VirtualDeviceModalProps {
 }
 
 export default function VirtualDeviceModal({ devices, virtual, onSave, onClose }: VirtualDeviceModalProps) {
+  const { showToast } = useToast();
   const [name, setName] = useState('');
   const [ledRanges, setLedRanges] = useState<VirtualLEDRange[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,12 +68,12 @@ export default function VirtualDeviceModal({ devices, virtual, onSave, onClose }
     e.preventDefault();
     
     if (!name.trim()) {
-      alert('Please enter a name for the virtual device');
+      showToast('Please enter a name for the virtual device', 'error');
       return;
     }
     
     if (ledRanges.length === 0) {
-      alert('Please add at least one LED range');
+      showToast('Please add at least one LED range', 'error');
       return;
     }
 

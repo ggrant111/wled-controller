@@ -109,20 +109,93 @@ function ruleMatchesDate(rule: ScheduleRule, now: Date): boolean {
 }
 
 // Helper function to stop existing streams to all targets in a rule
-function stopStreamsToTargets(targets: StreamTarget[]): void {
+// Only stops streams to devices included in the schedule, preserving streams to other devices
+async function stopStreamsToTargets(targets: StreamTarget[]): Promise<void> {
   const sessionsToRemove: string[] = [];
+  const sessionsModified: string[] = [];
   
-  for (const target of targets) {
-    for (const session of Array.from(streamingSessions.values())) {
-      const prevLen = session.targets.length;
-      session.targets = session.targets.filter(t => !(t.type === target.type && t.id === target.id));
+  // Resolve schedule targets to device IDs
+  const scheduleDeviceIds = await resolveTargetsToDeviceIds(targets);
+  
+  console.log(`[Scheduler] Resolving schedule targets to devices:`, Array.from(scheduleDeviceIds));
+  
+  // Check each active streaming session
+  for (const session of Array.from(streamingSessions.values())) {
+    if (!session.isActive) continue;
+    
+    // Resolve session targets to device IDs
+    const sessionDeviceIds = await resolveTargetsToDeviceIds(session.targets);
+    
+    // Find devices that overlap (devices in both schedule and session)
+    const overlappingDevices = Array.from(scheduleDeviceIds).filter(id => sessionDeviceIds.has(id));
+    
+    if (overlappingDevices.length === 0) {
+      // No overlap, skip this session
+      continue;
+    }
+    
+    console.log(`[Scheduler] Session ${session.id} has overlapping devices:`, overlappingDevices);
+    
+    // Check if session streams to groups/virtuals (can exclude devices) or direct devices
+    const hasGroupVirtualTargets = session.targets.some(t => t.type === 'group' || t.type === 'virtual');
+    const hasDirectDeviceTargets = session.targets.some(t => t.type === 'device');
+    
+    if (hasGroupVirtualTargets && !hasDirectDeviceTargets) {
+      // Session streams to groups/virtuals - exclude the overlapping devices
+      if (!session.excludedDevices) {
+        session.excludedDevices = [];
+      }
       
-      // If no targets left, mark inactive and queue for removal
+      let modified = false;
+      for (const deviceId of overlappingDevices) {
+        if (!session.excludedDevices.includes(deviceId)) {
+          session.excludedDevices.push(deviceId);
+          modified = true;
+          console.log(`[Scheduler] Excluded device ${deviceId} from session ${session.id}`);
+        }
+      }
+      
+      if (modified) {
+        sessionsModified.push(session.id);
+        io.emit('streaming-session-updated', session);
+      }
+    } else if (hasDirectDeviceTargets) {
+      // Session streams directly to devices - remove those devices from targets
+      const prevLen = session.targets.length;
+      
+      // Remove device targets that overlap with schedule
+      session.targets = session.targets.filter(t => {
+        if (t.type === 'device') {
+          return !scheduleDeviceIds.has(t.id);
+        }
+        // For groups/virtuals, we need to check if they still have any non-excluded devices
+        // For now, keep them but we'll handle exclusion separately
+        return true;
+      });
+      
+      // Also handle groups/virtuals that might have overlapping devices
+      // Exclude overlapping devices from group/virtual streams
+      for (const target of session.targets) {
+        if ((target.type === 'group' || target.type === 'virtual') && !session.excludedDevices) {
+          session.excludedDevices = [];
+        }
+        if (target.type === 'group' || target.type === 'virtual') {
+          for (const deviceId of overlappingDevices) {
+            if (!session.excludedDevices!.includes(deviceId)) {
+              session.excludedDevices!.push(deviceId);
+              console.log(`[Scheduler] Excluded device ${deviceId} from ${target.type} stream in session ${session.id}`);
+            }
+          }
+        }
+      }
+      
+      // If no targets left, mark inactive
       if (session.targets.length === 0 && prevLen > 0) {
         session.isActive = false;
         sessionsToRemove.push(session.id);
       } else if (session.targets.length < prevLen && prevLen > 0) {
         // Target removed but session still has targets - emit update
+        sessionsModified.push(session.id);
         io.emit('streaming-session-updated', session);
       }
     }
@@ -136,12 +209,13 @@ function stopStreamsToTargets(targets: StreamTarget[]): void {
   }
   
   // Emit state change if any sessions were affected
-  if (sessionsToRemove.length > 0 || targets.length > 0) {
+  if (sessionsToRemove.length > 0 || sessionsModified.length > 0) {
     const activeSessions = Array.from(streamingSessions.values()).filter(s => s.isActive);
     io.emit('streaming-state-changed', {
       isStreaming: activeSessions.length > 0,
       session: activeSessions.length > 0 ? activeSessions[0] : null
     });
+    console.log(`[Scheduler] Affected ${sessionsToRemove.length} sessions (removed) and ${sessionsModified.length} sessions (modified)`);
   }
 }
 
@@ -208,9 +282,10 @@ async function startSequenceForRule(rule: ScheduleRule): Promise<string | null> 
   }
   
   // Stop any existing streams to the targets before starting the schedule
+  // Only stops streams to devices included in this schedule
   if (rule.targets && rule.targets.length > 0) {
-    stopStreamsToTargets(rule.targets);
-    console.log(`[Scheduler] Stopped existing streams to ${rule.targets.length} target(s) before starting schedule`);
+    await stopStreamsToTargets(rule.targets);
+    console.log(`[Scheduler] Stopped existing streams to devices in ${rule.targets.length} target(s) before starting schedule`);
   }
   
   // Prepare body for first item
@@ -292,15 +367,18 @@ async function startSequenceForRule(rule: ScheduleRule): Promise<string | null> 
   return respSession.id;
 }
 
-function scheduleEndAtForRule(rule: ScheduleRule, startAt: Date): number | null {
+function scheduleEndAtForRule(rule: ScheduleRule, startAt: Date, defaultLocation?: { latitude?: number; longitude?: number }): number | null {
   const now = startAt;
+  // Use rule's location if specified, otherwise use default location from settings
+  const lat = rule.latitude ?? defaultLocation?.latitude;
+  const lon = rule.longitude ?? defaultLocation?.longitude;
   const end = computeEventTime(
     rule.endType || 'time',
     now,
     {
       time: rule.endTime,
-      lat: rule.latitude,
-      lon: rule.longitude,
+      lat,
+      lon,
       offsetMin: rule.endOffsetMinutes
     }
   );
@@ -325,6 +403,9 @@ async function schedulerTick() {
     const now = new Date();
     const nowTime = now.getTime();
     const schedules: Schedule[] = await storage.loadSchedules();
+    // Load default location settings once per tick
+    const defaultLocation = await storage.loadLocationSettings();
+    
     for (const sched of schedules) {
       if (!sched.enabled) continue;
       for (const rule of sched.rules) {
@@ -418,7 +499,10 @@ async function schedulerTick() {
         
         // Start condition
         if (!ruleMatchesDate(rule, now)) continue;
-        const startAt = computeEventTime(rule.startType, now, { time: rule.startTime, lat: rule.latitude, lon: rule.longitude, offsetMin: rule.startOffsetMinutes });
+        // Use rule's location if specified, otherwise use default location from settings
+        const lat = rule.latitude ?? defaultLocation.latitude;
+        const lon = rule.longitude ?? defaultLocation.longitude;
+        const startAt = computeEventTime(rule.startType, now, { time: rule.startTime, lat, lon, offsetMin: rule.startOffsetMinutes });
         if (!startAt) continue;
         // Start within current minute/window
         if (Math.abs(nowTime - startAt.getTime()) <= 30000) {
@@ -430,7 +514,7 @@ async function schedulerTick() {
           
           const sessionId = await startSequenceForRule(rule);
           if (sessionId) {
-            const endAt = scheduleEndAtForRule(rule, now);
+            const endAt = scheduleEndAtForRule(rule, now, defaultLocation);
             activeRuleSessions.set(ruleKey, {
               sessionId,
               endAt,
@@ -813,18 +897,11 @@ app.get('/api/stream/state', (req, res) => {
   }
 });
 
-// List all streaming sessions (summary)
+// List all streaming sessions (full data)
 app.get('/api/stream/sessions', (req, res) => {
   try {
     const sessions = Array.from(streamingSessions.values());
-    const summaries = sessions.map(s => ({
-      id: s.id,
-      isActive: s.isActive,
-      targets: s.targets,
-      fps: s.fps,
-      startTime: s.startTime,
-    }));
-    res.json({ count: summaries.length, sessions: summaries });
+    res.json({ count: sessions.length, sessions });
   } catch (error) {
     console.error('Error listing sessions:', error);
     res.status(500).json({ error: 'Failed to list sessions' });
@@ -987,6 +1064,121 @@ app.get('/api/stream/active-targets', async (req, res) => {
   }
 });
 
+// Helper function to resolve targets to device IDs
+async function resolveTargetsToDeviceIds(targets: StreamTarget[]): Promise<Set<string>> {
+  const deviceIds = new Set<string>();
+  const devices = await storage.loadDevices();
+  const groups = await storage.loadGroups();
+  const virtuals = await storage.loadVirtuals();
+  
+  for (const target of targets) {
+    if (target.type === 'device') {
+      deviceIds.add(target.id);
+    } else if (target.type === 'group') {
+      const group = groups.find(g => g.id === target.id);
+      if (group && group.members) {
+        for (const member of group.members) {
+          if (member.deviceId) {
+            deviceIds.add(member.deviceId);
+          }
+        }
+      }
+    } else if (target.type === 'virtual') {
+      const virtual = virtuals.find(v => v.id === target.id);
+      if (virtual && virtual.ledRanges) {
+        for (const range of virtual.ledRanges) {
+          if (range.deviceId) {
+            deviceIds.add(range.deviceId);
+          }
+        }
+      }
+    }
+  }
+  
+  return deviceIds;
+}
+
+// Check for streaming conflicts
+app.post('/api/stream/check-conflicts', async (req, res) => {
+  try {
+    const { targets } = req.body;
+    
+    if (!targets || !Array.isArray(targets)) {
+      return res.status(400).json({ error: 'Targets array is required' });
+    }
+    
+    console.log('[Conflict Check] Checking conflicts for targets:', JSON.stringify(targets));
+    
+    // Resolve new targets to device IDs
+    const newTargetDeviceIds = await resolveTargetsToDeviceIds(targets);
+    console.log('[Conflict Check] New target device IDs:', Array.from(newTargetDeviceIds));
+    
+    // Get all active streaming sessions
+    const activeSessions = Array.from(streamingSessions.values()).filter(s => s.isActive);
+    console.log('[Conflict Check] Active sessions:', activeSessions.length);
+    
+    const conflicts: Array<{
+      sessionId: string;
+      sessionTargets: StreamTarget[];
+      conflictingDevices: Array<{ id: string; name: string }>;
+    }> = [];
+    
+    // Check each active session for conflicts
+    for (const session of activeSessions) {
+      console.log('[Conflict Check] Checking session:', session.id, 'targets:', JSON.stringify(session.targets));
+      const sessionDeviceIds = await resolveTargetsToDeviceIds(session.targets);
+      console.log('[Conflict Check] Session device IDs:', Array.from(sessionDeviceIds));
+      
+      // Find overlapping device IDs
+      const overlappingDevices = Array.from(newTargetDeviceIds).filter(id => sessionDeviceIds.has(id));
+      console.log('[Conflict Check] Overlapping devices:', overlappingDevices);
+      
+      if (overlappingDevices.length > 0) {
+        // Get device names
+        const devices = await storage.loadDevices();
+        const conflictingDevices = overlappingDevices.map(deviceId => {
+          const device = devices.find(d => d.id === deviceId);
+          return { id: deviceId, name: device?.name || deviceId };
+        });
+        
+        // Determine if this conflict can be partially resolved (device is in a group/virtual, not direct device stream)
+        // Can partial stop if:
+        // 1. The conflicting session streams to groups/virtuals (not direct device)
+        // 2. We're trying to stream to a single device
+        // 3. There's only one conflicting device
+        const canPartialStop = session.targets.some(t => 
+          t.type === 'group' || t.type === 'virtual'
+        ) && newTargetDeviceIds.size === 1 && conflictingDevices.length === 1;
+        
+        console.log('[Conflict Check] canPartialStop calculation:', {
+          hasGroupVirtualTarget: session.targets.some(t => t.type === 'group' || t.type === 'virtual'),
+          newTargetDeviceCount: newTargetDeviceIds.size,
+          conflictingDeviceCount: conflictingDevices.length,
+          canPartialStop
+        });
+        
+        conflicts.push({
+          sessionId: session.id,
+          sessionTargets: session.targets,
+          conflictingDevices,
+          canPartialStop: canPartialStop || false,
+          conflictSourceType: session.targets.find(t => t.type === 'group' || t.type === 'virtual')?.type || 'device'
+        });
+        console.log('[Conflict Check] Conflict found with session:', session.id, 'canPartialStop:', canPartialStop);
+      }
+    }
+    
+    console.log('[Conflict Check] Total conflicts:', conflicts.length);
+    res.json({ 
+      hasConflicts: conflicts.length > 0,
+      conflicts 
+    });
+  } catch (error) {
+    console.error('Error checking stream conflicts:', error);
+    res.status(500).json({ error: 'Failed to check conflicts' });
+  }
+});
+
 // Streaming
 app.post('/api/stream/start', async (req, res) => {
   try {
@@ -1090,6 +1282,35 @@ app.post('/api/stream/stop-target', async (req, res) => {
   }
 });
 
+// Exclude a device from group/virtual streams in a session
+app.post('/api/stream/exclude-device', async (req, res) => {
+  try {
+    const { sessionId, deviceId } = req.body;
+    if (!sessionId || !deviceId) {
+      return res.status(400).json({ error: 'sessionId and deviceId are required' });
+    }
+    
+    const session = streamingSessions.get(sessionId);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    if (!session.excludedDevices) {
+      session.excludedDevices = [];
+    }
+    
+    if (!session.excludedDevices.includes(deviceId)) {
+      session.excludedDevices.push(deviceId);
+      io.emit('streaming-session-updated', session);
+    }
+    
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Error excluding device:', error);
+    return res.status(500).json({ error: 'Failed to exclude device' });
+  }
+});
+
 app.post('/api/stream/stop/:sessionId', (req, res) => {
   try {
     const sessionId = req.params.sessionId;
@@ -1105,6 +1326,68 @@ app.post('/api/stream/stop/:sessionId', (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to stop streaming' });
+  }
+});
+
+app.post('/api/stream/pause/:sessionId', (req, res) => {
+  try {
+    const sessionId = req.params.sessionId;
+    const session = streamingSessions.get(sessionId);
+    
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    session.isActive = false;
+    
+    // Check if any active sessions remain
+    const hasActiveSessions = Array.from(streamingSessions.values()).some(s => s.isActive);
+    if (!hasActiveSessions && streamingInterval) {
+      clearInterval(streamingInterval);
+      streamingInterval = null;
+      loggedStreamingDevices.clear();
+    }
+    
+    io.emit('streaming-session-updated', session);
+    io.emit('streaming-state-changed', {
+      isStreaming: hasActiveSessions,
+      session: hasActiveSessions ? Array.from(streamingSessions.values()).find(s => s.isActive) || null : null
+    });
+    
+    res.json({ success: true, session });
+  } catch (error) {
+    console.error('Error pausing session:', error);
+    res.status(500).json({ error: 'Failed to pause streaming' });
+  }
+});
+
+app.post('/api/stream/resume/:sessionId', (req, res) => {
+  try {
+    const sessionId = req.params.sessionId;
+    const session = streamingSessions.get(sessionId);
+    
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    session.isActive = true;
+    
+    // Start streaming loop if not already running
+    if (!streamingInterval) {
+      loggedStreamingDevices.clear();
+      startStreamingLoop();
+    }
+    
+    io.emit('streaming-session-updated', session);
+    io.emit('streaming-state-changed', {
+      isStreaming: true,
+      session: session
+    });
+    
+    res.json({ success: true, session });
+  } catch (error) {
+    console.error('Error resuming session:', error);
+    res.status(500).json({ error: 'Failed to resume streaming' });
   }
 });
 
@@ -1158,6 +1441,139 @@ app.post('/api/brightness', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update brightness' });
+  }
+});
+
+// Location Settings
+app.get('/api/settings/location', async (req, res) => {
+  try {
+    const settings = await storage.loadLocationSettings();
+    res.json(settings);
+  } catch (error) {
+    console.error('Error loading location settings:', error);
+    res.status(500).json({ error: 'Failed to load location settings' });
+  }
+});
+
+app.post('/api/settings/location', async (req, res) => {
+  try {
+    const { latitude, longitude, timezone, city, country, autoDetected } = req.body;
+    const settings = {
+      latitude: latitude !== undefined && latitude !== null ? Number(latitude) : undefined,
+      longitude: longitude !== undefined && longitude !== null ? Number(longitude) : undefined,
+      timezone: timezone || undefined,
+      city: city || undefined,
+      country: country || undefined,
+      autoDetected: autoDetected !== undefined ? Boolean(autoDetected) : undefined
+    };
+    await storage.saveLocationSettings(settings);
+    res.json(settings);
+  } catch (error) {
+    console.error('Error saving location settings:', error);
+    res.status(500).json({ error: 'Failed to save location settings' });
+  }
+});
+
+// Helper function to check if IP is private/localhost
+function isPrivateIP(ip: string): boolean {
+  if (!ip || ip === 'unknown' || ip === '::1' || ip === '127.0.0.1' || ip === 'localhost') {
+    return true;
+  }
+  // Check for private IP ranges
+  const parts = ip.split('.');
+  if (parts.length === 4) {
+    const first = parseInt(parts[0], 10);
+    const second = parseInt(parts[1], 10);
+    // 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+    if (first === 10 || 
+        (first === 172 && second >= 16 && second <= 31) ||
+        (first === 192 && second === 168)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Geolocate client by IP
+app.get('/api/settings/geolocate', async (req, res) => {
+  try {
+    // Get client IP from request
+    const clientIp = req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() || 
+                     req.headers['x-real-ip']?.toString() || 
+                     req.socket.remoteAddress || 
+                     'unknown';
+    
+    // Check if IP is private/localhost - if so, try to get public IP first
+    if (isPrivateIP(clientIp)) {
+      // Try to get public IP using a service that returns just the IP
+      try {
+        const publicIpResponse = await axios.get('https://api.ipify.org?format=json', { timeout: 3000 });
+        const publicIp = publicIpResponse.data.ip;
+        
+        if (isPrivateIP(publicIp)) {
+          return res.status(400).json({ 
+            error: 'Unable to detect location. You appear to be on a private network. Please enter your location manually.' 
+          });
+        }
+        
+        // Use the public IP for geolocation
+        const geoResponse = await axios.get(`http://ip-api.com/json/${publicIp}`, {
+          timeout: 5000,
+          params: {
+            fields: 'status,message,lat,lon,timezone,city,country,countryCode'
+          }
+        });
+        
+        if (geoResponse.data.status === 'success') {
+          return res.json({
+            latitude: geoResponse.data.lat,
+            longitude: geoResponse.data.lon,
+            timezone: geoResponse.data.timezone,
+            city: geoResponse.data.city,
+            country: geoResponse.data.country,
+            countryCode: geoResponse.data.countryCode,
+            autoDetected: true
+          });
+        }
+      } catch (publicIpError) {
+        // Fall through to manual entry message
+        return res.status(400).json({ 
+          error: 'Unable to detect your public IP. Please enter your location manually in the settings.' 
+        });
+      }
+    }
+    
+    // Use ip-api.com (free, no API key required for basic usage)
+    // Note: Limited to 45 requests per minute from the same IP
+    const response = await axios.get(`http://ip-api.com/json/${clientIp}`, {
+      timeout: 5000,
+      params: {
+        fields: 'status,message,lat,lon,timezone,city,country,countryCode'
+      }
+    });
+    
+    if (response.data.status === 'success') {
+      res.json({
+        latitude: response.data.lat,
+        longitude: response.data.lon,
+        timezone: response.data.timezone,
+        city: response.data.city,
+        country: response.data.country,
+        countryCode: response.data.countryCode,
+        autoDetected: true
+      });
+    } else {
+      res.status(400).json({ error: response.data.message || 'Failed to geolocate. Please enter location manually.' });
+    }
+  } catch (error: any) {
+    console.error('Error geolocating:', error);
+    if (error.response?.status === 400 && error.response?.data?.message?.includes('reserved')) {
+      res.status(400).json({ 
+        error: 'Cannot geolocate private IP address. Please enter your location manually or ensure you have a public IP.' 
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to geolocate. Please enter location manually.' });
+    }
   }
 });
 
@@ -1316,9 +1732,14 @@ function startStreamingLoop() {
             const groups = await storage.loadGroups();
             const group = groups.find(g => g.id === target.id);
             if (group && group.members) {
-              // Calculate total LED count for the group
+              // Calculate total LED count for the group (excluding excluded devices)
               let totalGroupLEDs = 0;
               for (const member of group.members) {
+                // Skip excluded devices
+                if (session.excludedDevices && session.excludedDevices.includes(member.deviceId)) {
+                  continue;
+                }
+                
                 const device = devices.find(d => d.id === member.deviceId);
                 if (device) {
                   if (member.startLed !== undefined && member.endLed !== undefined) {
@@ -1345,6 +1766,11 @@ function startStreamingLoop() {
               
               // Send to individual devices
               for (const member of group.members) {
+                // Skip excluded devices
+                if (session.excludedDevices && session.excludedDevices.includes(member.deviceId)) {
+                  continue;
+                }
+                
                 const device = devices.find(d => d.id === member.deviceId);
                 if (device) {
                   // Calculate LED count - use full device or segment
@@ -1417,6 +1843,12 @@ function startStreamingLoop() {
               // Map virtual LED indices to physical device ranges
               let virtualLEDIndex = 0;
               for (const range of virtual.ledRanges) {
+                // Skip excluded devices
+                if (session.excludedDevices && session.excludedDevices.includes(range.deviceId)) {
+                  virtualLEDIndex += range.endLed - range.startLed + 1;
+                  continue;
+                }
+                
                 const device = devices.find(d => d.id === range.deviceId);
                 if (device) {
                   const rangeLength = range.endLed - range.startLed + 1;

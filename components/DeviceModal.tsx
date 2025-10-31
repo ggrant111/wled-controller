@@ -122,7 +122,7 @@ export default function DeviceModal({ device, onSave, onClose }: DeviceModalProp
       }
     } catch (error) {
       console.error('Error saving device:', error);
-      alert('Failed to save device. Please try again.');
+      showToast('Failed to save device. Please try again.', 'error');
     } finally {
       setLoading(false);
     }

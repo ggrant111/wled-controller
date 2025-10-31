@@ -1,61 +1,75 @@
 ---
-description: Core data model specification for LED control system including devices, segments, effects, and their relationships
+description: Defines core LED control data models, relationships, and domain entities
 ---
 
 
 # data-models
 
-## Core Device Models
-Importance Score: 95
+## Core Data Models (Importance: 95/100)
 
-Device representation hierarchy that models physical and virtual LED arrangements:
-- LEDDevice: Base model for physical WLED-compatible devices
-  - deviceId: Unique identifier
-  - segments: Array of LED ranges
-  - virtualMappings: Segment-to-virtual device relationships
-- VirtualDevice: Logical grouping of LED segments
-  - virtualId: Unique identifier
-  - mappedSegments: References to physical device segments
-  - effectParameters: Active effect configuration
+1. LED Device Model
+- Physical and virtual LED device definitions
+- Segment mappings and address ranges
+- Brightness and color calibration parameters
+- Protocol configuration (DDP/UDP)
 
-## Effect System Models 
-Importance Score: 90
+2. Effect Model
+- Effect type definitions and parameters 
+- Layer compositing and blending rules
+- Real-time frame generation settings
+- Parameter inheritance schema
 
-Effect configuration and parameter models:
-- Effect: Template for LED animations
-  - effectId: Unique identifier
-  - parameters: Dynamic parameter collection
-  - blendMode: Compositing rules for layering
-- EffectLayer: Instance of effect with specific parameters
-  - opacity: Layer transparency
-  - parameterValues: Current parameter state
-  - targetSegments: Affected LED ranges
+3. Device Groups
+- Hierarchical group structures
+- Segment-level grouping rules
+- Partial device inclusion mappings
+- Reference validation constraints
 
-## Segment Models
-Importance Score: 85
+4. Effect Palettes
+- Color palette definitions
+- Interpolation parameters
+- FastLED compatibility formats
+- Dynamic generation rules
 
-LED segment organization and grouping:
-- Segment: Continuous range of LEDs
-  - startIndex: First LED in range
-  - length: Number of LEDs
-  - virtualAssignments: Parent virtual devices
-- Group: Collection of segments
-  - groupId: Unique identifier
-  - segments: Member segment references
-  - activeEffects: Currently running effects
+## Relationships
 
-## Palette Models
-Importance Score: 80
+1. Device-Segment Mapping
+- One-to-many relationship between devices and segments
+- Overlapping segment validation
+- Range conflict detection
+- Virtual-to-physical mappings
 
-Color management system:
-- ColorPalette: Collection of colors for effects
-  - paletteId: Unique identifier
-  - colors: Array of RGB values
-  - interpolationMode: Blending method
-- PaletteTransition: Rules for color changes
-  - sourceColors: Starting palette
-  - targetColors: Ending palette
-  - transitionType: Interpolation method
+2. Group-Device Association
+- Many-to-many relationship between groups and devices
+- Segment-level inclusion rules
+- Circular reference prevention
+- Inheritance hierarchy
+
+3. Effect-Layer Binding
+- One-to-many relationship between effects and layers
+- Parameter override mechanics
+- Blend mode definitions
+- Real-time update constraints
+
+## Domain Entities
+
+1. LED Segments
+- Start/end address ranges
+- Color order (RGB/GRB/etc)
+- Brightness scaling
+- Direction (forward/reverse)
+
+2. Effect Parameters
+- Type-specific parameter sets
+- Default value definitions
+- Valid range constraints
+- Real-time update flags
+
+3. Stream Targets
+- Protocol configurations
+- Address mappings
+- Timeout settings
+- Activity indicators
 
 $END$
 

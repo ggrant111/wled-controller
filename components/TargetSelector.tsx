@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { WLEDDevice, Group, VirtualDevice } from '../types';
+import { useModal } from './ModalProvider';
 
 interface TargetSelectorProps {
   devices: WLEDDevice[];
@@ -66,9 +67,17 @@ export default function TargetSelector({
       onTargetsChange(selectedTargets.filter(id => id !== virtualId));
     } else {
       if (hasOverlap) {
-        if (!confirm('Warning: This virtual device has overlapping LEDs with another selected virtual device. This may cause flashing/fighting effects. Continue anyway?')) {
-          return;
-        }
+        showConfirm({
+          message: 'Warning: This virtual device has overlapping LEDs with another selected virtual device. This may cause flashing/fighting effects. Continue anyway?',
+          title: 'Virtual Device Overlap',
+          variant: 'warning',
+          confirmText: 'Continue',
+          cancelText: 'Cancel',
+          onConfirm: () => {
+            onTargetsChange([...selectedTargets, virtualId]);
+          }
+        });
+        return;
       }
       onTargetsChange([...selectedTargets, virtualId]);
     }

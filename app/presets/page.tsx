@@ -6,9 +6,13 @@ import { Save, Trash2, Play, Edit3, Layers, Zap } from 'lucide-react';
 import { EffectPreset, WLEDDevice, Group, VirtualDevice } from '../../types';
 import { useRouter } from 'next/navigation';
 import PresetStreamModal from '../../components/PresetStreamModal';
+import { useToast } from '../../components/ToastProvider';
+import { useModal } from '../../components/ModalProvider';
 
 export default function PresetsPage() {
   const router = useRouter();
+  const { showToast } = useToast();
+  const { showConfirm } = useModal();
   const [presets, setPresets] = useState<EffectPreset[]>([]);
   const [devices, setDevices] = useState<WLEDDevice[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -17,6 +21,10 @@ export default function PresetsPage() {
   const [selectedPreset, setSelectedPreset] = useState<EffectPreset | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [showStreamModal, setShowStreamModal] = useState(false);
+  const [editingPreset, setEditingPreset] = useState<EffectPreset | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadPresets();
@@ -51,9 +59,14 @@ export default function PresetsPage() {
   };
 
   const handleDeletePreset = async (presetId: string) => {
-    if (!confirm('Are you sure you want to delete this preset?')) return;
-
-    setIsDeleting(presetId);
+    showConfirm({
+      message: 'Are you sure you want to delete this preset?',
+      title: 'Delete Preset',
+      variant: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        setIsDeleting(presetId);
     try {
       const response = await fetch(`/api/presets/${presetId}`, {
         method: 'DELETE'
@@ -67,15 +80,67 @@ export default function PresetsPage() {
       }
     } catch (error) {
       console.error('Error deleting preset:', error);
-      alert('Failed to delete preset');
+      showToast('Failed to delete preset', 'error');
     } finally {
       setIsDeleting(null);
     }
+      }
+    });
   };
 
   const handleStreamPreset = (preset: EffectPreset) => {
     setSelectedPreset(preset);
     setShowStreamModal(true);
+  };
+
+  const handleEditPreset = (preset: EffectPreset) => {
+    setEditingPreset(preset);
+    setEditName(preset.name);
+    setEditDescription(preset.description || '');
+  };
+
+  const handleSavePreset = async () => {
+    if (!editingPreset || !editName.trim()) {
+      showToast('Please enter a preset name', 'error');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/presets/${editingPreset.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName.trim(),
+          description: editDescription.trim() || '',
+          useLayers: editingPreset.useLayers,
+          effect: editingPreset.effect,
+          parameters: editingPreset.parameters,
+          layers: editingPreset.layers,
+          layerParameters: editingPreset.layerParameters
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update preset');
+      }
+
+      const updatedPreset = await response.json();
+      setPresets(presets.map(p => p.id === updatedPreset.id ? updatedPreset : p));
+      setEditingPreset(null);
+      setEditName('');
+      setEditDescription('');
+    } catch (error: any) {
+      console.error('Error updating preset:', error);
+      showToast(error.message || 'Failed to update preset', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleEditInEffects = (preset: EffectPreset) => {
+    router.push(`/effects?preset=${encodeURIComponent(preset.id)}&edit=true`);
   };
 
   if (loading) {
@@ -143,14 +208,23 @@ export default function PresetsPage() {
                     {preset.name}
                   </h3>
                 </div>
-                <button
-                  onClick={() => handleDeletePreset(preset.id)}
-                  disabled={isDeleting === preset.id}
-                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-red-400 hover:text-red-300 disabled:opacity-50"
-                  title="Delete preset"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleEditPreset(preset)}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-blue-400 hover:text-blue-300"
+                    title="Edit preset"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeletePreset(preset.id)}
+                    disabled={isDeleting === preset.id}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-red-400 hover:text-red-300 disabled:opacity-50"
+                    title="Delete preset"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {preset.description && (
@@ -184,13 +258,22 @@ export default function PresetsPage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => handleStreamPreset(preset)}
-                className="w-full px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                <Play className="w-4 h-4" />
-                Stream Preset
-              </button>
+              <div className="space-y-2">
+                <button
+                  onClick={() => handleStreamPreset(preset)}
+                  className="w-full px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Play className="w-4 h-4" />
+                  Stream Preset
+                </button>
+                <button
+                  onClick={() => handleEditInEffects(preset)}
+                  className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit Effects
+                </button>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -207,6 +290,61 @@ export default function PresetsPage() {
           onClose={() => setShowStreamModal(false)}
           onStreamStarted={() => setShowStreamModal(false)}
         />
+      )}
+
+      {/* Edit Preset Modal */}
+      {editingPreset && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card p-6 max-w-md w-full mx-4"
+          >
+            <h3 className="text-xl font-bold mb-4">Edit Preset</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Preset Name *</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Enter preset name"
+                  className="input-field w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Description</label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Optional description"
+                  rows={3}
+                  className="input-field w-full resize-none"
+                />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setEditingPreset(null);
+                    setEditName('');
+                    setEditDescription('');
+                  }}
+                  disabled={isSaving}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSavePreset}
+                  disabled={isSaving || !editName.trim()}
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );

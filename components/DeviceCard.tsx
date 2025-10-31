@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Edit, Trash2, Play, Pause, Settings, Wifi, WifiOff, Zap, Save, Eye } from 'lucide-react';
 import { WLEDDevice, Effect, EffectPreset } from '../types';
 import LEDPreviewCanvas from './LEDPreviewCanvas';
+import StreamConflictModal from './StreamConflictModal';
 import { useToast } from './ToastProvider';
 import { useStreamIndicator } from '../hooks/useStreamIndicator';
 
@@ -25,18 +26,39 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
   const [mode, setMode] = useState<'preset' | 'effect'>('preset');
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [selectedEffectId, setSelectedEffectId] = useState<string>('');
+  const [conflictModalOpen, setConflictModalOpen] = useState(false);
+  const [pendingStreamConfig, setPendingStreamConfig] = useState<{ requestBody: any; targets: any[] } | null>(null);
+  const [conflictData, setConflictData] = useState<any>(null);
+  const [devicesList, setDevicesList] = useState<Array<{ id: string; name: string }>>([]);
+  const [groupsList, setGroupsList] = useState<Array<{ id: string; name: string }>>([]);
+  const [virtualsList, setVirtualsList] = useState<Array<{ id: string; name: string }>>([]);
 
   useEffect(() => {
     // Lazy-load when controls shown
     if (!showStreamControls) return;
     (async () => {
       try {
-        const [effectsRes, presetsRes] = await Promise.all([
+        const [effectsRes, presetsRes, devicesRes, groupsRes, virtualsRes] = await Promise.all([
           fetch('/api/effects'),
-          fetch('/api/presets')
+          fetch('/api/presets'),
+          fetch('/api/devices'),
+          fetch('/api/groups'),
+          fetch('/api/virtuals')
         ]);
         if (effectsRes.ok) setEffects(await effectsRes.json());
         if (presetsRes.ok) setPresets(await presetsRes.json());
+        if (devicesRes.ok) {
+          const devs = await devicesRes.json();
+          setDevicesList(devs.map((d: WLEDDevice) => ({ id: d.id, name: d.name })));
+        }
+        if (groupsRes.ok) {
+          const grps = await groupsRes.json();
+          setGroupsList(grps.map((g: any) => ({ id: g.id, name: g.name })));
+        }
+        if (virtualsRes.ok) {
+          const virts = await virtualsRes.json();
+          setVirtualsList(virts.map((v: any) => ({ id: v.id, name: v.name })));
+        }
       } catch {}
     })();
   }, [showStreamControls]);
@@ -185,14 +207,15 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
                 </select>
                 <button
                   onClick={async ()=>{
-                    if (!selectedPresetId) { alert('Select a preset'); return; }
+                    if (!selectedPresetId) { showToast('Select a preset', 'error'); return; }
                     const res = await fetch(`/api/presets/${selectedPresetId}`);
-                    if (!res.ok) { alert('Failed to load preset'); return; }
+                    if (!res.ok) { showToast('Failed to load preset', 'error'); return; }
                     const preset: EffectPreset = await res.json();
+                    const targets = [{ type:'device', id: device.id }];
                     let body: any;
                     if (preset.useLayers && preset.layers) {
                       body = {
-                        targets: [{ type:'device', id: device.id }],
+                        targets,
                         layers: preset.layers.map(layer => ({
                           ...layer,
                           effect: {
@@ -207,7 +230,7 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
                       };
                     } else if (preset.effect) {
                       body = {
-                        targets: [{ type:'device', id: device.id }],
+                        targets,
                         effect: {
                           ...preset.effect,
                           parameters: preset.effect.parameters.map(param => ({
@@ -218,7 +241,29 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
                         fps: 30,
                         blendMode: 'overwrite'
                       };
-                    } else { alert('Invalid preset'); return; }
+                    } else { showToast('Invalid preset', 'error'); return; }
+                    
+                    // Check for conflicts
+                    try {
+                      const conflictResponse = await fetch('/api/stream/check-conflicts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targets })
+                      });
+                      
+                      if (conflictResponse.ok) {
+                        const conflictCheck = await conflictResponse.json();
+                        if (conflictCheck.hasConflicts && conflictCheck.conflicts.length > 0) {
+                          setConflictData(conflictCheck);
+                          setPendingStreamConfig({ requestBody: body, targets });
+                          setConflictModalOpen(true);
+                          return;
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error checking conflicts:', error);
+                    }
+                    
                     const start = await fetch('/api/stream/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
                     if (!start.ok) { showToast('Failed to start stream', 'error'); } else { showToast('Streaming started', 'success'); }
                   }}
@@ -240,17 +285,41 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
                 <button
                   onClick={async ()=>{
                     const eff = effects.find(e=>e.id===selectedEffectId);
-                    if (!eff) { alert('Select an effect'); return; }
+                    if (!eff) { showToast('Select an effect', 'error'); return; }
                     const effectWithDefaults = {
                       ...eff,
                       parameters: eff.parameters.map(p => ({...p}))
                     };
-                    const start = await fetch('/api/stream/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-                      targets:[{ type:'device', id: device.id }],
+                    const targets = [{ type:'device', id: device.id }];
+                    const body = {
+                      targets,
                       effect: effectWithDefaults,
                       fps: 30,
                       blendMode: 'overwrite'
-                    }) });
+                    };
+                    
+                    // Check for conflicts
+                    try {
+                      const conflictResponse = await fetch('/api/stream/check-conflicts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targets })
+                      });
+                      
+                      if (conflictResponse.ok) {
+                        const conflictCheck = await conflictResponse.json();
+                        if (conflictCheck.hasConflicts && conflictCheck.conflicts.length > 0) {
+                          setConflictData(conflictCheck);
+                          setPendingStreamConfig({ requestBody: body, targets });
+                          setConflictModalOpen(true);
+                          return;
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error checking conflicts:', error);
+                    }
+                    
+                    const start = await fetch('/api/stream/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
                     if (!start.ok) { showToast('Failed to start stream', 'error'); } else { showToast('Streaming started', 'success'); }
                   }}
                   className="btn-primary"
@@ -265,6 +334,105 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
           </div>
         )}
       </div>
+      
+      {/* Stream Conflict Modal */}
+      <StreamConflictModal
+        isOpen={conflictModalOpen}
+        conflicts={conflictData?.conflicts || []}
+        devices={devicesList}
+        groups={groupsList}
+        virtuals={virtualsList}
+        targetDeviceId={device.id}
+        onPartialStop={async (deviceId) => {
+          if (!pendingStreamConfig || !conflictData?.conflicts?.[0]) {
+            setConflictModalOpen(false);
+            return;
+          }
+          
+          try {
+            // Exclude this device from the conflicting group/virtual stream
+            const conflict = conflictData.conflicts[0];
+            await fetch('/api/stream/exclude-device', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                sessionId: conflict.sessionId,
+                deviceId: deviceId
+              })
+            });
+            
+            // Start the new stream
+            const response = await fetch('/api/stream/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(pendingStreamConfig.requestBody)
+            });
+            
+            if (!response.ok) {
+              showToast('Failed to start stream', 'error');
+            } else {
+              showToast('Streaming started to device', 'success');
+            }
+            
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+          } catch (error) {
+            console.error('Error starting streaming after partial stop:', error);
+            showToast('Failed to start streaming', 'error');
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+          }
+        }}
+        onConfirm={async () => {
+          if (!pendingStreamConfig) {
+            setConflictModalOpen(false);
+            return;
+          }
+          
+          try {
+            // Stop conflicting sessions
+            if (conflictData?.conflicts) {
+              for (const conflict of conflictData.conflicts) {
+                try {
+                  await fetch(`/api/stream/stop/${conflict.sessionId}`, { method: 'POST' });
+                } catch (e) {
+                  console.error('Error stopping conflicting session:', e);
+                }
+              }
+            }
+            
+            // Start the new stream
+            const response = await fetch('/api/stream/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(pendingStreamConfig.requestBody)
+            });
+            
+            if (!response.ok) {
+              showToast('Failed to start stream', 'error');
+            } else {
+              showToast('Streaming started', 'success');
+            }
+            
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+          } catch (error) {
+            console.error('Error starting streaming after conflict resolution:', error);
+            showToast('Failed to start streaming', 'error');
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+          }
+        }}
+        onCancel={() => {
+          setConflictModalOpen(false);
+          setPendingStreamConfig(null);
+          setConflictData(null);
+        }}
+      />
     </motion.div>
   );
 }

@@ -1,47 +1,49 @@
 ---
-description: Specification for LED device mapping, segmentation, and group synchronization logic
+description: Configuration and management of virtual LED devices, segments, and group synchronization
 ---
 
 
 # device-management
 
-Virtual Device Management (Importance Score: 85)
-- LED range mapping system for composing virtual devices from physical segments
-- Segment overlap detection and validation logic
-- Distribution management for LED assignments across multiple physical devices
+Importance Score: 75/100
 
-Device Group Synchronization (Importance Score: 80)
-- Synchronized control mechanisms for device clusters
-- Segment-level coordination within grouped devices
-- Cross-device effect propagation handling
+## Virtual Device Mapping
 
-Device Segment Management (Importance Score: 75)
-Files: components/VirtualDeviceModal.tsx
-- Virtual LED segment definition and boundary management
-- Mapping tables for physical-to-logical device relationships
-- Real-time segment state synchronization
+Key components handling logical-to-physical device relationships:
 
-Key Domain Models:
-1. Virtual Device Structure
-- Segment definitions with start/end mappings
-- Physical device references
-- Group membership attributes
+1. LED Segment Allocation
+- Maps virtual LED ranges to physical device segments 
+- Handles overlapping LED range detection
+- Validates segment boundaries and device constraints
+- Manages dynamic reconfiguration of LED mappings
 
-2. Device Groups
-- Synchronized control parameters
-- Member device registry
-- Segment-level effect coordination
+2. Group Synchronization
+- Implements hierarchical device grouping structure
+- Controls partial device inclusion in groups
+- Prevents circular group references
+- Coordinates segment-level device synchronization
 
-3. LED Range Mapping
-- Physical-to-virtual LED index translation
-- Segment overlap resolution
-- Cross-device LED distribution
+3. Device Configuration
+- Virtual device creation with customizable ranges
+- LED segment validation and conflict resolution
+- Real-time device mapping updates
+- Group-based device management
 
-Business Rules:
-- Virtual devices must have unique segment ranges
-- Group effects apply uniformly across member devices
-- Segment boundaries cannot overlap within single virtual device
-- Physical device segments maintain independent state tracking
+Core workflows:
+
+1. Virtual Device Creation
+- Range mapping configuration
+- Segment allocation validation
+- Overlap conflict detection
+- Physical device linking
+
+2. Group Management  
+- Hierarchical device organization
+- Segment-level grouping
+- Group configuration validation
+- Multi-device synchronization
+
+The device management system focuses on maintaining relationships between virtual and physical LED devices while ensuring proper synchronization through hierarchical grouping structures.
 
 $END$
 

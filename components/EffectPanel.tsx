@@ -6,9 +6,12 @@ import { Play, Pause, Settings, Palette, Zap, Trash2, Layers, Save, Download } f
 import { Effect, EffectParameter, EffectLayer, EffectPreset } from '../types';
 import { useStreaming } from '../contexts/StreamingContext';
 import { useSocket } from '../hooks/useSocket';
+import { useToast } from './ToastProvider';
+import { useModal } from './ModalProvider';
 import LEDPreviewCanvas from './LEDPreviewCanvas';
 import PaletteSelector from './PaletteSelector';
 import LayerPanel from './LayerPanel';
+import StreamConflictModal from './StreamConflictModal';
 import { v4 as uuidv4 } from 'uuid';
 
 interface EffectPanelProps {
@@ -18,11 +21,15 @@ interface EffectPanelProps {
   devices: any[];
   groups: any[];
   virtuals: any[];
+  editingPresetId?: string;
+  editingPreset?: EffectPreset | null;
 }
 
-export default function EffectPanel({ effects, selectedEffect, onEffectSelect, devices, groups, virtuals }: EffectPanelProps) {
+export default function EffectPanel({ effects, selectedEffect, onEffectSelect, devices, groups, virtuals, editingPresetId, editingPreset }: EffectPanelProps) {
   const { isStreaming, setIsStreaming, streamingSessionId, setStreamingSessionId, lastStreamConfig, setLastStreamConfig, selectedTargets, setSelectedTargets } = useStreaming();
   const { emit } = useSocket();
+  const { showToast } = useToast();
+  const { showConfirm } = useModal();
   const [effectParameters, setEffectParameters] = useState<Map<string, Map<string, any>>>(new Map());
   const [activeEffect, setActiveEffect] = useState<Effect | null>(null);
   const [useLayers, setUseLayers] = useState(false);
@@ -30,6 +37,122 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
   const [showSavePresetModal, setShowSavePresetModal] = useState(false);
   const [presetName, setPresetName] = useState('');
   const [presetDescription, setPresetDescription] = useState('');
+  const [currentPresetId, setCurrentPresetId] = useState<string | undefined>(editingPresetId);
+  const [presetLoaded, setPresetLoaded] = useState(false);
+  const [conflictModalOpen, setConflictModalOpen] = useState(false);
+  const [pendingStreamConfig, setPendingStreamConfig] = useState<{ targets: any[]; requestBody: any } | null>(null);
+  const [conflictData, setConflictData] = useState<any>(null);
+
+  // Load preset data when editing (wait for effects to be available)
+  useEffect(() => {
+    if (effects.length > 0 && !presetLoaded) {
+      if (editingPreset) {
+        loadPresetForEdit(editingPreset);
+        setPresetLoaded(true);
+      } else if (editingPresetId && !currentPresetId) {
+        // Fallback: load by ID if preset object not provided
+        loadPresetById(editingPresetId);
+        setPresetLoaded(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingPreset, editingPresetId, effects.length, presetLoaded]);
+
+  const loadPresetById = async (presetId: string) => {
+    try {
+      const encodedPresetId = encodeURIComponent(presetId);
+      const response = await fetch(`/api/presets/${encodedPresetId}`);
+      if (!response.ok) throw new Error('Failed to load preset');
+      const preset: EffectPreset = await response.json();
+      loadPresetForEdit(preset);
+    } catch (error) {
+      console.error('Error loading preset for edit:', error);
+    }
+  };
+
+  const loadPresetForEdit = (preset: EffectPreset) => {
+    setCurrentPresetId(preset.id);
+    setPresetName(preset.name);
+    setPresetDescription(preset.description || '');
+    
+    if (preset.useLayers && preset.layers && preset.layers.length > 0) {
+      // Load layered preset
+      setUseLayers(true);
+      
+      // Load layers - need to match effects from available effects list
+      const loadedLayers: EffectLayer[] = preset.layers.map(layer => {
+        // Find matching effect from available effects
+        const matchingEffect = effects.find(e => e.id === layer.effect.id);
+        if (matchingEffect) {
+          // Get saved parameters for this layer
+          const layerParamKey = `${layer.id}-${layer.effect.id}`;
+          const savedParams = preset.layerParameters?.[layerParamKey] || preset.layerParameters?.[layer.effect.id] || {};
+          
+          return {
+            ...layer,
+            effect: {
+              ...matchingEffect,
+              // Use saved parameter values from preset, fallback to layer's effect params, then defaults
+              parameters: matchingEffect.parameters.map(param => ({
+                ...param,
+                value: savedParams[param.name] ?? layer.effect.parameters.find(p => p.name === param.name)?.value ?? param.value
+              }))
+            }
+          };
+        }
+        // If effect not found, use the layer's effect as-is
+        return layer;
+      });
+      
+      setLayers(loadedLayers);
+      
+      // Load layer parameters into Map structure
+      const newEffectParams = new Map(effectParameters);
+      if (preset.layerParameters) {
+        Object.entries(preset.layerParameters).forEach(([key, params]) => {
+          const paramMap = new Map(Object.entries(params));
+          newEffectParams.set(key, paramMap);
+        });
+      }
+      
+      // Also initialize parameters for layers that might not have saved params yet
+      loadedLayers.forEach(layer => {
+        const paramKey = `${layer.id}-${layer.effect.id}`;
+        if (!newEffectParams.has(paramKey)) {
+          // Initialize with default values from effect
+          const layerParams = new Map();
+          layer.effect.parameters.forEach(param => {
+            layerParams.set(param.name, param.value);
+          });
+          newEffectParams.set(paramKey, layerParams);
+        }
+      });
+      
+      setEffectParameters(newEffectParams);
+    } else if (preset.effect) {
+      // Load single effect preset
+      setUseLayers(false);
+      const matchingEffect = effects.find(e => e.id === preset.effect?.id);
+      if (matchingEffect) {
+        const effectWithParams = {
+          ...matchingEffect,
+          parameters: matchingEffect.parameters.map(param => ({
+            ...param,
+            value: preset.parameters?.[param.name] ?? param.value
+          }))
+        };
+        onEffectSelect(effectWithParams);
+        
+        // Load parameters into Map
+        if (preset.parameters) {
+          const paramMap = new Map(Object.entries(preset.parameters));
+          const newEffectParams = new Map(effectParameters);
+          newEffectParams.set(matchingEffect.id, paramMap);
+          setEffectParameters(newEffectParams);
+        }
+      }
+    }
+  };
   // Debounce timers per parameter (single and layers)
   const paramDebounceTimers = useRef<Map<string, any>>(new Map());
 
@@ -106,9 +229,10 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
     console.log('Parameter updated:', paramName, value);
   };
 
-  // Initialize layers when useLayers is enabled
+  // Initialize layers when useLayers is enabled (but not if we're loading a preset)
   useEffect(() => {
-    if (useLayers && layers.length === 0 && selectedEffect) {
+    if (useLayers && layers.length === 0 && selectedEffect && !currentPresetId) {
+      // Only auto-initialize if we're not editing a preset
       const layerId = uuidv4();
       const initialLayer: EffectLayer = {
         id: layerId,
@@ -129,7 +253,7 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
       newEffectParams.set(`${layerId}-${selectedEffect.id}`, layerParams);
       setEffectParameters(newEffectParams);
     }
-  }, [useLayers, selectedEffect]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [useLayers, selectedEffect, currentPresetId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStartStreaming = async () => {
     if (!selectedEffect && (!useLayers || layers.length === 0)) return;
@@ -138,7 +262,7 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
       setIsStreaming(true);
       
       if (selectedTargets.length === 0) {
-        alert('Please select at least one device to stream to.');
+        showToast('Please select at least one device to stream to.', 'error');
         setIsStreaming(false);
         return;
       }
@@ -162,6 +286,29 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
           };
         }
       });
+      
+      // Check for conflicts before starting stream
+      let hasConflicts = false;
+      let conflictCheck: any = null;
+      
+      try {
+        const conflictResponse = await fetch('/api/stream/check-conflicts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targets })
+        });
+        
+        if (conflictResponse.ok) {
+          conflictCheck = await conflictResponse.json();
+          console.log('Conflict check result:', conflictCheck);
+          hasConflicts = conflictCheck.hasConflicts && conflictCheck.conflicts && conflictCheck.conflicts.length > 0;
+        } else {
+          console.warn('Conflict check failed:', conflictResponse.status, conflictResponse.statusText);
+        }
+      } catch (error) {
+        console.error('Error checking conflicts:', error);
+        // Continue without conflict check if it fails
+      }
       
       let requestBody: any;
       if (useLayers && layers.length > 0) {
@@ -205,6 +352,16 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
         return;
       }
       
+      if (hasConflicts) {
+        // Show conflict modal
+        console.log('Showing conflict modal with conflicts:', conflictCheck.conflicts);
+        setConflictData(conflictCheck);
+        setPendingStreamConfig({ targets, requestBody });
+        setConflictModalOpen(true);
+        setIsStreaming(false);
+        return;
+      }
+      
       const response = await fetch('/api/stream/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -232,7 +389,7 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
     } catch (error) {
       console.error('Error starting streaming:', error);
       setIsStreaming(false);
-      alert('Failed to start streaming. Please try again.');
+      showToast('Failed to start streaming. Please try again.', 'error');
     }
   };
 
@@ -257,14 +414,14 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
     switch (param.type) {
       case 'color':
         return (
-          <div key={param.name} className="space-y-2">
-            <label className="block text-sm font-medium">{param.name}</label>
-            <div className="flex items-center gap-3">
+          <div key={param.name} className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-200">{param.name}</label>
+            <div className="flex items-center gap-2">
               <input
                 type="color"
                 value={parameters.get(param.name) || param.value}
                 onChange={(e) => handleParameterChange(param.name, e.target.value)}
-                className="w-12 h-8 rounded border border-white/20 bg-transparent"
+                className="w-10 h-8 rounded border border-white/20 bg-transparent cursor-pointer"
               />
               <input
                 type="text"
@@ -278,10 +435,13 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
 
       case 'range':
         return (
-          <div key={param.name} className="space-y-2">
-            <label className="block text-sm font-medium">
-              {param.name}: {parameters.get(param.name) ?? param.value}
-            </label>
+          <div key={param.name} className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-200">{param.name}</label>
+              <span className="text-sm text-primary-400 font-mono min-w-[60px] text-right">
+                {parameters.get(param.name) ?? param.value}
+              </span>
+            </div>
             <input
               type="range"
               min={param.min || 0}
@@ -322,8 +482,8 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
 
       case 'number':
         return (
-          <div key={param.name} className="space-y-2">
-            <label className="block text-sm font-medium">{param.name}</label>
+          <div key={param.name} className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-200">{param.name}</label>
             <input
               type="number"
               min={param.min}
@@ -349,8 +509,8 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
 
       case 'boolean':
         return (
-          <div key={param.name} className="flex items-center justify-between">
-            <label className="text-sm font-medium">{param.name}</label>
+          <div key={param.name} className="flex items-center justify-between py-1">
+            <label className="text-sm font-medium text-gray-200">{param.name}</label>
             <button
               onClick={() => handleParameterChange(param.name, !(parameters.get(param.name) ?? param.value))}
               className={`w-12 h-6 rounded-full transition-colors ${
@@ -370,14 +530,14 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
 
       case 'options':
         return (
-          <div key={param.name} className="space-y-2">
-            <label className="block text-sm font-medium">{param.name}</label>
-            <div className="flex gap-2">
+          <div key={param.name} className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-200">{param.name}</label>
+            <div className="flex gap-2 flex-wrap">
               {param.options?.map((option) => (
                 <button
                   key={option}
                   onClick={() => handleParameterChange(param.name, option)}
-                  className={`px-4 py-2 rounded-lg text-sm transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
                     parameters.get(param.name) === option || (!parameters.has(param.name) && param.value === option)
                       ? 'bg-primary-500 text-white'
                       : 'bg-white/10 hover:bg-white/20 text-white/70'
@@ -394,20 +554,20 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
         if (param.isColorArray) {
           const colorArray = parameters.get(param.name) || param.value || [];
           return (
-            <div key={param.name} className="space-y-3">
+            <div key={param.name} className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium">{param.name}</label>
+                <label className="block text-sm font-medium text-gray-200">{param.name}</label>
                 <button
                   onClick={() => {
                     const newArray = [...colorArray, '#ff0000'];
                     handleParameterChange(param.name, newArray);
                   }}
-                  className="btn-secondary text-xs px-3 py-1"
+                  className="btn-secondary text-xs px-2 py-1"
                 >
                   Add Color
                 </button>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {colorArray.map((color: string, index: number) => (
                   <div key={index} className="flex items-center gap-2">
                     <input
@@ -418,7 +578,7 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
                         newArray[index] = e.target.value;
                         handleParameterChange(param.name, newArray);
                       }}
-                      className="w-12 h-8 rounded border border-white/20 bg-transparent"
+                      className="w-10 h-8 rounded border border-white/20 bg-transparent cursor-pointer"
                     />
                     <input
                       type="text"
@@ -435,8 +595,9 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
                         const newArray = colorArray.filter((_: any, i: number) => i !== index);
                         handleParameterChange(param.name, newArray);
                       }}
-                      className="p-2 hover:bg-red-500/20 text-red-400 rounded transition-colors"
+                      className="p-1.5 hover:bg-red-500/20 text-red-400 rounded transition-colors"
                       disabled={colorArray.length <= 1}
+                      title="Remove color"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -450,8 +611,8 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
 
       case 'palette':
         return (
-          <div key={param.name} className="space-y-2">
-            <label className="block text-sm font-medium">{param.name}</label>
+          <div key={param.name} className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-200">{param.name}</label>
             <PaletteSelector
               value={parameters.get(param.name) || param.value || 'rainbow'}
               onChange={(paletteId) => handleParameterChange(param.name, paletteId)}
@@ -543,7 +704,7 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
       </motion.div>
 
       {/* Target Selection - Horizontal Pills */}
-      {selectedEffect && (
+      {(selectedEffect || (useLayers && layers.length > 0)) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -657,9 +818,17 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
                               setSelectedTargets(selectedTargets.filter(id => id !== virtualId));
                             } else {
                               if (hasOverlap) {
-                                if (!confirm('Warning: This virtual device has overlapping LEDs with another selected virtual device. This may cause flashing/fighting effects. Continue anyway?')) {
-                                  return;
-                                }
+                                showConfirm({
+                                  message: 'Warning: This virtual device has overlapping LEDs with another selected virtual device. This may cause flashing/fighting effects. Continue anyway?',
+                                  title: 'Virtual Device Overlap',
+                                  variant: 'warning',
+                                  confirmText: 'Continue',
+                                  cancelText: 'Cancel',
+                                  onConfirm: () => {
+                                    setSelectedTargets([...selectedTargets, virtualId]);
+                                  }
+                                });
+                                return;
                               }
                               setSelectedTargets([...selectedTargets, virtualId]);
                             }
@@ -686,7 +855,7 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
       )}
 
       {/* Save Preset Button & Layers Mode Toggle */}
-      {selectedEffect && (
+      {(selectedEffect || (useLayers && layers.length > 0)) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -727,7 +896,7 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
       )}
 
       {/* Layer Panel */}
-      {selectedEffect && useLayers && (
+      {useLayers && layers.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -839,14 +1008,14 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
             <h3 className="text-lg font-bold">Parameters</h3>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {selectedEffect.parameters.map(renderParameterControl)}
           </div>
         </motion.div>
       )}
 
       {/* Streaming Controls */}
-      {selectedEffect && (
+      {(selectedEffect || (useLayers && layers.length > 0)) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -886,7 +1055,7 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
       )}
 
       {/* Live Preview */}
-      {selectedEffect && (
+      {(selectedEffect || (useLayers && layers.length > 0)) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -905,6 +1074,134 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
         </motion.div>
       )}
 
+      {/* Stream Conflict Modal */}
+      <StreamConflictModal
+        isOpen={conflictModalOpen}
+        conflicts={conflictData?.conflicts || []}
+        devices={devices.map(d => ({ id: d.id, name: d.name }))}
+        groups={groups.map(g => ({ id: g.id, name: g.name }))}
+        virtuals={virtuals.map(v => ({ id: v.id, name: v.name }))}
+        targetDeviceId={
+          pendingStreamConfig?.targets?.length === 1 && 
+          pendingStreamConfig.targets[0]?.type === 'device' 
+            ? pendingStreamConfig.targets[0].id 
+            : undefined
+        }
+        onPartialStop={async (deviceId) => {
+          if (!pendingStreamConfig || !conflictData?.conflicts?.[0]) {
+            setConflictModalOpen(false);
+            return;
+          }
+          
+          try {
+            // Exclude this device from the conflicting group/virtual stream
+            const conflict = conflictData.conflicts[0];
+            await fetch('/api/stream/exclude-device', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                sessionId: conflict.sessionId,
+                deviceId: deviceId
+              })
+            });
+            
+            // Start the new stream
+            const response = await fetch('/api/stream/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(pendingStreamConfig.requestBody)
+            });
+            
+            if (!response.ok) {
+              throw new Error('Failed to start streaming');
+            }
+            
+            const session = await response.json();
+            console.log('Streaming started:', session);
+            
+            setStreamingSessionId(session.id);
+            setLastStreamConfig({
+              targets: pendingStreamConfig.targets,
+              effect: useLayers ? undefined : pendingStreamConfig.requestBody.effect,
+              layers: useLayers ? layers : undefined,
+              fps: 30,
+              blendMode: 'overwrite'
+            });
+            
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+          } catch (error) {
+            console.error('Error starting streaming after partial stop:', error);
+            setIsStreaming(false);
+            showToast('Failed to start streaming. Please try again.', 'error');
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+          }
+        }}
+        onConfirm={async () => {
+          if (!pendingStreamConfig) {
+            setConflictModalOpen(false);
+            return;
+          }
+          
+          try {
+            setIsStreaming(true);
+            
+            // Stop conflicting sessions
+            if (conflictData?.conflicts) {
+              for (const conflict of conflictData.conflicts) {
+                try {
+                  await fetch(`/api/stream/stop/${conflict.sessionId}`, { method: 'POST' });
+                } catch (e) {
+                  console.error('Error stopping conflicting session:', e);
+                }
+              }
+            }
+            
+            // Start the new stream
+            const response = await fetch('/api/stream/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(pendingStreamConfig.requestBody)
+            });
+            
+            if (!response.ok) {
+              throw new Error('Failed to start streaming');
+            }
+            
+            const session = await response.json();
+            console.log('Streaming started:', session);
+            
+            setStreamingSessionId(session.id);
+            setLastStreamConfig({
+              targets: pendingStreamConfig.targets,
+              effect: useLayers ? undefined : pendingStreamConfig.requestBody.effect,
+              layers: useLayers ? layers : undefined,
+              fps: 30,
+              blendMode: 'overwrite'
+            });
+            
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+          } catch (error) {
+            console.error('Error starting streaming after conflict resolution:', error);
+            setIsStreaming(false);
+            showToast('Failed to start streaming. Please try again.', 'error');
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+          }
+        }}
+        onCancel={() => {
+          setConflictModalOpen(false);
+          setPendingStreamConfig(null);
+          setConflictData(null);
+        }}
+      />
+
       {/* Save Preset Modal */}
       {showSavePresetModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -913,7 +1210,9 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
             animate={{ opacity: 1, scale: 1 }}
             className="glass-card p-6 max-w-md w-full mx-4"
           >
-            <h3 className="text-xl font-bold mb-4">Save Effect Preset</h3>
+            <h3 className="text-xl font-bold mb-4">
+              {currentPresetId ? 'Update Effect Preset' : 'Save Effect Preset'}
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Preset Name *</label>
@@ -941,6 +1240,7 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
                     setShowSavePresetModal(false);
                     setPresetName('');
                     setPresetDescription('');
+                    setCurrentPresetId(undefined);
                   }}
                   className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
                 >
@@ -949,7 +1249,7 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
                 <button
                   onClick={async () => {
                     if (!presetName.trim()) {
-                      alert('Please enter a preset name');
+                      showToast('Please enter a preset name', 'error');
                       return;
                     }
 
@@ -974,30 +1274,41 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
                         presetData.parameters = Object.fromEntries(parameters);
                       }
 
-                      const response = await fetch('/api/presets', {
-                        method: 'POST',
+                      const url = currentPresetId 
+                        ? `/api/presets/${encodeURIComponent(currentPresetId)}`
+                        : '/api/presets';
+                      const method = currentPresetId ? 'PUT' : 'POST';
+
+                      const response = await fetch(url, {
+                        method,
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(presetData)
                       });
 
                       if (!response.ok) {
                         const error = await response.json();
-                        throw new Error(error.error || 'Failed to save preset');
+                        throw new Error(error.error || `Failed to ${currentPresetId ? 'update' : 'save'} preset`);
                       }
 
                       const savedPreset = await response.json();
-                      alert(`Preset "${savedPreset.name}" saved successfully!`);
+                      showToast(`Preset "${savedPreset.name}" ${currentPresetId ? 'updated' : 'saved'} successfully!`, 'success');
                       setShowSavePresetModal(false);
                       setPresetName('');
                       setPresetDescription('');
+                      setCurrentPresetId(undefined);
+                      
+                      // If updating, reload the page or navigate back to presets
+                      if (currentPresetId) {
+                        window.location.href = '/presets';
+                      }
                     } catch (error: any) {
-                      console.error('Error saving preset:', error);
-                      alert(error.message || 'Failed to save preset');
+                      console.error(`Error ${currentPresetId ? 'updating' : 'saving'} preset:`, error);
+                      showToast(error.message || `Failed to ${currentPresetId ? 'update' : 'save'} preset`, 'error');
                     }
                   }}
                   className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
                 >
-                  Save Preset
+                  {currentPresetId ? 'Update Preset' : 'Save Preset'}
                 </button>
               </div>
             </div>

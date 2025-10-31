@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { WLEDDevice, Group, VirtualDevice, Preset, Schedule } from '../types';
+import { WLEDDevice, Group, VirtualDevice, Preset, Schedule, LocationSettings } from '../types';
 
 export class JSONStorage {
   private dataDir: string;
@@ -199,6 +199,21 @@ export class JSONStorage {
     const schedules = await this.loadSchedules();
     const filtered = schedules.filter(s => s.id !== scheduleId);
     await this.saveSchedules(filtered);
+  }
+
+  async loadLocationSettings(): Promise<LocationSettings> {
+    try {
+      await this.ensureDataDir();
+      const data = await fs.readFile(this.getFilePath('location-settings'), 'utf-8');
+      return JSON.parse(data);
+    } catch {
+      return {};
+    }
+  }
+
+  async saveLocationSettings(settings: LocationSettings): Promise<void> {
+    await this.ensureDataDir();
+    await fs.writeFile(this.getFilePath('location-settings'), JSON.stringify(settings, null, 2));
   }
 }
 

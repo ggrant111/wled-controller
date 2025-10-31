@@ -5,9 +5,11 @@ import { LayoutDashboard, Zap, Cpu, Settings, Play, Pause, Save } from 'lucide-r
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useStreaming } from '../contexts/StreamingContext';
+import { useToast } from './ToastProvider';
 
 export default function Navigation() {
   const pathname = usePathname();
+  const { showToast } = useToast();
   const { isStreaming, setIsStreaming, setStreamingSessionId, lastStreamConfig } = useStreaming();
   const [activeStreams, setActiveStreams] = useState(0);
 
@@ -67,14 +69,14 @@ export default function Navigation() {
           } catch (error) {
             console.error('Error restarting streaming:', error);
             setIsStreaming(false);
-            alert('Failed to restart streaming. Please configure from the Effects page.');
+            showToast('Failed to restart streaming. Please configure from the Effects page.', 'error');
           }
         } else {
           // No last configuration - navigate to effects page or show message
           if (pathname !== '/effects') {
             window.location.href = '/effects';
           } else {
-            alert('Please configure and start streaming first.');
+            showToast('Please configure and start streaming first.', 'info');
           }
         }
       }
@@ -88,6 +90,7 @@ export default function Navigation() {
     { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/devices', icon: Cpu, label: 'Devices' },
     { href: '/effects', icon: Zap, label: 'Effects' },
+    { href: '/streams', icon: Play, label: 'Streams' },
     { href: '/presets', icon: Save, label: 'Presets' },
     { href: '/schedule', icon: Settings, label: 'Schedule' },
     { href: '/settings', icon: Settings, label: 'Settings' },
@@ -105,39 +108,41 @@ export default function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-4">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    isActive
-                      ? 'bg-primary-500/20 text-primary-500'
-                      : 'hover:bg-white/10 text-white/70 hover:text-white'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          <div className="hidden md:flex items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${
+                      isActive
+                        ? 'bg-primary-500/20 text-primary-500'
+                        : 'hover:bg-white/10 text-white/70 hover:text-white'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="hidden lg:inline">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
             
             {/* Streaming Control */}
-            <div className="h-8 w-px bg-white/20 mx-2"></div>
+            <div className="h-8 w-px bg-white/20 mx-2 flex-shrink-0"></div>
             <button
               onClick={handleStartStopStreaming}
-              className={`relative flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+              className={`relative flex items-center gap-2 px-3 py-2 rounded-lg transition-all flex-shrink-0 ${
                 isStreaming
                   ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
                   : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
               }`}
             >
               {isStreaming ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-              <span className="hidden lg:inline">{isStreaming ? 'Stop' : 'Start'} All</span>
+              <span className="hidden xl:inline">{isStreaming ? 'Stop' : 'Start'} All</span>
               {activeStreams > 0 && (
                 <span className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 rounded-full bg-primary-500 text-white text-xs flex items-center justify-center">
                   {activeStreams}
@@ -147,7 +152,7 @@ export default function Navigation() {
           </div>
 
           {/* Mobile Navigation */}
-          <div className="md:hidden flex items-center gap-2 overflow-x-auto pb-2">
+          <div className="md:hidden flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;

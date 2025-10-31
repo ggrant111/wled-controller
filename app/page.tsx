@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { Cpu, Users, Monitor, Zap, Wifi, WifiOff, Save, Calendar } from 'lucide-react';
 import type { Schedule, ScheduleRule, WLEDDevice, Group, VirtualDevice, EffectPreset } from '../types';
 
 export default function Dashboard() {
+  const router = useRouter();
   const [devices, setDevices] = useState(0);
   const [groups, setGroups] = useState(0);
   const [virtuals, setVirtuals] = useState(0);
@@ -349,7 +351,10 @@ export default function Dashboard() {
         transition={{ delay: 0.1 }}
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        <div className="glass-card p-6">
+        <div 
+          className="glass-card p-6 cursor-pointer hover:bg-white/10 transition-colors"
+          onClick={() => router.push('/devices')}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/70 text-sm mb-1">Devices</p>
@@ -360,7 +365,10 @@ export default function Dashboard() {
           <p className="text-xs text-white/50 mt-2">Total WLED devices</p>
         </div>
         
-        <div className="glass-card p-6">
+        <div 
+          className="glass-card p-6 cursor-pointer hover:bg-white/10 transition-colors"
+          onClick={() => router.push('/devices?tab=groups')}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/70 text-sm mb-1">Groups</p>
@@ -371,7 +379,10 @@ export default function Dashboard() {
           <p className="text-xs text-white/50 mt-2">Device groups</p>
         </div>
         
-        <div className="glass-card p-6">
+        <div 
+          className="glass-card p-6 cursor-pointer hover:bg-white/10 transition-colors"
+          onClick={() => router.push('/devices?tab=virtuals')}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/70 text-sm mb-1">Virtuals</p>
@@ -382,7 +393,10 @@ export default function Dashboard() {
           <p className="text-xs text-white/50 mt-2">Virtual layouts</p>
         </div>
         
-        <div className="glass-card p-6">
+        <div 
+          className="glass-card p-6 cursor-pointer hover:bg-white/10 transition-colors"
+          onClick={() => router.push('/effects')}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/70 text-sm mb-1">Effects</p>
@@ -393,7 +407,10 @@ export default function Dashboard() {
           <p className="text-xs text-white/50 mt-2">Available effects</p>
         </div>
         
-        <div className="glass-card p-6">
+        <div 
+          className="glass-card p-6 cursor-pointer hover:bg-white/10 transition-colors"
+          onClick={() => router.push('/presets')}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/70 text-sm mb-1">Presets</p>
@@ -445,7 +462,10 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <div className="glass-card p-6">
+        <div 
+          className="glass-card p-6 cursor-pointer hover:bg-white/10 transition-colors"
+          onClick={() => router.push('/schedule')}
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Calendar className="h-8 w-8 text-primary-500" />
@@ -566,7 +586,10 @@ export default function Dashboard() {
                 Ready
               </span>
             </div>
-            <div className="flex items-center justify-between">
+            <div 
+              className="flex items-center justify-between cursor-pointer hover:bg-white/5 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
+              onClick={() => router.push('/streams')}
+            >
               <span className="text-white/70">Active Streams</span>
               <span className="text-primary-500">{activeStreams}</span>
             </div>

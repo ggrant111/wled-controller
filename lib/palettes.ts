@@ -231,21 +231,25 @@ export class PaletteManager {
   // Utility function to interpolate between colors in a palette
   interpolateColor(palette: Palette, position: number): { r: number; g: number; b: number } {
     const colors = palette.colors;
-    if (colors.length === 0) return { r: 0, g: 0, b: 0 };
-    if (colors.length === 1) return this.parseColor(colors[0]);
+    if (!colors || colors.length === 0) return { r: 0, g: 0, b: 0 };
+    
+    // Filter out invalid colors
+    const validColors = colors.filter(c => c != null && typeof c === 'string' && c.trim() !== '');
+    if (validColors.length === 0) return { r: 0, g: 0, b: 0 };
+    if (validColors.length === 1) return this.parseColor(validColors[0]);
 
     // Normalize position to 0-1 range
     let normalizedPos = position % 1;
     if (normalizedPos < 0) normalizedPos += 1;
 
     // For seamless looping, we need to handle the transition from last to first color
-    const scaledPos = normalizedPos * colors.length;
-    const index1 = Math.floor(scaledPos) % colors.length;
-    const index2 = (index1 + 1) % colors.length;
+    const scaledPos = normalizedPos * validColors.length;
+    const index1 = Math.floor(scaledPos) % validColors.length;
+    const index2 = (index1 + 1) % validColors.length;
     const t = scaledPos - Math.floor(scaledPos);
 
-    const color1 = this.parseColor(colors[index1]);
-    const color2 = this.parseColor(colors[index2]);
+    const color1 = this.parseColor(validColors[index1]);
+    const color2 = this.parseColor(validColors[index2]);
 
     return {
       r: Math.floor(color1.r + (color2.r - color1.r) * t),
@@ -256,6 +260,11 @@ export class PaletteManager {
 
   // Get color from palette at specific index with blending
   getColorFromPalette(palette: Palette, colorIndex: number, brightness: number = 255, blending: 'linear' | 'none' = 'linear'): { r: number; g: number; b: number } {
+    // Validate palette colors
+    if (!palette.colors || palette.colors.length === 0) {
+      return { r: 0, g: 0, b: 0 };
+    }
+    
     if (blending === 'none') {
       const index = Math.floor(colorIndex) % palette.colors.length;
       const color = this.parseColor(palette.colors[index]);
@@ -274,12 +283,24 @@ export class PaletteManager {
     }
   }
 
-  private parseColor(colorStr: string): { r: number; g: number; b: number } {
-    const hex = colorStr.replace('#', '');
+  private parseColor(colorStr: string | undefined | null): { r: number; g: number; b: number } {
+    // Handle undefined, null, or empty strings
+    if (!colorStr || typeof colorStr !== 'string' || colorStr.trim() === '') {
+      return { r: 0, g: 0, b: 0 };
+    }
+    const hex = colorStr.replace('#', '').trim();
+    // Validate hex string length
+    if (hex.length !== 6 && hex.length !== 3) {
+      return { r: 0, g: 0, b: 0 };
+    }
+    // Handle 3-digit hex (expand to 6)
+    const fullHex = hex.length === 3 
+      ? hex.split('').map(c => c + c).join('')
+      : hex;
     return {
-      r: parseInt(hex.substr(0, 2), 16),
-      g: parseInt(hex.substr(2, 2), 16),
-      b: parseInt(hex.substr(4, 2), 16)
+      r: parseInt(fullHex.substr(0, 2), 16) || 0,
+      g: parseInt(fullHex.substr(2, 2), 16) || 0,
+      b: parseInt(fullHex.substr(4, 2), 16) || 0
     };
   }
 

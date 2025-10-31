@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { Palette, Plus, Trash2, Copy, Edit3, Save, X, Shuffle } from 'lucide-react';
 import { Palette as PaletteType } from '../types';
 import { paletteManager } from '../lib/palettes';
+import { useModal } from './ModalProvider';
 
 interface PaletteSelectorProps {
   value: string;
@@ -20,6 +21,7 @@ interface PaletteEditorProps {
 }
 
 export default function PaletteSelector({ value, onChange, className = '' }: PaletteSelectorProps) {
+  const { showConfirm } = useModal();
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingPalette, setEditingPalette] = useState<PaletteType | null>(null);
@@ -70,15 +72,24 @@ export default function PaletteSelector({ value, onChange, className = '' }: Pal
   };
 
   const handleDeletePalette = async (paletteId: string) => {
-    if (paletteId.startsWith('custom-') && confirm('Are you sure you want to delete this custom palette?')) {
-      const success = await paletteManager.deleteCustomPalette(paletteId);
-      if (success) {
-        await paletteManager.loadCustomPalettes();
-        setAllPalettes(paletteManager.getAllPalettes());
-        if (value === paletteId) {
-          onChange('rainbow'); // Fallback to default
+    if (paletteId.startsWith('custom-')) {
+      showConfirm({
+        message: 'Are you sure you want to delete this custom palette?',
+        title: 'Delete Palette',
+        variant: 'danger',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        onConfirm: async () => {
+          const success = await paletteManager.deleteCustomPalette(paletteId);
+          if (success) {
+            await paletteManager.loadCustomPalettes();
+            setAllPalettes(paletteManager.getAllPalettes());
+            if (value === paletteId) {
+              onChange('rainbow'); // Fallback to default
+            }
+          }
         }
-      }
+      });
     }
   };
 
@@ -117,8 +128,202 @@ export default function PaletteSelector({ value, onChange, className = '' }: Pal
     setEditingPalette(null);
   };
 
+  // Render modal content that will be portaled
+  const modalContent = isOpen ? (
+    <AnimatePresence>
+      <>
+        {/* Backdrop */}
+        <motion.div
+          key="backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99998]"
+          onClick={() => setIsOpen(false)}
+        />
+        {/* Modal Container - Centers modal while respecting viewport */}
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 pointer-events-none"
+        >
+          {/* Modal */}
+          <motion.div
+            key="modal"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-black/90 backdrop-blur-sm border border-white/20 rounded-lg shadow-xl flex flex-col pointer-events-auto"
+            style={{ 
+              width: '500px',
+              maxWidth: '100%',
+              maxHeight: 'calc(100vh - 2rem)',
+              minHeight: '300px'
+            }}
+          >
+            {/* Header */}
+            <div className="p-4 border-b border-white/10 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Select Palette</h3>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-1 hover:bg-white/10 rounded transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content - Scrollable */}
+            <div className="p-4 overflow-y-auto flex-1 min-h-0">
+          {/* Action Buttons */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={handleCreateNew}
+              className="flex items-center gap-2 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-sm"
+            >
+              <Plus className="h-4 w-4" />
+              New Palette
+            </button>
+            <button
+              onClick={handleGenerateRandom}
+              className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm"
+            >
+              <Shuffle className="h-4 w-4" />
+              Random
+            </button>
+          </div>
+
+          {/* Preset Palettes */}
+          <div className="mb-6">
+            <h4 className="text-sm font-semibold text-white/70 mb-3">PRESET PALETTES</h4>
+            <div className="space-y-2">
+              {allPalettes.filter(p => !p.isCustom).map((palette) => (
+                <button
+                  key={palette.id}
+                  onClick={() => handlePaletteSelect(palette.id)}
+                  className={`w-full p-3 rounded-lg transition-all flex items-center justify-between mb-1 border ${
+                    value === palette.id
+                      ? 'bg-primary-500/20 border-primary-500/50'
+                      : 'bg-white/5 hover:bg-white/10 border-white/10'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1">
+                      {palette.colors.slice(0, 4).map((color, index) => (
+                        <div
+                          key={index}
+                          className="w-3 h-3 rounded-full border border-white/20"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                      {palette.colors.length > 4 && (
+                        <span className="text-xs text-white/50">+{palette.colors.length - 4}</span>
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <div className="text-sm font-medium">{palette.name}</div>
+                      {palette.description && (
+                        <div className="text-xs text-white/50">{palette.description}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDuplicatePalette(palette);
+                      }}
+                      className="p-1 hover:bg-white/10 rounded transition-colors cursor-pointer"
+                      title="Duplicate"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom Palettes */}
+          {allPalettes.filter(p => p.isCustom).length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-white/70 mb-3">CUSTOM PALETTES</h4>
+              <div className="space-y-2">
+                {allPalettes.filter(p => p.isCustom).map((palette) => (
+                  <button
+                    key={palette.id}
+                    onClick={() => handlePaletteSelect(palette.id)}
+                    className={`w-full p-3 rounded-lg transition-all flex items-center justify-between mb-1 border ${
+                      value === palette.id
+                        ? 'bg-primary-500/20 border-primary-500/50'
+                        : 'bg-white/5 hover:bg-white/10 border-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-1">
+                        {palette.colors.slice(0, 4).map((color, index) => (
+                          <div
+                            key={index}
+                            className="w-3 h-3 rounded-full border border-white/20"
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                        {palette.colors.length > 4 && (
+                          <span className="text-xs text-white/50">+{palette.colors.length - 4}</span>
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <div className="text-sm font-medium">{palette.name}</div>
+                        {palette.description && (
+                          <div className="text-xs text-white/50">{palette.description}</div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditPalette(palette);
+                        }}
+                        className="p-1 hover:bg-white/10 rounded transition-colors cursor-pointer"
+                        title="Edit"
+                      >
+                        <Edit3 className="h-3 w-3" />
+                      </div>
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicatePalette(palette);
+                        }}
+                        className="p-1 hover:bg-white/10 rounded transition-colors cursor-pointer"
+                        title="Duplicate"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </div>
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePalette(palette.id);
+                        }}
+                        className="p-1 hover:bg-red-500/20 text-red-400 rounded transition-colors cursor-pointer"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+          </motion.div>
+        </div>
+      </>
+    </AnimatePresence>
+  ) : null;
+
   return (
-    <div className={`relative z-[100] ${className}`}>
+    <div className={`relative ${className}`}>
       {/* Palette Selector Button */}
       <button
         onClick={() => setIsOpen(true)}
@@ -145,204 +350,19 @@ export default function PaletteSelector({ value, onChange, className = '' }: Pal
         </div>
       </button>
 
-      {/* Palette Selection Modal */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99998]"
-              onClick={() => setIsOpen(false)}
-            />
-            {/* Modal */}
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="fixed bg-black/90 backdrop-blur-sm border border-white/20 rounded-lg shadow-xl z-[99999] max-h-[80vh] overflow-y-auto"
-              style={{ 
-                top: '50%', 
-                left: '50%', 
-                transform: 'translate(-50%, -50%)',
-                width: '500px',
-                maxWidth: '90vw'
-              }}
-            >
-              {/* Header */}
-              <div className="p-4 border-b border-white/10">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Select Palette</h3>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="p-1 hover:bg-white/10 rounded transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="p-4">
-                {/* Action Buttons */}
-                <div className="flex gap-2 mb-4">
-                  <button
-                    onClick={handleCreateNew}
-                    className="flex items-center gap-2 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-sm"
-                  >
-                    <Plus className="h-4 w-4" />
-                    New Palette
-                  </button>
-                  <button
-                    onClick={handleGenerateRandom}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm"
-                  >
-                    <Shuffle className="h-4 w-4" />
-                    Random
-                  </button>
-                </div>
-
-                {/* Preset Palettes */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-white/70 mb-3">PRESET PALETTES</h4>
-                  <div className="space-y-2">
-                    {allPalettes.filter(p => !p.isCustom).map((palette) => (
-                      <button
-                        key={palette.id}
-                        onClick={() => handlePaletteSelect(palette.id)}
-                        className={`w-full p-3 rounded-lg transition-all flex items-center justify-between mb-1 border ${
-                          value === palette.id
-                            ? 'bg-primary-500/20 border-primary-500/50'
-                            : 'bg-white/5 hover:bg-white/10 border-white/10'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex gap-1">
-                            {palette.colors.slice(0, 4).map((color, index) => (
-                              <div
-                                key={index}
-                                className="w-3 h-3 rounded-full border border-white/20"
-                                style={{ backgroundColor: color }}
-                              />
-                            ))}
-                            {palette.colors.length > 4 && (
-                              <span className="text-xs text-white/50">+{palette.colors.length - 4}</span>
-                            )}
-                          </div>
-                          <div className="text-left">
-                            <div className="text-sm font-medium">{palette.name}</div>
-                            {palette.description && (
-                              <div className="text-xs text-white/50">{palette.description}</div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-1">
-                          <div
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDuplicatePalette(palette);
-                            }}
-                            className="p-1 hover:bg-white/10 rounded transition-colors cursor-pointer"
-                            title="Duplicate"
-                          >
-                            <Copy className="h-3 w-3" />
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Custom Palettes */}
-                {allPalettes.filter(p => p.isCustom).length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-white/70 mb-3">CUSTOM PALETTES</h4>
-                    <div className="space-y-2">
-                      {allPalettes.filter(p => p.isCustom).map((palette) => (
-                        <button
-                          key={palette.id}
-                          onClick={() => handlePaletteSelect(palette.id)}
-                          className={`w-full p-3 rounded-lg transition-all flex items-center justify-between mb-1 border ${
-                            value === palette.id
-                              ? 'bg-primary-500/20 border-primary-500/50'
-                              : 'bg-white/5 hover:bg-white/10 border-white/10'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="flex gap-1">
-                              {palette.colors.slice(0, 4).map((color, index) => (
-                                <div
-                                  key={index}
-                                  className="w-3 h-3 rounded-full border border-white/20"
-                                  style={{ backgroundColor: color }}
-                                />
-                              ))}
-                              {palette.colors.length > 4 && (
-                                <span className="text-xs text-white/50">+{palette.colors.length - 4}</span>
-                              )}
-                            </div>
-                            <div className="text-left">
-                              <div className="text-sm font-medium">{palette.name}</div>
-                              {palette.description && (
-                                <div className="text-xs text-white/50">{palette.description}</div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditPalette(palette);
-                              }}
-                              className="p-1 hover:bg-white/10 rounded transition-colors cursor-pointer"
-                              title="Edit"
-                            >
-                              <Edit3 className="h-3 w-3" />
-                            </div>
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDuplicatePalette(palette);
-                              }}
-                              className="p-1 hover:bg-white/10 rounded transition-colors cursor-pointer"
-                              title="Duplicate"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </div>
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeletePalette(palette.id);
-                              }}
-                              className="p-1 hover:bg-red-500/20 text-red-400 rounded transition-colors cursor-pointer"
-                              title="Delete"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Palette Editor Modal */}
-      <AnimatePresence>
-        {isEditing && editingPalette && (
+      {/* Modals rendered via portals */}
+      {typeof window !== 'undefined' && isOpen && createPortal(modalContent, document.body)}
+      {typeof window !== 'undefined' && isEditing && editingPalette && createPortal(
+        <AnimatePresence mode="wait">
           <PaletteEditor
+            key={editingPalette.id || 'new'}
             palette={editingPalette}
             onSave={handleSavePalette}
             onCancel={handleCancelEdit}
           />
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }
@@ -380,18 +400,21 @@ function PaletteEditor({ palette, onSave, onCancel }: PaletteEditorProps) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
-    >
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100000]"
+        onClick={onCancel}
+      />
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-gray-900 border border-white/20 rounded-lg p-6 w-full max-w-md"
+        className="fixed inset-0 flex items-center justify-center z-[100001] p-4 pointer-events-none"
       >
+        <div className="bg-gray-900 border border-white/20 rounded-lg p-6 w-full max-w-md pointer-events-auto">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Edit Palette</h3>
           <button
@@ -476,7 +499,8 @@ function PaletteEditor({ palette, onSave, onCancel }: PaletteEditorProps) {
             </button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Plus, Cpu, Users, Monitor } from 'lucide-react';
 import DeviceCard from '../../components/DeviceCard';
@@ -9,12 +10,22 @@ import VirtualCard from '../../components/VirtualCard';
 import DeviceModal from '../../components/DeviceModal';
 import VirtualDeviceModal from '../../components/VirtualDeviceModal';
 import GroupModal from '../../components/GroupModal';
+import { useToast } from '../../components/ToastProvider';
+import { useModal } from '../../components/ModalProvider';
 import { WLEDDevice, Group, VirtualDevice } from '../../types';
 
 type TabType = 'devices' | 'groups' | 'virtuals';
 
 export default function DevicesPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('devices');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { showToast } = useToast();
+  const { showConfirm } = useModal();
+  const tabParam = searchParams?.get('tab') as TabType | null;
+  const [activeTab, setActiveTab] = useState<TabType>(
+    (tabParam && ['devices', 'groups', 'virtuals'].includes(tabParam)) ? tabParam : 'devices'
+  );
   const [devices, setDevices] = useState<WLEDDevice[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [virtuals, setVirtuals] = useState<VirtualDevice[]>([]);
@@ -26,9 +37,22 @@ export default function DevicesPage() {
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    router.push(`${pathname}?tab=${tab}`);
+  };
+
   useEffect(() => {
     loadData();
   }, []);
+
+  // Sync tab with URL parameter when it changes
+  useEffect(() => {
+    const tabParam = searchParams?.get('tab') as TabType | null;
+    if (tabParam && ['devices', 'groups', 'virtuals'].includes(tabParam) && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams, activeTab]);
 
   const loadData = async () => {
     try {
@@ -59,14 +83,22 @@ export default function DevicesPage() {
   };
 
   const handleDeleteDevice = async (deviceId: string) => {
-    if (confirm('Are you sure you want to delete this device?')) {
+    showConfirm({
+      message: 'Are you sure you want to delete this device?',
+      title: 'Delete Device',
+      variant: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
       try {
         await fetch(`/api/devices/${deviceId}`, { method: 'DELETE' });
         setDevices(devices.filter(d => d.id !== deviceId));
       } catch (error) {
         console.error('Failed to delete device:', error);
+        showToast('Failed to delete device', 'error');
       }
-    }
+      }
+    });
   };
 
   const handleDeviceSaved = (device: WLEDDevice) => {
@@ -89,14 +121,22 @@ export default function DevicesPage() {
   };
 
   const handleDeleteVirtual = async (virtualId: string) => {
-    if (confirm('Are you sure you want to delete this virtual device?')) {
+    showConfirm({
+      message: 'Are you sure you want to delete this virtual device?',
+      title: 'Delete Virtual Device',
+      variant: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
       try {
         await fetch(`/api/virtuals/${virtualId}`, { method: 'DELETE' });
         setVirtuals(virtuals.filter(v => v.id !== virtualId));
       } catch (error) {
         console.error('Failed to delete virtual device:', error);
+        showToast('Failed to delete virtual device', 'error');
       }
-    }
+      }
+    });
   };
 
   const handleVirtualSaved = async (virtual: VirtualDevice) => {
@@ -138,7 +178,7 @@ export default function DevicesPage() {
       setEditingVirtual(null);
     } catch (error) {
       console.error('Failed to save virtual device:', error);
-      alert('Failed to save virtual device');
+      showToast('Failed to save virtual device', 'error');
     }
   };
 
@@ -153,14 +193,22 @@ export default function DevicesPage() {
   };
 
   const handleDeleteGroup = async (groupId: string) => {
-    if (confirm('Are you sure you want to delete this group?')) {
+    showConfirm({
+      message: 'Are you sure you want to delete this group?',
+      title: 'Delete Group',
+      variant: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
       try {
         await fetch(`/api/groups/${groupId}`, { method: 'DELETE' });
         setGroups(groups.filter(g => g.id !== groupId));
       } catch (error) {
         console.error('Failed to delete group:', error);
+        showToast('Failed to delete group', 'error');
       }
-    }
+      }
+    });
   };
 
   const handleGroupSaved = async (group: Group) => {
@@ -196,7 +244,7 @@ export default function DevicesPage() {
       setEditingGroup(null);
     } catch (error) {
       console.error('Failed to save group:', error);
-      alert('Failed to save group');
+      showToast('Failed to save group', 'error');
     }
   };
 
@@ -234,7 +282,7 @@ export default function DevicesPage() {
       >
         <div className="flex gap-2 overflow-x-auto scrollbar-hide">
           <button
-            onClick={() => setActiveTab('devices')}
+            onClick={() => handleTabChange('devices')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
               activeTab === 'devices'
                 ? 'bg-primary-500/20 text-primary-500'
@@ -251,7 +299,7 @@ export default function DevicesPage() {
           </button>
           
           <button
-            onClick={() => setActiveTab('groups')}
+            onClick={() => handleTabChange('groups')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
               activeTab === 'groups'
                 ? 'bg-primary-500/20 text-primary-500'
@@ -268,7 +316,7 @@ export default function DevicesPage() {
           </button>
           
           <button
-            onClick={() => setActiveTab('virtuals')}
+            onClick={() => handleTabChange('virtuals')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
               activeTab === 'virtuals'
                 ? 'bg-primary-500/20 text-primary-500'

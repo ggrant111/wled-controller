@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Edit, Trash2, Play, Pause, Settings, Users, Eye, Save, Zap } from 'lucide-react';
 import { Group, Effect, EffectPreset } from '../types';
 import LEDPreviewCanvas from './LEDPreviewCanvas';
+import StreamConflictModal from './StreamConflictModal';
 import { useToast } from './ToastProvider';
 import { useStreamIndicator } from '../hooks/useStreamIndicator';
 
@@ -25,17 +26,38 @@ export default function GroupCard({ group, onEdit, onDelete, delay = 0 }: GroupC
   const [mode, setMode] = useState<'preset' | 'effect'>('preset');
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [selectedEffectId, setSelectedEffectId] = useState<string>('');
+  const [conflictModalOpen, setConflictModalOpen] = useState(false);
+  const [pendingStreamConfig, setPendingStreamConfig] = useState<{ requestBody: any; targets: any[] } | null>(null);
+  const [conflictData, setConflictData] = useState<any>(null);
+  const [devicesList, setDevicesList] = useState<Array<{ id: string; name: string }>>([]);
+  const [groupsList, setGroupsList] = useState<Array<{ id: string; name: string }>>([]);
+  const [virtualsList, setVirtualsList] = useState<Array<{ id: string; name: string }>>([]);
 
   useEffect(() => {
     if (!showStreamControls) return;
     (async () => {
       try {
-        const [effectsRes, presetsRes] = await Promise.all([
+        const [effectsRes, presetsRes, devicesRes, groupsRes, virtualsRes] = await Promise.all([
           fetch('/api/effects'),
-          fetch('/api/presets')
+          fetch('/api/presets'),
+          fetch('/api/devices'),
+          fetch('/api/groups'),
+          fetch('/api/virtuals')
         ]);
         if (effectsRes.ok) setEffects(await effectsRes.json());
         if (presetsRes.ok) setPresets(await presetsRes.json());
+        if (devicesRes.ok) {
+          const devs = await devicesRes.json();
+          setDevicesList(devs.map((d: any) => ({ id: d.id, name: d.name })));
+        }
+        if (groupsRes.ok) {
+          const grps = await groupsRes.json();
+          setGroupsList(grps.map((g: any) => ({ id: g.id, name: g.name })));
+        }
+        if (virtualsRes.ok) {
+          const virts = await virtualsRes.json();
+          setVirtualsList(virts.map((v: any) => ({ id: v.id, name: v.name })));
+        }
       } catch {}
     })();
   }, [showStreamControls]);
@@ -112,14 +134,15 @@ export default function GroupCard({ group, onEdit, onDelete, delay = 0 }: GroupC
                 </select>
                 <button
                   onClick={async ()=>{
-                    if (!selectedPresetId) { alert('Select a preset'); return; }
+                    if (!selectedPresetId) { showToast('Select a preset', 'error'); return; }
                     const res = await fetch(`/api/presets/${selectedPresetId}`);
-                    if (!res.ok) { alert('Failed to load preset'); return; }
+                    if (!res.ok) { showToast('Failed to load preset', 'error'); return; }
                     const preset: EffectPreset = await res.json();
+                    const targets = [{ type:'group', id: group.id }];
                     let body: any;
                     if (preset.useLayers && preset.layers) {
                       body = {
-                        targets: [{ type:'group', id: group.id }],
+                        targets,
                         layers: preset.layers.map(layer => ({
                           ...layer,
                           effect: {
@@ -134,7 +157,7 @@ export default function GroupCard({ group, onEdit, onDelete, delay = 0 }: GroupC
                       };
                     } else if (preset.effect) {
                       body = {
-                        targets: [{ type:'group', id: group.id }],
+                        targets,
                         effect: {
                           ...preset.effect,
                           parameters: preset.effect.parameters.map(param => ({
@@ -145,7 +168,29 @@ export default function GroupCard({ group, onEdit, onDelete, delay = 0 }: GroupC
                         fps: 30,
                         blendMode: 'overwrite'
                       };
-                    } else { alert('Invalid preset'); return; }
+                    } else { showToast('Invalid preset', 'error'); return; }
+                    
+                    // Check for conflicts
+                    try {
+                      const conflictResponse = await fetch('/api/stream/check-conflicts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targets })
+                      });
+                      
+                      if (conflictResponse.ok) {
+                        const conflictCheck = await conflictResponse.json();
+                        if (conflictCheck.hasConflicts && conflictCheck.conflicts.length > 0) {
+                          setConflictData(conflictCheck);
+                          setPendingStreamConfig({ requestBody: body, targets });
+                          setConflictModalOpen(true);
+                          return;
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error checking conflicts:', error);
+                    }
+                    
                     const start = await fetch('/api/stream/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
                     if (!start.ok) { showToast('Failed to start stream', 'error'); } else { showToast('Streaming started', 'success'); }
                   }}
@@ -161,14 +206,38 @@ export default function GroupCard({ group, onEdit, onDelete, delay = 0 }: GroupC
                 <button
                   onClick={async ()=>{
                     const eff = effects.find(e=>e.id===selectedEffectId);
-                    if (!eff) { alert('Select an effect'); return; }
+                    if (!eff) { showToast('Select an effect', 'error'); return; }
                     const effectWithDefaults = { ...eff, parameters: eff.parameters.map(p => ({...p})) };
-                    const start = await fetch('/api/stream/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-                      targets:[{ type:'group', id: group.id }],
+                    const targets = [{ type:'group', id: group.id }];
+                    const body = {
+                      targets,
                       effect: effectWithDefaults,
                       fps: 30,
                       blendMode: 'overwrite'
-                    }) });
+                    };
+                    
+                    // Check for conflicts
+                    try {
+                      const conflictResponse = await fetch('/api/stream/check-conflicts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targets })
+                      });
+                      
+                      if (conflictResponse.ok) {
+                        const conflictCheck = await conflictResponse.json();
+                        if (conflictCheck.hasConflicts && conflictCheck.conflicts.length > 0) {
+                          setConflictData(conflictCheck);
+                          setPendingStreamConfig({ requestBody: body, targets });
+                          setConflictModalOpen(true);
+                          return;
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error checking conflicts:', error);
+                    }
+                    
+                    const start = await fetch('/api/stream/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
                     if (!start.ok) { showToast('Failed to start stream', 'error'); } else { showToast('Streaming started', 'success'); }
                   }}
                   className="btn-primary"
@@ -183,6 +252,62 @@ export default function GroupCard({ group, onEdit, onDelete, delay = 0 }: GroupC
           </div>
         )}
       </div>
+      
+      {/* Stream Conflict Modal */}
+      <StreamConflictModal
+        isOpen={conflictModalOpen}
+        conflicts={conflictData?.conflicts || []}
+        devices={devicesList}
+        groups={groupsList}
+        virtuals={virtualsList}
+        onConfirm={async () => {
+          if (!pendingStreamConfig) {
+            setConflictModalOpen(false);
+            return;
+          }
+          
+          try {
+            // Stop conflicting sessions
+            if (conflictData?.conflicts) {
+              for (const conflict of conflictData.conflicts) {
+                try {
+                  await fetch(`/api/stream/stop/${conflict.sessionId}`, { method: 'POST' });
+                } catch (e) {
+                  console.error('Error stopping conflicting session:', e);
+                }
+              }
+            }
+            
+            // Start the new stream
+            const response = await fetch('/api/stream/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(pendingStreamConfig.requestBody)
+            });
+            
+            if (!response.ok) {
+              showToast('Failed to start stream', 'error');
+            } else {
+              showToast('Streaming started', 'success');
+            }
+            
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+          } catch (error) {
+            console.error('Error starting streaming after conflict resolution:', error);
+            showToast('Failed to start streaming', 'error');
+            setConflictModalOpen(false);
+            setPendingStreamConfig(null);
+            setConflictData(null);
+          }
+        }}
+        onCancel={() => {
+          setConflictModalOpen(false);
+          setPendingStreamConfig(null);
+          setConflictData(null);
+        }}
+      />
     </motion.div>
   );
 }

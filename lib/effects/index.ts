@@ -21,3 +21,7 @@ export * from './colorTwinkle';
 export * from './pacifica';
 export * from './skippingRock';
 export * from './shockwaveDual';
+export * from './chromaticVortex';
+export * from './etherealMatrix';
+export * from './flareBurst';
+export * from './patternGenerator';

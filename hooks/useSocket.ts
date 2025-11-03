@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface UseSocketReturn {
@@ -49,23 +49,23 @@ export function useSocket(): UseSocketReturn {
     };
   }, []);
 
-  const emit = (event: string, data?: any) => {
+  const emit = useCallback((event: string, data?: any) => {
     if (socket) {
       socket.emit(event, data);
     }
-  };
+  }, [socket]);
 
-  const on = (event: string, callback: (...args: any[]) => void) => {
+  const on = useCallback((event: string, callback: (...args: any[]) => void) => {
     if (socket) {
       socket.on(event, callback);
     }
-  };
+  }, [socket]);
 
-  const off = (event: string, callback?: (...args: any[]) => void) => {
+  const off = useCallback((event: string, callback?: (...args: any[]) => void) => {
     if (socket) {
       socket.off(event, callback);
     }
-  };
+  }, [socket]);
 
   return {
     socket,

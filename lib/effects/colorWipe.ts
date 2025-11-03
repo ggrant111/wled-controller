@@ -36,9 +36,14 @@ export class ColorWipeEffect implements EffectGenerator {
     
     const buffer = Buffer.alloc(ledCount * 3);
     
+    // Wrap time to prevent precision issues from very large time values
+    // Use a large period that doesn't affect visuals but prevents precision loss
+    const TIME_WRAP = 3600000; // 1 hour in milliseconds
+    const timeWrapped = time % TIME_WRAP;
+    
     // Total cycle time: one full wipe per color
     const totalCycleTime = ledCount * colors.length;
-    const cycleProgress = (time * speed * 100) % totalCycleTime;
+    const cycleProgress = (timeWrapped * speed * 100) % totalCycleTime;
     
     // Determine which color we're currently wiping
     const currentColorIndex = Math.floor(cycleProgress / ledCount);

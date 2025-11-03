@@ -30,8 +30,15 @@ export class ConfettiEffect implements EffectGenerator {
     for (const particle of this.confettiData) {
       particle.position += particle.velocity;
       
-      if (particle.position < 0) {
-        particle.position = ledCount;
+      // Check if particle went outside bounds (crossed a boundary)
+      const wasOutOfBounds = particle.position < 0 || particle.position >= ledCount;
+      
+      // Wrap position to keep it within [0, ledCount) range to prevent unbounded growth
+      // This handles both positive and negative positions correctly
+      particle.position = ((particle.position % ledCount) + ledCount) % ledCount;
+      
+      // If particle wrapped around (crossed a boundary), give it a new random color
+      if (wasOutOfBounds) {
         particle.color = { r: Math.random(), g: Math.random(), b: Math.random() };
       }
       

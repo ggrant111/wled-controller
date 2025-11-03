@@ -45,5 +45,49 @@
     ],
     "isCustom": true,
     "description": "Generated random palette"
+  },
+  {
+    "id": "custom-1761945919915-3lenc7c4r",
+    "name": "Purple Green (Copy)",
+    "colors": [
+      "#800080",
+      "#008000"
+    ],
+    "isCustom": true,
+    "description": "Purple and green stripes"
+  },
+  {
+    "id": "custom-1761946023472-b69jgbrka",
+    "name": "Random 3:27:03 PM",
+    "colors": [
+      "#85fd0e",
+      "#eb8c18",
+      "#1997db",
+      "#d201e1",
+      "#7cff0a",
+      "#f16e11",
+      "#cc6b21",
+      "#d91c00",
+      "#d4f327",
+      "#d52987",
+      "#d89313",
+      "#6f0df9",
+      "#fbe124"
+    ],
+    "isCustom": true,
+    "description": "Generated random palette"
+  },
+  {
+    "id": "custom-1761969007088-774psch22",
+    "name": "Lava",
+    "colors": [
+      "#000000",
+      "#ff0000",
+      "#ff8000",
+      "#ff0000",
+      "#000000"
+    ],
+    "isCustom": true,
+    "description": "Hot lava reds and oranges"
   }
 ]

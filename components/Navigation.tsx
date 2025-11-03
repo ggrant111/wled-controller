@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Zap, Cpu, Settings, Play, Pause, Save } from 'lucide-react';
+import { LayoutDashboard, Zap, Cpu, Settings, Play, Pause, Save, Music } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useStreaming } from '../contexts/StreamingContext';
@@ -42,6 +42,18 @@ export default function Navigation() {
       if (isStreaming) {
         // Stop all streaming
         await fetch('/api/stream/stop-all', { method: 'POST' });
+        
+        // Also stop any active playlist
+        try {
+          const playlistStopRes = await fetch('/api/playlists/stop', { method: 'POST' });
+          if (playlistStopRes.ok) {
+            console.log('Playlist stopped');
+          }
+        } catch (error) {
+          console.error('Error stopping playlist:', error);
+          // Continue anyway - stop-all will handle it
+        }
+        
         setIsStreaming(false);
       } else {
         // Start streaming with last configuration if available
@@ -92,6 +104,7 @@ export default function Navigation() {
     { href: '/effects', icon: Zap, label: 'Effects' },
     { href: '/streams', icon: Play, label: 'Streams' },
     { href: '/presets', icon: Save, label: 'Presets' },
+    { href: '/playlists', icon: Music, label: 'Playlists' },
     { href: '/schedule', icon: Settings, label: 'Schedule' },
     { href: '/settings', icon: Settings, label: 'Settings' },
   ];

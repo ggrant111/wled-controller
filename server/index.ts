@@ -718,17 +718,41 @@ async function initializeStorage() {
 }
 
 // Health check functions
-async function checkDeviceHealth(device: WLEDDevice): Promise<boolean> {
+interface WLEDJsonResponse {
+  state: {
+    on: boolean;
+    bri: number; // Global brightness 0-255
+    seg?: Array<{
+      id: number;
+      bri?: number; // Segment brightness 0-255
+      start?: number;
+      stop?: number;
+      len?: number;
+    }>;
+  };
+  info?: {
+    ver?: string;
+    name?: string;
+    leds?: {
+      count?: number;
+    };
+  };
+}
+
+async function checkDeviceHealth(device: WLEDDevice): Promise<{ isOnline: boolean; data?: WLEDJsonResponse }> {
   try {
-    const url = `http://${device.ip}/json/state`;
-    const response = await axios.get(url, {
+    const url = `http://${device.ip}/json`;
+    const response = await axios.get<WLEDJsonResponse>(url, {
       timeout: 3000,
       validateStatus: () => true // Accept any status code
     });
     
-    return response.status === 200;
+    if (response.status === 200 && response.data) {
+      return { isOnline: true, data: response.data };
+    }
+    return { isOnline: false };
   } catch (error) {
-    return false;
+    return { isOnline: false };
   }
 }
 
@@ -738,11 +762,49 @@ async function checkAllDevicesHealth() {
     let hasChanges = false;
     
     for (const device of devices) {
-      const isOnline = await checkDeviceHealth(device);
+      const healthCheck = await checkDeviceHealth(device);
+      const isOnline = healthCheck.isOnline;
+      let deviceUpdated = false;
       
+      // Update online status
       if (device.isOnline !== isOnline) {
         device.isOnline = isOnline;
         device.lastSeen = new Date();
+        deviceUpdated = true;
+      }
+      
+      // Sync brightness from WLED device if online and we have data
+      if (isOnline && healthCheck.data?.state) {
+        const wledState = healthCheck.data.state;
+        const globalBrightness = wledState.bri / 255; // Convert from 0-255 to 0-1
+        
+        // If device has segments and WLED response has segment data, sync per-segment
+        if (wledState.seg && Array.isArray(wledState.seg) && device.segments.length > 0) {
+          // Map WLED segments to our device segments by position
+          for (let i = 0; i < device.segments.length && i < wledState.seg.length; i++) {
+            const wledSeg = wledState.seg[i];
+            if (wledSeg.bri !== undefined) {
+              const segmentBrightness = wledSeg.bri / 255; // Convert from 0-255 to 0-1
+              if (Math.abs((device.segments[i].brightness || 0) - segmentBrightness) > 0.01) {
+                device.segments[i].brightness = segmentBrightness;
+                deviceUpdated = true;
+              }
+            }
+          }
+        } else {
+          // No segment data, use global brightness for all segments
+          if (device.segments.length > 0) {
+            for (const segment of device.segments) {
+              if (Math.abs((segment.brightness || 0) - globalBrightness) > 0.01) {
+                segment.brightness = globalBrightness;
+                deviceUpdated = true;
+              }
+            }
+          }
+        }
+      }
+      
+      if (deviceUpdated) {
         await storage.updateDevice(device);
         ddpSender.updateDevice(device);
         hasChanges = true;
@@ -869,9 +931,14 @@ io.on('connection', (socket) => {
 app.get('/api/devices', async (req, res) => {
   try {
     const devices = await storage.loadDevices();
+    console.log(`Loaded ${devices.length} devices from storage`);
+    if (devices.length === 0) {
+      console.warn('No devices found in storage - returning empty array');
+    }
     res.json(devices);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to load devices' });
+    console.error('Error loading devices:', error);
+    res.status(500).json({ error: 'Failed to load devices', details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -1074,6 +1141,64 @@ app.get('/api/stream/sessions', (req, res) => {
   } catch (error) {
     console.error('Error listing sessions:', error);
     res.status(500).json({ error: 'Failed to list sessions' });
+  }
+});
+
+// Get active playlist information
+app.get('/api/playlists/active', (req, res) => {
+  try {
+    // Find the session with a playlistId
+    const playlistSession = Array.from(streamingSessions.values()).find(
+      session => session.playlistId
+    );
+
+    if (playlistSession) {
+      res.json({
+        activePlaylist: {
+          sessionId: playlistSession.id,
+          playlistId: playlistSession.playlistId
+        }
+      });
+    } else {
+      res.json({ activePlaylist: null });
+    }
+  } catch (error) {
+    console.error('Error getting active playlist:', error);
+    res.status(500).json({ error: 'Failed to get active playlist' });
+  }
+});
+
+// Stop the currently active playlist
+app.post('/api/playlists/stop', (req, res) => {
+  try {
+    // Find the session with a playlistId
+    const playlistSession = Array.from(streamingSessions.values()).find(
+      session => session.playlistId
+    );
+
+    if (!playlistSession) {
+      return res.status(404).json({ error: 'No active playlist found' });
+    }
+
+    // Stop the playlist session
+    const sessionId = playlistSession.id;
+    const playlistId = playlistSession.playlistId;
+    streamingSessions.delete(sessionId);
+    
+    if (streamingSessions.size === 0 && streamingInterval) {
+      clearInterval(streamingInterval);
+      streamingInterval = null;
+      loggedStreamingDevices.clear();
+    }
+    
+    // Emit both the standard streaming-stopped and a specific playlist-stopped event
+    io.emit('streaming-stopped', { sessionId });
+    io.emit('playlist-stopped', { sessionId, playlistId });
+    
+    res.json({ success: true, sessionId, playlistId });
+  } catch (error) {
+    console.error('Error stopping playlist:', error);
+    res.status(500).json({ error: 'Failed to stop playlist' });
   }
 });
 
@@ -1353,7 +1478,7 @@ app.post('/api/stream/check-conflicts', async (req, res) => {
 // Streaming
 app.post('/api/stream/start', async (req, res) => {
   try {
-    const { targets, effect, layers, fps = 30, blendMode = 'replace', sessionId, selectedTargets } = req.body;
+    const { targets, effect, layers, fps = 30, blendMode = 'replace', sessionId, selectedTargets, playlistId } = req.body;
     
     let session: StreamingSession;
     
@@ -1384,6 +1509,10 @@ app.post('/api/stream/start', async (req, res) => {
       if (selectedTargets !== undefined) {
         session.selectedTargets = selectedTargets;
       }
+      // Preserve playlistId if updating, or set it if provided
+      if (playlistId !== undefined) {
+        session.playlistId = playlistId;
+      }
       console.log('Updated streaming session:', session.id);
     } else {
       // Create new session
@@ -1394,17 +1523,38 @@ app.post('/api/stream/start', async (req, res) => {
         fps,
         isActive: true,
         startTime: new Date(),
-        selectedTargets: selectedTargets || undefined
+        selectedTargets: selectedTargets || undefined,
+        playlistId: playlistId || undefined
       };
-      console.log('Starting streaming session:', { targets, layers: effectLayers.length, fps });
+      console.log('Starting streaming session:', { targets, layers: effectLayers.length, fps, playlistId });
     }
     
     streamingSessions.set(session.id, session);
     console.log('Active streaming sessions:', streamingSessions.size);
     
+    // Reset effect instances and clear state when starting a new session
+    // This ensures fresh state when restarting streaming
+    if (!sessionId) {
+      // This is a new session - reset all effect states
+      for (const layer of effectLayers) {
+        try {
+          effectEngine.resetEffect(layer.effect.type as any);
+          // Also clear state for effects that maintain their own state
+          const effectInstance = (effectEngine as any).effects?.get(layer.effect.type);
+          if (effectInstance && typeof effectInstance.clearState === 'function') {
+            effectInstance.clearState();
+          }
+        } catch (e) {
+          // Ignore errors for effects that don't support reset
+        }
+      }
+    }
+    
     if (!streamingInterval) {
       console.log('Starting streaming loop');
       loggedStreamingDevices.clear(); // Clear logged devices for new streaming session
+      // Reset time when starting fresh
+      effectEngine.updateTime(-effectEngine.getTime()); // Reset to 0
       startStreamingLoop();
     }
     
@@ -1479,6 +1629,40 @@ app.post('/api/stream/exclude-device', async (req, res) => {
   } catch (error) {
     console.error('Error excluding device:', error);
     return res.status(500).json({ error: 'Failed to exclude device' });
+  }
+});
+
+// Exclude a segment/range from group/virtual streams in a session
+// For segments, we exclude the entire device (simpler approach)
+// Future enhancement: track excluded segments separately
+app.post('/api/stream/exclude-segment', async (req, res) => {
+  try {
+    const { sessionId, deviceId, startLed, endLed } = req.body;
+    if (!sessionId || !deviceId || startLed === undefined || endLed === undefined) {
+      return res.status(400).json({ error: 'sessionId, deviceId, startLed, and endLed are required' });
+    }
+    
+    const session = streamingSessions.get(sessionId);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    // For now, exclude the entire device when a segment is stopped
+    // This ensures the segment stops streaming
+    // Future: Could track excluded segments separately for more granular control
+    if (!session.excludedDevices) {
+      session.excludedDevices = [];
+    }
+    
+    if (!session.excludedDevices.includes(deviceId)) {
+      session.excludedDevices.push(deviceId);
+      io.emit('streaming-session-updated', session);
+    }
+    
+    return res.json({ success: true, message: `Excluded device ${deviceId} (segment LEDs ${startLed}-${endLed})` });
+  } catch (error) {
+    console.error('Error excluding segment:', error);
+    return res.status(500).json({ error: 'Failed to exclude segment' });
   }
 });
 
@@ -1564,6 +1748,9 @@ app.post('/api/stream/resume/:sessionId', (req, res) => {
 
 app.post('/api/stream/stop-all', (req, res) => {
   try {
+    // Get all playlist sessions before clearing
+    const playlistSessions = Array.from(streamingSessions.values()).filter(s => s.playlistId);
+    
     streamingSessions.clear();
     
     if (streamingInterval) {
@@ -1571,6 +1758,11 @@ app.post('/api/stream/stop-all', (req, res) => {
       streamingInterval = null;
       loggedStreamingDevices.clear(); // Clear logged devices when streaming stops
     }
+    
+    // Emit playlist-stopped events for any playlists that were stopped
+    playlistSessions.forEach(session => {
+      io.emit('playlist-stopped', { sessionId: session.id, playlistId: session.playlistId });
+    });
     
     io.emit('streaming-stopped-all');
     res.json({ success: true });
@@ -1582,7 +1774,7 @@ app.post('/api/stream/stop-all', (req, res) => {
 // Brightness
 app.post('/api/brightness', async (req, res) => {
   try {
-    const { targetType, targetId, brightness } = req.body;
+    const { targetType, targetId, brightness, sendToDevice } = req.body;
     
     if (targetType === 'device') {
       const devices = await storage.loadDevices();
@@ -1591,6 +1783,34 @@ app.post('/api/brightness', async (req, res) => {
         device.segments.forEach(segment => segment.brightness = brightness);
         await storage.updateDevice(device);
         ddpSender.updateDevice(device);
+        
+        // If sendToDevice flag is true, send JSON directly to WLED device
+        if (sendToDevice && device.isOnline) {
+          try {
+            // Convert brightness from 0-1 range to 0-255 for WLED API
+            const wledBrightness = Math.round(brightness * 255);
+            const url = `http://${device.ip}/json/state`;
+            await axios.post(url, { bri: wledBrightness }, {
+              timeout: 3000,
+              validateStatus: () => true // Accept any status code
+            });
+            console.log(`Sent brightness ${wledBrightness} (${Math.round(brightness * 100)}%) to WLED device ${device.name} at ${device.ip}`);
+          } catch (error) {
+            // Only log error details for non-timeout errors to reduce noise
+            if (axios.isAxiosError(error)) {
+              if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+                // Device timeout - just log a simple message
+                console.warn(`Brightness update timeout for ${device.name} at ${device.ip} (device may be slow or unreachable)`);
+              } else {
+                // Other network errors - log with more detail
+                console.error(`Failed to send brightness to WLED device ${device.name} at ${device.ip}:`, error.message);
+              }
+            } else {
+              console.error(`Failed to send brightness to WLED device ${device.name} at ${device.ip}:`, error);
+            }
+            // Don't fail the entire request if WLED device is unreachable
+          }
+        }
       }
     } else if (targetType === 'group') {
       const groups = await storage.loadGroups();
@@ -1894,7 +2114,9 @@ function startStreamingLoop() {
                 io.emit('frame-data', {
                   targetId: target.id,
                   data: Buffer.from(frame).toString('base64'),
-                  ledCount
+                  ledCount,
+                  deviceId: target.id,
+                  deviceName: device.name
                 });
               } else {
                 console.log('Device not found:', target.id);
@@ -1903,39 +2125,7 @@ function startStreamingLoop() {
             const groups = await storage.loadGroups();
             const group = groups.find(g => g.id === target.id);
             if (group && group.members) {
-              // Calculate total LED count for the group (excluding excluded devices)
-              let totalGroupLEDs = 0;
-              for (const member of group.members) {
-                // Skip excluded devices
-                if (session.excludedDevices && session.excludedDevices.includes(member.deviceId)) {
-                  continue;
-                }
-                
-                const device = devices.find(d => d.id === member.deviceId);
-                if (device) {
-                  if (member.startLed !== undefined && member.endLed !== undefined) {
-                    totalGroupLEDs += member.endLed - member.startLed + 1;
-                  } else {
-                    totalGroupLEDs += device.ledCount;
-                  }
-                }
-              }
-              
-              // Generate one frame for the entire group
-              const groupFrame = session.layers && session.layers.length > 0
-                ? effectEngine.generateFrameFromLayers(session.layers, totalGroupLEDs)
-                : session.effect
-                  ? effectEngine.generateFrame(session.effect, totalGroupLEDs)
-                  : Buffer.alloc(totalGroupLEDs * 3);
-              
-              // Emit frame data for preview (once per group)
-              io.emit('frame-data', {
-                targetId: target.id,
-                data: Buffer.from(groupFrame).toString('base64'),
-                ledCount: totalGroupLEDs
-              });
-              
-              // Send to individual devices
+              // Send to individual devices and emit per-device/segment frame data for preview
               for (const member of group.members) {
                 // Skip excluded devices
                 if (session.excludedDevices && session.excludedDevices.includes(member.deviceId)) {
@@ -1959,6 +2149,22 @@ function startStreamingLoop() {
                       : session.effect
                         ? effectEngine.generateFrame(session.effect, ledCount)
                         : Buffer.alloc(ledCount * 3);
+                    
+                    // Emit frame data for this device segment with specific target ID
+                    const segmentTargetId = `${member.deviceId}:${member.startLed}-${member.endLed}`;
+                    io.emit('frame-data', {
+                      targetId: segmentTargetId,
+                      data: Buffer.from(frame).toString('base64'),
+                      ledCount: ledCount,
+                      deviceId: member.deviceId,
+                      deviceName: device.name,
+                      segmentInfo: {
+                        startLed: member.startLed,
+                        endLed: member.endLed,
+                        segmentId: member.segmentId
+                      }
+                    });
+                    
                     // DDP offset is in bytes, so multiply LED index by 3
                     await ddpSender.sendToDevice(member.deviceId, frame, member.startLed * 3);
                   } else {
@@ -1975,6 +2181,16 @@ function startStreamingLoop() {
                       : session.effect
                         ? effectEngine.generateFrame(session.effect, ledCount)
                         : Buffer.alloc(ledCount * 3);
+                    
+                    // Emit frame data for this device with device ID as target
+                    io.emit('frame-data', {
+                      targetId: member.deviceId,
+                      data: Buffer.from(frame).toString('base64'),
+                      ledCount: ledCount,
+                      deviceId: member.deviceId,
+                      deviceName: device.name
+                    });
+                    
                     await ddpSender.sendToDevice(member.deviceId, frame);
                   }
                 }
@@ -2004,13 +2220,6 @@ function startStreamingLoop() {
                   ? effectEngine.generateFrame(session.effect, totalVirtualLEDs)
                   : Buffer.alloc(totalVirtualLEDs * 3);
               
-              // Emit frame data for preview
-              io.emit('frame-data', {
-                targetId: target.id,
-                data: Buffer.from(virtualFrame).toString('base64'),
-                ledCount: totalVirtualLEDs
-              });
-              
               // Map virtual LED indices to physical device ranges
               let virtualLEDIndex = 0;
               for (const range of virtual.ledRanges) {
@@ -2031,6 +2240,21 @@ function startStreamingLoop() {
                     console.log(`Streaming started to device ${device.name}, LEDs ${range.startLed}-${range.endLed} (${rangeLength} LEDs)`);
                     loggedStreamingDevices.add(device.id);
                   }
+                  
+                  // Emit frame data for this device range with specific target ID
+                  const rangeTargetId = `${range.deviceId}:${range.startLed}-${range.endLed}`;
+                  io.emit('frame-data', {
+                    targetId: rangeTargetId,
+                    data: Buffer.from(rangeFrame).toString('base64'),
+                    ledCount: rangeLength,
+                    deviceId: range.deviceId,
+                    deviceName: device.name,
+                    segmentInfo: {
+                      startLed: range.startLed,
+                      endLed: range.endLed
+                    }
+                  });
+                  
                   // Send with offset to target the specific LED range
                   // DDP offset is in bytes, so multiply LED index by 3
                   await ddpSender.sendToDevice(device.id, rangeFrame, range.startLed * 3);

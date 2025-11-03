@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Pause, Settings, Palette, Zap, Trash2, Layers, Save, Download } from 'lucide-react';
+import { Play, Pause, Settings, Palette, Zap, Trash2, Layers, Save, Download, Shuffle, Sparkles } from 'lucide-react';
 import { Effect, EffectParameter, EffectLayer, EffectPreset } from '../types';
 import { useStreaming } from '../contexts/StreamingContext';
 import { useSocket } from '../hooks/useSocket';
 import { useToast } from './ToastProvider';
 import { useModal } from './ModalProvider';
 import LEDPreviewCanvas from './LEDPreviewCanvas';
+import MultiPreviewPanel from './MultiPreviewPanel';
 import PaletteSelector from './PaletteSelector';
 import LayerPanel from './LayerPanel';
 import StreamConflictModal from './StreamConflictModal';
@@ -1003,10 +1004,106 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
           transition={{ delay: 0.2 }}
           className="glass-card p-4 sm:p-6"
         >
-          <div className="flex items-center gap-2 mb-4">
-            <Settings className="h-5 w-5 text-primary-500" />
-            <h3 className="text-lg font-bold">Parameters</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-primary-500" />
+              <h3 className="text-lg font-bold">Parameters</h3>
+            </div>
           </div>
+
+          {/* Quick Selectors for Pattern Generator */}
+          {selectedEffect.type === 'pattern-generator' && (
+            <div className="mb-4 space-y-3">
+              {/* Mode Quick Selectors */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Mode</label>
+                <div className="flex gap-2">
+                  {['scroll', 'pingpong', 'static'].map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => handleParameterChange('mode', mode)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        (parameters.get('mode') ?? selectedEffect.parameters.find(p => p.name === 'mode')?.value ?? 'scroll') === mode
+                          ? 'bg-primary-500 text-white'
+                          : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                      }`}
+                    >
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Speed Quick Presets */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Speed</label>
+                <div className="flex gap-2">
+                  {[
+                    { label: 'Slow', value: 2 },
+                    { label: 'Medium', value: 6 },
+                    { label: 'Fast', value: 15 }
+                  ].map((preset) => (
+                    <button
+                      key={preset.label}
+                      onClick={() => handleParameterChange('speed', preset.value)}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-white/10 text-gray-300 hover:bg-white/20 transition-colors"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Randomize Button */}
+              <button
+                onClick={() => {
+                  // Randomize mode
+                  const modes = ['scroll', 'pingpong', 'static'];
+                  const randomMode = modes[Math.floor(Math.random() * modes.length)];
+                  handleParameterChange('mode', randomMode);
+
+                  // Randomize speed (0.5 to 20)
+                  const randomSpeed = (Math.random() * 19.5 + 0.5).toFixed(1);
+                  handleParameterChange('speed', parseFloat(randomSpeed));
+
+                  // Randomize pingpongDistance if mode is pingpong
+                  if (randomMode === 'pingpong') {
+                    const randomDistance = Math.floor(Math.random() * 10) + 1;
+                    handleParameterChange('pingpongDistance', randomDistance);
+                  }
+
+                  // Randomize colors (3-6 random colors)
+                  const colorCount = Math.floor(Math.random() * 4) + 3; // 3-6 colors
+                  const randomColors = Array.from({ length: colorCount }, () => {
+                    const r = Math.floor(Math.random() * 256);
+                    const g = Math.floor(Math.random() * 256);
+                    const b = Math.floor(Math.random() * 256);
+                    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                  });
+                  handleParameterChange('colors', randomColors);
+
+                  // Randomize blend
+                  const blendModes = ['none', 'ledfade'];
+                  const randomBlend = blendModes[Math.floor(Math.random() * blendModes.length)];
+                  handleParameterChange('blend', randomBlend);
+
+                  // Randomize brightness (0.5 to 1.0)
+                  const randomBrightness = (Math.random() * 0.5 + 0.5).toFixed(2);
+                  handleParameterChange('brightness', parseFloat(randomBrightness));
+
+                  // Randomize reverse/mirror
+                  handleParameterChange('reverse', Math.random() > 0.5);
+                  handleParameterChange('mirror', Math.random() > 0.5);
+
+                  showToast('Parameters randomized!', 'success');
+                }}
+                className="w-full px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <Shuffle className="h-4 w-4" />
+                Randomize All
+              </button>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {selectedEffect.parameters.map(renderParameterControl)}
@@ -1055,21 +1152,21 @@ export default function EffectPanel({ effects, selectedEffect, onEffectSelect, d
       )}
 
       {/* Live Preview */}
-      {(selectedEffect || (useLayers && layers.length > 0)) && (
+      {(selectedEffect || (useLayers && layers.length > 0)) && selectedTargets.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="glass-card p-6"
         >
-          <h3 className="text-lg font-bold mb-4">Live Preview</h3>
-          <LEDPreviewCanvas 
-            effect={useLayers ? null : selectedEffect}
+          <MultiPreviewPanel
+            selectedTargets={selectedTargets}
+            devices={devices}
+            groups={groups}
+            virtuals={virtuals}
+            effect={useLayers ? undefined : selectedEffect}
             parameters={useLayers ? undefined : parameters}
             layers={useLayers ? layers : undefined}
             layerParameters={useLayers ? effectParameters : undefined}
-            ledCount={100}
-            width={600}
-            height={80}
           />
         </motion.div>
       )}

@@ -32,6 +32,17 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
   const [devicesList, setDevicesList] = useState<Array<{ id: string; name: string }>>([]);
   const [groupsList, setGroupsList] = useState<Array<{ id: string; name: string }>>([]);
   const [virtualsList, setVirtualsList] = useState<Array<{ id: string; name: string }>>([]);
+  // Convert brightness from 0-1 to 0-100 for slider
+  const [brightness, setBrightness] = useState<number>(
+    device.segments.length > 0 ? Math.round((device.segments[0].brightness || 1.0) * 100) : 100
+  );
+
+  useEffect(() => {
+    // Sync brightness when device prop changes
+    if (device.segments.length > 0) {
+      setBrightness(Math.round((device.segments[0].brightness || 1.0) * 100));
+    }
+  }, [device]);
 
   useEffect(() => {
     // Lazy-load when controls shown
@@ -141,6 +152,101 @@ export default function DeviceCard({ device, onEdit, onDelete, delay = 0 }: Devi
           }`}>
             {device.isOnline ? 'Online' : 'Offline'}
           </span>
+        </div>
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-white/70">Brightness:</span>
+            <span className="font-mono text-sm">{brightness}%</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={brightness}
+            onChange={(e) => setBrightness(Number(e.target.value))}
+            onMouseUp={async () => {
+              // Send brightness update directly to WLED device and update storage
+              try {
+                const brightnessValue = brightness / 100; // Convert to 0-1 range for storage
+                const wledBrightness = Math.round(brightness * 255 / 100); // Convert to 0-255 for WLED
+
+                // Send brightness directly to WLED device via proxy
+                const deviceResponse = await fetch(`/api/wled/${encodeURIComponent(device.ip)}/brightness`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ brightness: wledBrightness })
+                });
+
+                // Update storage (don't send to device since we already did)
+                const storageResponse = await fetch('/api/brightness', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    targetType: 'device',
+                    targetId: device.id,
+                    brightness: brightnessValue,
+                    sendToDevice: false // Already sent directly above
+                  })
+                });
+
+                if (deviceResponse.ok && storageResponse.ok) {
+                  showToast(`Brightness set to ${brightness}%`, 'success');
+                } else if (!deviceResponse.ok) {
+                  const errorData = await deviceResponse.json().catch(() => ({}));
+                  throw new Error(errorData.error || 'Failed to update device brightness');
+                } else {
+                  throw new Error('Failed to update brightness in storage');
+                }
+              } catch (error) {
+                console.error('Error updating brightness:', error);
+                const errorMsg = error instanceof Error ? error.message : 'Failed to update brightness';
+                showToast(errorMsg, 'error');
+              }
+            }}
+            onTouchEnd={async () => {
+              // Handle touch events for mobile devices
+              try {
+                const brightnessValue = brightness / 100; // Convert to 0-1 range for storage
+                const wledBrightness = Math.round(brightness * 255 / 100); // Convert to 0-255 for WLED
+
+                // Send brightness directly to WLED device via proxy
+                const deviceResponse = await fetch(`/api/wled/${encodeURIComponent(device.ip)}/brightness`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ brightness: wledBrightness })
+                });
+
+                // Update storage (don't send to device since we already did)
+                const storageResponse = await fetch('/api/brightness', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    targetType: 'device',
+                    targetId: device.id,
+                    brightness: brightnessValue,
+                    sendToDevice: false // Already sent directly above
+                  })
+                });
+
+                if (deviceResponse.ok && storageResponse.ok) {
+                  showToast(`Brightness set to ${brightness}%`, 'success');
+                } else if (!deviceResponse.ok) {
+                  const errorData = await deviceResponse.json().catch(() => ({}));
+                  throw new Error(errorData.error || 'Failed to update device brightness');
+                } else {
+                  throw new Error('Failed to update brightness in storage');
+                }
+              } catch (error) {
+                console.error('Error updating brightness:', error);
+                const errorMsg = error instanceof Error ? error.message : 'Failed to update brightness';
+                showToast(errorMsg, 'error');
+              }
+            }}
+            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary-500"
+            style={{
+              background: `linear-gradient(to right, rgb(99, 102, 241) 0%, rgb(99, 102, 241) ${brightness}%, rgba(255, 255, 255, 0.1) ${brightness}%, rgba(255, 255, 255, 0.1) 100%)`
+            }}
+          />
         </div>
       </div>
 

@@ -1,0 +1,433 @@
+---
+description: FastLED-inspired math functions and patterns for LED effects in TypeScript
+---
+
+# math-functions
+
+Importance Score: 85/100
+
+## Overview
+
+Mathematical functions are essential for creating smooth animations, rhythmic patterns, and dynamic visual effects. This guide provides TypeScript/JavaScript implementations of FastLED-style math functions optimized for LED effects.
+
+## Core Math Functions
+
+### Value Scaling and Clamping
+
+**scale8(value, scale)** - Fast 8-bit scaling (0-255 range)
+```typescript
+function scale8(value: number, scale: number): number {
+  return Math.floor((value * scale) / 255);
+}
+
+// Usage: Dim color to 50%
+const dimmed = scale8(color.r, 128); // 128 = 50% of 255
+```
+
+**Common scale8 values:**
+- `255` = 100% (no change)
+- `128` = 50%
+- `64` = 25%
+- `32` = 12.5%
+
+**map(value, inMin, inMax, outMin, outMax)** - Map value from one range to another
+```typescript
+// Map LED position to hue range
+const hue = map(i, 0, ledCount - 1, 0, 255);
+
+// Map parameter (0-10) to actual range
+function mapSpeed(speed: number): number {
+  return Math.max(0, Math.min(10, speed)) / 10; // 0 -> 0.0, 10 -> 1.0
+}
+```
+
+**clamp(value, min, max)** - Ensure value stays within bounds
+```typescript
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+// Clamp to 0-1 range
+function clamp01(x: number): number {
+  return Math.max(0, Math.min(1, x));
+}
+```
+
+### Saturation Math
+
+**qadd8(a, b)** - Add with saturation (max 255)
+```typescript
+function qadd8(a: number, b: number): number {
+  return Math.min(255, a + b);
+}
+
+// Example: Brighten color safely
+const brightened = qadd8(color.r, 50); // Won't overflow past 255
+```
+
+**qsub8(a, b)** - Subtract with saturation (min 0)
+```typescript
+function qsub8(a: number, b: number): number {
+  return Math.max(0, a - b);
+}
+
+// Example: Dim color safely
+const dimmed = qsub8(color.r, 30); // Won't go below 0
+```
+
+## Wave Functions
+
+### Sine and Cosine Waves
+
+**sin8(angle)** - Fast 8-bit sine wave (0-255 input → 0-255 output)
+```typescript
+function sin8(angle: number): number {
+  // Normalize 0-255 to 0-2π
+  const normalized = (angle / 255) * Math.PI * 2;
+  // Convert -1..1 to 0..255
+  return Math.floor(((Math.sin(normalized) + 1) / 2) * 255);
+}
+
+// Usage: Create sine wave pattern
+for (let i = 0; i < ledCount; i++) {
+  const angle = (i * 255) / ledCount;
+  const brightness = sin8(angle);
+  // Apply brightness to LED
+}
+```
+
+**cos8(angle)** - Fast 8-bit cosine (90° phase shift from sin8)
+```typescript
+function cos8(angle: number): number {
+  const normalized = (angle / 255) * Math.PI * 2;
+  return Math.floor(((Math.cos(normalized) + 1) / 2) * 255);
+}
+```
+
+**Animated Sine Wave:**
+```typescript
+// Phase-based animation
+state.plasmaPhase += 0.005 * speedFactor;
+const wave = Math.sin((position * Math.PI * 4) + state.plasmaPhase);
+```
+
+### Triangle Wave
+
+**triwave8(x)** - Triangle wave function
+```typescript
+function triwave8(x: number): number {
+  x = x % 256;
+  return x < 128 ? x * 2 : 255 - (x - 128) * 2;
+}
+```
+
+### Beat Functions (Rhythmic Patterns)
+
+**beat8(bpm, timeMs)** - Sawtooth wave that increases from 0 to 255
+```typescript
+function beat8(bpm: number, timeMs: number): number {
+  const timeSeconds = timeMs / 1000;
+  const phase = (timeSeconds * (bpm / 60)) % 1.0;
+  return Math.floor(phase * 255);
+}
+
+// Usage: Slow color rotation
+const hue = beat8(20, time); // 20 beats per minute
+```
+
+**beatsin8(bpm, min, max, timeMs)** - Sine wave that oscillates smoothly
+```typescript
+function beatsin8(bpm: number, min: number, max: number, timeMs: number): number {
+  const timeSeconds = timeMs / 1000;
+  const phase = timeSeconds * (bpm / 60) * Math.PI * 2;
+  const normalized = (Math.sin(phase) + 1) / 2;
+  return Math.floor(min + (max - min) * normalized);
+}
+
+// Usage: Breathing effect
+const brightness = beatsin8(12, 50, 200, time); // Oscillates between 50-200
+```
+
+**beatsin8 with Phase Offset:**
+```typescript
+// Create wave pattern across LEDs
+for (let i = 0; i < ledCount; i++) {
+  const phaseOffset = (i * 255) / ledCount;
+  const brightness = beatsin8(60, 0, 255, time, phaseOffset);
+}
+```
+
+## Interpolation Functions
+
+**lerp(a, b, t)** - Linear interpolation (0-1)
+```typescript
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+// Usage: Blend between two colors
+const blended = {
+  r: lerp(color1.r, color2.r, t),
+  g: lerp(color1.g, color2.g, t),
+  b: lerp(color1.b, color2.b, t)
+};
+```
+
+**smoothstep(edge0, edge1, x)** - Smooth interpolation
+```typescript
+function smoothstep(edge0: number, edge1: number, x: number): number {
+  const t = clamp01((x - edge0) / (edge1 - edge0));
+  return t * t * (3 - 2 * t);
+}
+```
+
+## Easing Functions
+
+**easeInQuad(t)** - Accelerating from zero
+```typescript
+function easeInQuad(t: number): number {
+  return t * t;
+}
+```
+
+**easeOutQuad(t)** - Decelerating to zero
+```typescript
+function easeOutQuad(t: number): number {
+  return t * (2 - t);
+}
+```
+
+**easeInOutQuad(t)** - Accelerate then decelerate
+```typescript
+function easeInOutQuad(t: number): number {
+  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+}
+```
+
+**easeInOutCubic(t)** - Cubic easing
+```typescript
+function easeInOutCubic(t: number): number {
+  return t < 0.5 
+    ? 4 * t * t * t 
+    : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+}
+```
+
+## Random Functions
+
+**random8() / random8(max)** - Fast random (0-255 or 0-max)
+```typescript
+function random8(max?: number): number {
+  if (max !== undefined) {
+    return Math.floor(Math.random() * max);
+  }
+  return Math.floor(Math.random() * 256);
+}
+
+// Usage: Random twinkle
+if (random8() < 50) { // ~20% chance
+  const pos = random8(ledCount);
+  // Light up LED at pos
+}
+```
+
+## Common Patterns
+
+### Pattern 1: Breathing Effect
+```typescript
+const breathingSpeed = params.get('breathingSpeed') ?? 7;
+const breathMin = params.get('breathingMin') ?? 110;
+const breathMax = params.get('breathingMax') ?? 255;
+const effectiveBPM = 0.25 * Math.pow(Math.max(0.1, breathingSpeed), 1.8);
+const breath = beatsin8(effectiveBPM, breathMin, breathMax, time);
+
+// Apply to all LEDs
+for (let i = 0; i < ledCount * 3; i++) {
+  buffer[i] = Math.floor((buffer[i] * breath) / 255);
+}
+```
+
+### Pattern 2: Wave Chaser
+```typescript
+static offset = 0;
+for (let i = 0; i < ledCount; i++) {
+  const angle = offset + (i * 20);
+  const brightness = sin8(angle);
+  // Apply brightness
+}
+offset += 5; // Wave speed
+```
+
+### Pattern 3: Multiple Wave Interference
+```typescript
+for (let i = 0; i < ledCount; i++) {
+  const position = i / ledCount;
+  const wave1 = Math.sin((position * Math.PI * 4) + phase1);
+  const wave2 = Math.sin((position * Math.PI * 6) + phase2);
+  const wave3 = Math.sin((i * 0.1) + phase3);
+  
+  const combined = (wave1 + wave2 + wave3) / 3;
+  // Use combined value for color/brightness
+}
+```
+
+### Pattern 4: Position-Based Mapping
+```typescript
+// Map LED position to hue range
+for (let i = 0; i < ledCount; i++) {
+  const position = i / (ledCount - 1);
+  const hue = position * 360;
+  const color = hsvToRgb(hue, 1.0, 1.0);
+}
+```
+
+### Pattern 5: Distance-Based Fade
+```typescript
+const center = ledCount / 2;
+for (let i = 0; i < ledCount; i++) {
+  const distance = Math.abs(i - center);
+  const maxDist = Math.max(center, ledCount - center);
+  const normalizedDist = distance / maxDist;
+  const brightness = qsub8(255, scale8(normalizedDist * 255, 20));
+  // Apply brightness
+}
+```
+
+### Pattern 6: Parameter Mapping (UI to Effect)
+```typescript
+// Map UI parameter (0-10) to internal value
+function mapSpeed(speed: number): number {
+  return Math.max(0, Math.min(10, speed)) / 10; // 0 -> 0.0, 10 -> 1.0
+}
+
+function mapBrightness(brightness: number): number {
+  // 0 -> 0.1, 10 -> 1.0
+  return 0.1 + (Math.max(0, Math.min(10, brightness)) / 10) * 0.9;
+}
+
+function mapFrequency(frequency: number): number {
+  // 0 -> 0.1x, 10 -> 3.0x frequency
+  return 0.1 + (Math.max(0, Math.min(10, frequency)) / 10) * 2.9;
+}
+
+function mapOpacity(opacity: number): number {
+  // 0 -> 0.0 (off), 10 -> 1.0 (full)
+  return Math.max(0, Math.min(10, opacity)) / 10;
+}
+```
+
+## Performance Tips
+
+1. **Pre-calculate constants outside loops**
+```typescript
+// BAD
+for (let i = 0; i < ledCount; i++) {
+  const angle = (i * Math.PI * 2) / ledCount; // Calculated every iteration
+}
+
+// GOOD
+const angleStep = (Math.PI * 2) / ledCount;
+for (let i = 0; i < ledCount; i++) {
+  const angle = i * angleStep;
+}
+```
+
+2. **Use integer math when possible**
+```typescript
+// Avoid unnecessary floating point
+const hue = Math.floor((i * 255) / ledCount); // Integer result
+```
+
+3. **Cache frequently used values**
+```typescript
+// In effect state
+interface EffectState {
+  phase: number;
+  hueOffset: number;
+  cachedValue: number;
+}
+```
+
+4. **Use bitwise operations for powers of 2**
+```typescript
+const half = value >> 1;    // Divide by 2
+const quarter = value >> 2; // Divide by 4
+const doubled = value << 1;  // Multiply by 2
+```
+
+## Common Mistakes to Avoid
+
+1. **Don't use floating point unnecessarily**
+   - Use integer math (0-255 range) for performance
+   - Only convert to float when needed for calculations
+
+2. **Always clamp values**
+   - RGB values must be 0-255
+   - Opacity/alpha must be 0-1
+   - Prevent NaN and Infinity
+
+3. **Don't recalculate static values in loops**
+   - Move constant calculations outside loops
+   - Cache values that don't change per frame
+
+4. **Handle edge cases**
+   - Check for division by zero (`Math.max(1, ledCount)`)
+   - Handle empty arrays and null values
+   - Validate parameter ranges
+
+## Integration with Effects
+
+### In Effect Classes
+
+```typescript
+export class MyEffect implements EffectGenerator {
+  private stateByKey: Map<string, EffectState> = new Map();
+
+  private mapSpeed(speed: number): number {
+    return Math.max(0, Math.min(10, speed)) / 10;
+  }
+
+  generate(params: Map<string, any>, ledCount: number, time: number): Buffer {
+    const buffer = Buffer.alloc(ledCount * 3);
+    const speed = params.get('speed') ?? 5.0;
+    const speedFactor = this.mapSpeed(speed);
+
+    // Use beat functions for rhythmic effects
+    const brightness = beatsin8(12, 50, 255, time);
+
+    for (let i = 0; i < ledCount; i++) {
+      const position = i / ledCount;
+      const wave = Math.sin((position * Math.PI * 4) + time * speedFactor);
+      const intensity = (wave + 1) / 2;
+      
+      // Apply to buffer
+      const p = i * 3;
+      buffer[p] = Math.floor(255 * intensity);
+      buffer[p + 1] = Math.floor(255 * intensity);
+      buffer[p + 2] = Math.floor(255 * intensity);
+    }
+
+    return buffer;
+  }
+}
+```
+
+## Reference: Function Quick Lookup
+
+| Function | Input Range | Output Range | Use Case |
+|----------|------------|--------------|----------|
+| `scale8(value, scale)` | 0-255, 0-255 | 0-255 | Brightness dimming |
+| `sin8(angle)` | 0-255 | 0-255 | Smooth wave patterns |
+| `beatsin8(bpm, min, max, time)` | - | min-max | Rhythmic oscillation |
+| `beat8(bpm, time)` | - | 0-255 | Continuous rotation |
+| `triwave8(x)` | 0-255 | 0-255 | Triangle wave |
+| `qadd8(a, b)` | 0-255, 0-255 | 0-255 | Safe addition |
+| `qsub8(a, b)` | 0-255, 0-255 | 0-255 | Safe subtraction |
+| `lerp(a, b, t)` | - | a-b | Smooth interpolation |
+| `map(value, inMin, inMax, outMin, outMax)` | - | outMin-outMax | Range conversion |
+
+## See Also
+
+- `led-effects-engine.mdc` - Effect generation system
+- `colorUtils.ts` - Color conversion utilities
+- `blendUtils.ts` - Layer blending functions

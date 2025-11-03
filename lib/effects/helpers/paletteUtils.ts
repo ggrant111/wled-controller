@@ -35,12 +35,22 @@ export function getColorFromPalette(palette: Palette, colorIndex: number, bright
 
 /**
  * Get color array from parameters, supporting both color arrays and palettes
+ * Checks for palette parameter first, then colors array, then falls back to default
  */
 export function getColorArray(params: Map<string, any>, fallback: string): RGBColor[] {
+  // First, check if a palette is specified
+  const palette = getPalette(params);
+  if (palette && palette.colors && palette.colors.length > 0) {
+    return palette.colors.map(c => parseColor(c));
+  }
+  
+  // Then check for colors array
   const colors = params.get('colors');
   if (Array.isArray(colors) && colors.length > 0) {
     return colors.map(c => parseColor(c));
   }
+  
+  // Finally, fall back to the default color
   return [parseColor(fallback)];
 }
 

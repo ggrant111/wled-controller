@@ -11,6 +11,9 @@
       },
       {
         "deviceId": "55364947-fba5-4ee0-9bd2-afc276eaf9fc"
+      },
+      {
+        "deviceId": "c9012eeb-f968-44dc-87b0-f26759381790"
       }
     ],
     "isDefault": false,
@@ -134,6 +137,72 @@
         "segmentId": "6a8a4625-f18a-4ee4-9e71-c2b3be9bfff1",
         "startLed": 154,
         "endLed": 167
+      }
+    ],
+    "isDefault": false,
+    "brightness": 1,
+    "isStreaming": false
+  },
+  {
+    "id": "9c81d618-26f3-456f-854a-41ad5ed49d48",
+    "name": "Right",
+    "members": [
+      {
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+        "segmentId": "824a68ba-cbef-450f-8037-a75a11f09e31",
+        "startLed": 0,
+        "endLed": 59
+      },
+      {
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+        "segmentId": "48effdd2-2377-4405-ba58-cf16dda660a1",
+        "startLed": 120,
+        "endLed": 179
+      },
+      {
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+        "segmentId": "a5de3dce-dc9e-49f3-879f-5b4e5fbad51f",
+        "startLed": 240,
+        "endLed": 299
+      },
+      {
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+        "segmentId": "c0417451-e8c0-4ed9-b990-391954acd7a4",
+        "startLed": 360,
+        "endLed": 419
+      }
+    ],
+    "isDefault": false,
+    "brightness": 1,
+    "isStreaming": false
+  },
+  {
+    "id": "f7a149e6-472f-4e14-ad43-6584dfcfc29b",
+    "name": "Left",
+    "members": [
+      {
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+        "segmentId": "a0f49886-1081-48a9-bbed-36596cfdc7a4",
+        "startLed": 60,
+        "endLed": 119
+      },
+      {
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+        "segmentId": "95b45bf5-d6b4-41bf-8b34-039a8de5a042",
+        "startLed": 180,
+        "endLed": 239
+      },
+      {
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+        "segmentId": "c662c705-b165-4ce4-95b3-21fc95b7d789",
+        "startLed": 300,
+        "endLed": 359
+      },
+      {
+        "deviceId": "b671e3e4-afd0-47ac-a133-7b3b2fe6c839",
+        "segmentId": "4107fdc7-bda4-47e7-b90e-864ba2410a8c",
+        "startLed": 420,
+        "endLed": 479
       }
     ],
     "isDefault": false,

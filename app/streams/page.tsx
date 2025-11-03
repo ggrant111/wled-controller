@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Pause, Square, RefreshCw, Zap, Clock, Target } from 'lucide-react';
+import { Play, Pause, Square, RefreshCw, Zap, Clock, Target, Music } from 'lucide-react';
 import { StreamingSession, WLEDDevice, Group, VirtualDevice, StreamTarget } from '../../types';
 import { useToast } from '../../components/ToastProvider';
 import { useModal } from '../../components/ModalProvider';
+import StreamSessionExpandedTargets from '../../components/StreamSessionExpandedTargets';
 
 export default function StreamsPage() {
   const { showToast } = useToast();
@@ -15,11 +16,36 @@ export default function StreamsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [virtuals, setVirtuals] = useState<VirtualDevice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activePlaylistSessionId, setActivePlaylistSessionId] = useState<string | null>(null);
+  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
+
+  const checkActivePlaylist = async () => {
+    try {
+      const response = await fetch('/api/playlists/active');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.activePlaylist) {
+          setActivePlaylistSessionId(data.activePlaylist.sessionId);
+          setActivePlaylistId(data.activePlaylist.playlistId);
+        } else {
+          setActivePlaylistSessionId(null);
+          setActivePlaylistId(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking active playlist:', error);
+    }
+  };
 
   useEffect(() => {
     loadData();
+    checkActivePlaylist();
     // Auto-refresh every 2 seconds
-    const interval = setInterval(loadData, 2000);
+    const interval = setInterval(() => {
+      loadData();
+      checkActivePlaylist();
+    }, 2000);
+    
     return () => clearInterval(interval);
   }, []);
 
@@ -131,6 +157,28 @@ export default function StreamsPage() {
     });
   };
 
+  const handleStopPlaylist = async () => {
+    if (!activePlaylistSessionId) return;
+    
+    try {
+      // Stop the playlist via API
+      const res = await fetch('/api/playlists/stop', { method: 'POST' });
+      if (res.ok) {
+        setActivePlaylistSessionId(null);
+        setActivePlaylistId(null);
+        showToast('Playlist stopped', 'success');
+        loadData();
+        checkActivePlaylist();
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        showToast(errorData.error || 'Failed to stop playlist', 'error');
+      }
+    } catch (error) {
+      console.error('Error stopping playlist:', error);
+      showToast('Failed to stop playlist', 'error');
+    }
+  };
+
   const getEffectNames = (session: StreamingSession): string => {
     if (session.layers && session.layers.length > 0) {
       return session.layers
@@ -166,13 +214,25 @@ export default function StreamsPage() {
           <h1 className="text-4xl font-bold mb-2">Active Streams</h1>
           <p className="text-white/70">Manage your active LED effect streams</p>
         </div>
-        <button
-          onClick={loadData}
-          className="btn-secondary flex items-center gap-2"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          {activePlaylistSessionId && (
+            <button
+              onClick={handleStopPlaylist}
+              className="btn-secondary flex items-center gap-2 text-purple-400 hover:bg-purple-500/20"
+              title="Stop Playlist"
+            >
+              <Music className="h-4 w-4" />
+              <span className="hidden sm:inline">Stop Playlist</span>
+            </button>
+          )}
+          <button
+            onClick={loadData}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </button>
+        </div>
       </motion.div>
 
       {/* Streams List */}
@@ -245,6 +305,17 @@ export default function StreamsPage() {
                           ))}
                         </div>
                       </div>
+                    </div>
+
+                    {/* Expanded Targets with Individual Controls */}
+                    <div className="md:col-span-2">
+                      <StreamSessionExpandedTargets
+                        session={session}
+                        devices={devices}
+                        groups={groups}
+                        virtuals={virtuals}
+                        onRefresh={loadData}
+                      />
                     </div>
 
                     {/* Uptime */}

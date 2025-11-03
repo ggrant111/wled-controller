@@ -88,5 +88,15 @@
     "createdAt": "2025-10-31T19:00:50.103Z",
     "updatedAt": "2025-10-31T19:03:05.611Z",
     "description": "fds"
+  },
+  {
+    "id": "6a2862e0-0e86-4dfd-94c6-f2af9f175673",
+    "name": "Halloween",
+    "date": "10-31",
+    "isRecurring": true,
+    "description": "Halloween Oct 31st",
+    "isCustom": true,
+    "createdAt": "2025-10-31T22:39:43.531Z",
+    "updatedAt": "2025-10-31T22:39:43.531Z"
   }
 ]

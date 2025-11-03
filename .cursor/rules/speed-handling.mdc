@@ -1,0 +1,230 @@
+---
+title: Speed Parameter Handling in LED Effects
+description: Guidelines for properly handling speed parameters (0-10 range) in rotation-based and motion-based effects, including time normalization and speed mapping
+---
+
+# Speed Parameter Handling in LED Effects
+
+## Overview
+
+Speed parameters in effects use a standardized **0-10 range** where:
+- **0** = stopped/no motion
+- **5** = medium/default speed  
+- **10** = fast/maximum speed
+
+Common pitfalls when implementing speed:
+1. Not mapping speed properly, leaving it in 0-10 range with tiny multipliers → essentially static
+2. Not normalizing time (could be milliseconds or seconds)
+3. HSV helpers that expect 0-1 hue instead of degrees
+4. Palette defaults masking motion when palette is "flat"
+
+## Speed Mapping Pattern
+
+For **rotation-based effects** (rainbow, color wheels, etc.), map speed to degrees/second:
+
+```typescript
+/**
+ * Map speed slider [0..10] to an angular velocity in degrees/second.
+ * Tweak MAX_DPS to taste (default 720 = 2 rotations/sec at max speed).
+ */
+private mapSpeed(speed: number, MAX_DPS = 720): number {
+  const clamped = Math.max(0, Math.min(10, Number(speed) || 0));
+  const t = clamped / 10; // 0..1
+  // Ease a little so low speeds are still visibly moving
+  const eased = t * t * (3 - 2 * t); // smoothstep
+  return eased * MAX_DPS; // deg/sec
+}
+```
+
+**Usage:**
+```typescript
+const speedParam = params.get('speed') ?? 5; // 0..10
+const tSec = this.toSeconds(time);
+const degPerSec = this.mapSpeed(speedParam, 720);
+const hueOffsetDeg = (tSec * degPerSec) % 360;
+```
+
+For **position-based effects** (comet, color wipe, etc.), map speed to pixels/second or similar:
+
+```typescript
+private mapSpeed(speed: number, MAX_RATE = 100): number {
+  const clamped = Math.max(0, Math.min(10, Number(speed) || 0));
+  const t = clamped / 10; // 0..1
+  return t * MAX_RATE; // Linear mapping
+}
+```
+
+## Time Normalization
+
+Always normalize time to seconds to handle both milliseconds and seconds input:
+
+```typescript
+/**
+ * Normalize time to seconds regardless of input units.
+ * Heuristic: if value > 1e6, assume milliseconds.
+ */
+private toSeconds(time: number): number {
+  if (!isFinite(time)) return 0;
+  // Heuristic: if it's large, it's probably ms (e.g., performance.now())
+  return time > 1e6 ? time / 1000 : time;
+}
+```
+
+**Critical:** Always use `toSeconds()` before multiplying speed:
+```typescript
+// ❌ BAD - assumes time units
+const hueOffset = (time * speed * 0.1) % 360;
+
+// ✅ GOOD - normalizes time first
+const tSec = this.toSeconds(time);
+const degPerSec = this.mapSpeed(speed, 720);
+const hueOffset = (tSec * degPerSec) % 360;
+```
+
+## HSV Color Conversion
+
+Some `hsvToRgb` helpers expect hue in **0-1 range** instead of **0-360 degrees**. Check your helper and handle both:
+
+```typescript
+// Check if hsvToRgb expects normalized hue (0-1)
+const hsvHueIsUnit = params.get('hsvHueIsUnit') ?? false;
+
+// Convert hue for HSV helper
+const hueDeg = (hueOffsetDeg + idx * hueStepDeg) % 360;
+const hueForHSV = hsvHueIsUnit ? (hueDeg / 360) : hueDeg;
+const rgb = hsvToRgb(hueForHSV, saturation, brightness);
+```
+
+**Common helper signatures:**
+- `hsvToRgb(hue: number, s: number, v: number)` where hue is 0-360 → use `hueDeg` directly
+- `hsvToRgb(hue: number, s: number, v: number)` where hue is 0-1 → use `hueDeg / 360`
+
+## Palette vs HSV Mode
+
+**Problem:** If `usePalette` defaults to `true` when any palette is present, it can mask HSV motion when the palette is "flat" (all same color or very similar).
+
+**Solution:** Only enable palette mode if:
+1. User explicitly set `usePalette: true`, OR
+2. A palette object exists AND `usePalette` was not explicitly `false`
+
+```typescript
+const palette = getPalette(params);
+// Only force palette if user explicitly asked OR a palette object is present AND usePalette was not explicitly false
+const usePalette = (params.get('usePalette') ?? (palette != null)) && palette;
+```
+
+This ensures:
+- Explicit `usePalette: false` → always uses HSV
+- Explicit `usePalette: true` → always uses palette
+- No `usePalette` param → uses palette if available, otherwise HSV
+
+## Complete Example: Rotation-Based Effect
+
+```typescript
+export class MyRotationEffect implements EffectGenerator {
+  /**
+   * Map speed [0..10] to degrees/second
+   */
+  private mapSpeed(speed: number, MAX_DPS = 720): number {
+    const clamped = Math.max(0, Math.min(10, Number(speed) || 0));
+    const t = clamped / 10;
+    const eased = t * t * (3 - 2 * t); // smoothstep
+    return eased * MAX_DPS;
+  }
+
+  /**
+   * Normalize time to seconds
+   */
+  private toSeconds(time: number): number {
+    if (!isFinite(time)) return 0;
+    return time > 1e6 ? time / 1000 : time;
+  }
+
+  generate(
+    params: Map<string, any>,
+    ledCount: number,
+    time: number,
+    width?: number,
+    height?: number
+  ): Buffer {
+    const speedParam = params.get('speed') ?? 5; // 0..10
+    const buffer = Buffer.alloc(ledCount * 3);
+
+    // Normalize time and calculate rotation
+    const tSec = this.toSeconds(time);
+    const degPerSec = this.mapSpeed(speedParam, 720);
+    const rotationDeg = (tSec * degPerSec) % 360;
+
+    // Check HSV hue format
+    const hsvHueIsUnit = params.get('hsvHueIsUnit') ?? false;
+
+    for (let i = 0; i < ledCount; i++) {
+      const hueDeg = (rotationDeg + (i * 360 / ledCount)) % 360;
+      const hueForHSV = hsvHueIsUnit ? (hueDeg / 360) : hueDeg;
+      const rgb = hsvToRgb(hueForHSV, 1.0, 1.0);
+      
+      const p = i * 3;
+      buffer[p] = rgb.r;
+      buffer[p + 1] = rgb.g;
+      buffer[p + 2] = rgb.b;
+    }
+
+    return buffer;
+  }
+}
+```
+
+## Common Mistakes
+
+### ❌ Mistake 1: Not Mapping Speed
+```typescript
+// Speed stays 0-10, multiplier too small
+const hueOffset = (time * speed * 0.1) % 360;
+// At speed=5: 0.5 deg/sec → barely visible
+```
+
+### ✅ Fix: Proper Speed Mapping
+```typescript
+const tSec = this.toSeconds(time);
+const degPerSec = this.mapSpeed(speed, 720);
+const hueOffset = (tSec * degPerSec) % 360;
+// At speed=5: ~360 deg/sec → clearly visible
+```
+
+### ❌ Mistake 2: Assuming Time Units
+```typescript
+// Breaks if time is in seconds instead of ms
+const position = (time * speed * 100) % travelDistance;
+```
+
+### ✅ Fix: Normalize Time
+```typescript
+const tSec = this.toSeconds(time);
+const position = (tSec * speed * 100) % travelDistance;
+```
+
+### ❌ Mistake 3: Wrong HSV Hue Format
+```typescript
+// Assumes hsvToRgb wants 0-360
+const rgb = hsvToRgb(hueDeg, s, v);
+// Breaks if helper expects 0-1
+```
+
+### ✅ Fix: Check Helper Format
+```typescript
+const hueForHSV = hsvHueIsUnit ? (hueDeg / 360) : hueDeg;
+const rgb = hsvToRgb(hueForHSV, s, v);
+```
+
+## Speed Ranges
+
+| Speed Value | Typical Behavior |
+|------------|------------------|
+| 0 | Stopped/no motion |
+| 1 | Very slow (visible but barely) |
+| 2-3 | Slow |
+| 5 | Medium/default |
+| 7-8 | Fast |
+| 10 | Maximum speed |
+
+Adjust `MAX_DPS` or `MAX_RATE` constants to tune the maximum speed for your effect.

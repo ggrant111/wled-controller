@@ -1,0 +1,37 @@
+[
+  {
+    "id": "playlist-1762035349342-8qzcgq2q9",
+    "name": "Test",
+    "description": "",
+    "items": [
+      {
+        "id": "item-1762035315823-0cflkcwqo",
+        "presetId": "preset-shockwave-dual-crisp-smooth",
+        "duration": 10,
+        "order": 0
+      },
+      {
+        "id": "item-1762035326148-qicmuxt05",
+        "presetId": "preset-wave-neon-scanner",
+        "duration": 10,
+        "order": 1
+      },
+      {
+        "id": "item-1762035336420-b77iuwigo",
+        "presetId": "preset-cylon-palette-glide",
+        "duration": 10,
+        "order": 2
+      }
+    ],
+    "shuffle": false,
+    "loop": true,
+    "targets": [
+      {
+        "type": "device",
+        "id": "a42964d6-5f3d-4384-8d75-dc81a07311d7"
+      }
+    ],
+    "createdAt": "2025-11-01T22:15:49.342Z",
+    "updatedAt": "2025-11-01T22:44:34.162Z"
+  }
+]

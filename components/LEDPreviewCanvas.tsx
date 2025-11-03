@@ -71,6 +71,12 @@ export default function LEDPreviewCanvas({
     const container = containerRef.current;
     const currentLedCount = frameData.length / 3;
     
+    // Set container to use flexbox
+    container.style.display = 'flex';
+    container.style.width = '100%';
+    container.style.flexWrap = 'nowrap';
+    container.style.gap = '0';
+    
     // Update or create LED divs
     for (let i = 0; i < currentLedCount; i++) {
       let ledDiv = container.children[i] as HTMLElement;
@@ -84,12 +90,11 @@ export default function LEDPreviewCanvas({
       const b = frameData[i * 3 + 2];
       
       ledDiv.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
-      ledDiv.style.width = `${100 / currentLedCount}%`;
+      ledDiv.style.flex = '1 1 0';
+      ledDiv.style.minWidth = '0';
       ledDiv.style.height = '100%';
-      ledDiv.style.display = 'inline-block';
-      ledDiv.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+      ledDiv.style.borderRight = i < currentLedCount - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none';
       ledDiv.style.boxSizing = 'border-box';
-      ledDiv.style.float = 'left';
     }
     
     // Remove extra divs if ledCount changed
@@ -448,6 +453,36 @@ export default function LEDPreviewCanvas({
           buffer[pixelIndex + 1] = color.g * sparkle;
           buffer[pixelIndex + 2] = color.b * sparkle;
         }
+      } else if (effect.type === 'pacifica') {
+        // Simplified Pacifica preview - ocean wave effect
+        const speed = params.get('speed') || 0.5;
+        const intensity = params.get('intensity') || 1.0;
+        const mirror = params.get('mirror') || false;
+        
+        // Create ocean-like blue-green waves
+        for (let i = 0; i < ledCount; i++) {
+          let effectiveI = i;
+          if (mirror) {
+            const mid = (ledCount - 1) / 2;
+            effectiveI = Math.abs(i - mid) * 2;
+          }
+          
+          // Multiple wave layers for depth
+          const wave1 = Math.sin((effectiveI * 0.1 + time * speed * 0.5) * Math.PI * 2) * 0.5 + 0.5;
+          const wave2 = Math.sin((effectiveI * 0.15 + time * speed * 0.3) * Math.PI * 2) * 0.5 + 0.5;
+          const wave3 = Math.sin((effectiveI * 0.08 + time * speed * 0.7) * Math.PI * 2) * 0.3 + 0.7;
+          
+          // Ocean colors: deep blue to teal
+          const depth = effectiveI / Math.max(1, (mirror ? (ledCount - 1) / 2 : (ledCount - 1)));
+          const r = Math.floor((wave1 * 0.2 + wave2 * 0.1) * 40 * intensity);
+          const g = Math.floor((wave1 * 0.4 + wave2 * 0.3 + wave3 * 0.2) * (120 + depth * 80) * intensity);
+          const b = Math.floor((wave1 * 0.6 + wave2 * 0.5 + wave3 * 0.4) * (180 + depth * 75) * intensity);
+          
+          const pixelIndex = i * 3;
+          buffer[pixelIndex] = Math.min(255, r);
+          buffer[pixelIndex + 1] = Math.min(255, g);
+          buffer[pixelIndex + 2] = Math.min(255, b);
+        }
       } else {
         if (params.has('color')) {
           const color = parseColor(params.get('color') || '#ff0000');
@@ -529,6 +564,12 @@ export default function LEDPreviewCanvas({
       const buffer = simulateEffect();
       const container = containerRef.current;
       
+      // Set container to use flexbox
+      container.style.display = 'flex';
+      container.style.width = '100%';
+      container.style.flexWrap = 'nowrap';
+      container.style.gap = '0';
+      
       // Update or create LED divs
       for (let i = 0; i < ledCount; i++) {
         let ledDiv = container.children[i] as HTMLElement;
@@ -542,11 +583,16 @@ export default function LEDPreviewCanvas({
         const b = buffer[i * 3 + 2];
         
         ledDiv.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
-        ledDiv.style.width = `${100 / ledCount}%`;
+        ledDiv.style.flex = '1 1 0';
+        ledDiv.style.minWidth = '0';
         ledDiv.style.height = '100%';
-        ledDiv.style.display = 'inline-block';
-        ledDiv.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        ledDiv.style.borderRight = i < ledCount - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none';
         ledDiv.style.boxSizing = 'border-box';
+      }
+      
+      // Remove extra divs if ledCount changed
+      while (container.children.length > ledCount) {
+        container.removeChild(container.lastChild!);
       }
       
       time += frameTime;
@@ -568,7 +614,12 @@ export default function LEDPreviewCanvas({
     <div
       ref={containerRef}
       className="w-full rounded-lg overflow-hidden"
-      style={{ height: `${height}px`, background: '#000' }}
+      style={{ 
+        height: `${height}px`, 
+        background: '#000',
+        display: 'flex',
+        flexWrap: 'nowrap'
+      }}
     >
       {!frameData && !effect && (!layers || layers.length === 0) && (
         <div className="flex items-center justify-center w-full text-white/50">

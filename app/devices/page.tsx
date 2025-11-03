@@ -12,6 +12,7 @@ import VirtualDeviceModal from '../../components/VirtualDeviceModal';
 import GroupModal from '../../components/GroupModal';
 import { useToast } from '../../components/ToastProvider';
 import { useModal } from '../../components/ModalProvider';
+import { useSocket } from '../../hooks/useSocket';
 import { WLEDDevice, Group, VirtualDevice } from '../../types';
 
 type TabType = 'devices' | 'groups' | 'virtuals';
@@ -22,6 +23,7 @@ function DevicesPageContent() {
   const searchParams = useSearchParams();
   const { showToast } = useToast();
   const { showConfirm } = useModal();
+  const { on, emit, isConnected } = useSocket();
   const tabParam = searchParams?.get('tab') as TabType | null;
   const [activeTab, setActiveTab] = useState<TabType>(
     (tabParam && ['devices', 'groups', 'virtuals'].includes(tabParam)) ? tabParam : 'devices'
@@ -36,6 +38,8 @@ function DevicesPageContent() {
   const [editingVirtual, setEditingVirtual] = useState<VirtualDevice | null>(null);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [loading, setLoading] = useState(true);
+  const [globalBrightness, setGlobalBrightness] = useState<number>(100);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
@@ -45,6 +49,60 @@ function DevicesPageContent() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Trigger immediate health check when socket connects to sync brightness
+  useEffect(() => {
+    if (isConnected) {
+      emit('request-health-check');
+    }
+  }, [isConnected, emit]);
+
+  // Listen for device updates from health check
+  useEffect(() => {
+    if (!isConnected || !dataLoaded) return; // Wait until initial data is loaded
+
+    const handleDevicesUpdated = (updatedDevices: WLEDDevice[]) => {
+      // Only update devices if we have valid data
+      // Merge updates by device ID to preserve existing devices if health check fails for some
+      setDevices(prevDevices => {
+        // If we have no previous devices, use the updated ones (from health check)
+        if (prevDevices.length === 0 && updatedDevices.length > 0) {
+          // Update global brightness from first device if available
+          if (updatedDevices[0].segments.length > 0) {
+            const firstDeviceBrightness = updatedDevices[0].segments[0].brightness || 1.0;
+            setGlobalBrightness(Math.round(firstDeviceBrightness * 100));
+          }
+          return updatedDevices;
+        }
+        // If we have previous devices, merge the updates
+        if (prevDevices.length > 0 && updatedDevices.length > 0) {
+          // Create a map of updated devices by ID
+          const updatedMap = new Map(updatedDevices.map(d => [d.id, d]));
+          // Merge: use updated device if it exists, otherwise keep the previous one
+          const merged = prevDevices.map(prevDevice => {
+            const updated = updatedMap.get(prevDevice.id);
+            return updated || prevDevice;
+          });
+          
+          // Update global brightness from first device if available
+          if (merged.length > 0 && merged[0].segments.length > 0) {
+            const firstDeviceBrightness = merged[0].segments[0].brightness || 1.0;
+            setGlobalBrightness(Math.round(firstDeviceBrightness * 100));
+          }
+          
+          return merged;
+        }
+        // If updatedDevices is empty, don't clear - keep previous devices
+        return prevDevices;
+      });
+    };
+
+    on('devices-updated', handleDevicesUpdated);
+
+    return () => {
+      // Cleanup handled by socket hook
+    };
+  }, [isConnected, dataLoaded, on]);
 
   // Sync tab with URL parameter when it changes
   useEffect(() => {
@@ -62,11 +120,22 @@ function DevicesPageContent() {
         fetch('/api/virtuals')
       ]);
 
-      setDevices(await devicesRes.json());
+      const loadedDevices = await devicesRes.json();
+      setDevices(loadedDevices);
       setGroups(await groupsRes.json());
       setVirtuals(await virtualsRes.json());
+      
+      // Set initial global brightness from first device, or default to 100%
+      if (loadedDevices.length > 0 && loadedDevices[0].segments.length > 0) {
+        const firstDeviceBrightness = loadedDevices[0].segments[0].brightness || 1.0;
+        setGlobalBrightness(Math.round(firstDeviceBrightness * 100));
+      }
+      
+      // Mark data as loaded so we can process health check updates
+      setDataLoaded(true);
     } catch (error) {
       console.error('Failed to load data:', error);
+      setDataLoaded(true); // Still mark as loaded to prevent blocking
     } finally {
       setLoading(false);
     }
@@ -344,7 +413,108 @@ function DevicesPageContent() {
         {/* Devices Tab */}
         {activeTab === 'devices' && (
           <>
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between gap-4">
+              {devices.length > 0 && (
+                <div className="flex items-center gap-4 flex-1 max-w-md">
+                  <label className="text-sm text-white/70 whitespace-nowrap">Global Brightness:</label>
+                  <div className="flex items-center gap-3 flex-1">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={globalBrightness}
+                      onChange={(e) => setGlobalBrightness(Number(e.target.value))}
+                      onMouseUp={async () => {
+                        // Send brightness update directly to all WLED devices and update storage
+                        try {
+                          const brightnessValue = globalBrightness / 100; // Convert to 0-1 range for storage
+                          const wledBrightness = Math.round(globalBrightness * 255 / 100); // Convert to 0-255 for WLED
+
+                          // Send brightness directly to all WLED devices via proxy (in parallel)
+                          const devicePromises = devices
+                            .filter(device => device.isOnline)
+                            .map(device =>
+                              fetch(`/api/wled/${encodeURIComponent(device.ip)}/brightness`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ brightness: wledBrightness })
+                              }).catch(error => {
+                                console.warn(`Failed to update brightness on ${device.name}:`, error);
+                                return { ok: false, device: device.name };
+                              })
+                            );
+
+                          // Update storage for all devices (don't send to device since we already did)
+                          const storagePromises = devices.map(device =>
+                            fetch('/api/brightness', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                targetType: 'device',
+                                targetId: device.id,
+                                brightness: brightnessValue,
+                                sendToDevice: false // Already sent directly above
+                              })
+                            })
+                          );
+
+                          await Promise.all([...devicePromises, ...storagePromises]);
+                          showToast(`Brightness set to ${globalBrightness}% for all devices`, 'success');
+                        } catch (error) {
+                          console.error('Error updating brightness for all devices:', error);
+                          showToast('Failed to update brightness for all devices', 'error');
+                        }
+                      }}
+                      onTouchEnd={async () => {
+                        // Handle touch events for mobile devices
+                        try {
+                          const brightnessValue = globalBrightness / 100; // Convert to 0-1 range for storage
+                          const wledBrightness = Math.round(globalBrightness * 255 / 100); // Convert to 0-255 for WLED
+
+                          // Send brightness directly to all WLED devices via proxy (in parallel)
+                          const devicePromises = devices
+                            .filter(device => device.isOnline)
+                            .map(device =>
+                              fetch(`/api/wled/${encodeURIComponent(device.ip)}/brightness`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ brightness: wledBrightness })
+                              }).catch(error => {
+                                console.warn(`Failed to update brightness on ${device.name}:`, error);
+                                return { ok: false, device: device.name };
+                              })
+                            );
+
+                          // Update storage for all devices (don't send to device since we already did)
+                          const storagePromises = devices.map(device =>
+                            fetch('/api/brightness', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                targetType: 'device',
+                                targetId: device.id,
+                                brightness: brightnessValue,
+                                sendToDevice: false // Already sent directly above
+                              })
+                            })
+                          );
+
+                          await Promise.all([...devicePromises, ...storagePromises]);
+                          showToast(`Brightness set to ${globalBrightness}% for all devices`, 'success');
+                        } catch (error) {
+                          console.error('Error updating brightness for all devices:', error);
+                          showToast('Failed to update brightness for all devices', 'error');
+                        }
+                      }}
+                      className="flex-1 h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                      style={{
+                        background: `linear-gradient(to right, rgb(99, 102, 241) 0%, rgb(99, 102, 241) ${globalBrightness}%, rgba(255, 255, 255, 0.1) ${globalBrightness}%, rgba(255, 255, 255, 0.1) 100%)`
+                      }}
+                    />
+                    <span className="font-mono text-sm min-w-[3rem] text-right">{globalBrightness}%</span>
+                  </div>
+                </div>
+              )}
               <button
                 onClick={handleAddDevice}
                 className="btn-primary flex items-center gap-2"

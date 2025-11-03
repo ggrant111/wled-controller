@@ -87,7 +87,11 @@ export type EffectType =
   | 'color-twinkle'
   | 'pacifica'
   | 'shockwave-dual'
-  | 'skipping-rock';
+  | 'skipping-rock'
+  | 'chromatic-vortex'
+  | 'ethereal-matrix'
+  | 'flare-burst'
+  | 'pattern-generator';
 
 export interface Preset {
   id: string;
@@ -206,6 +210,8 @@ export interface StreamingSession {
   excludedDevices?: string[]; // Devices to exclude from group/virtual streams
   // Legacy support - if effect is provided, create a single layer
   effect?: Effect;
+  // Playlist metadata
+  playlistId?: string; // ID of the playlist if this session is part of a playlist
 }
 
 export interface DDPPacket {
@@ -235,6 +241,25 @@ export interface LocationSettings {
   country?: string;
   countryCode?: string; // ISO country code (e.g., 'US', 'CA')
   autoDetected?: boolean;
+}
+
+export interface PlaylistItem {
+  id: string;
+  presetId: string;
+  duration: number; // Duration in seconds
+  order: number; // Order in playlist
+}
+
+export interface Playlist {
+  id: string;
+  name: string;
+  description?: string;
+  items: PlaylistItem[];
+  shuffle: boolean;
+  loop: boolean;
+  targets: StreamTarget[]; // Devices/groups/virtuals to play to
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface EffectPreset {

@@ -23,6 +23,10 @@ import { ColorTwinkleEffect } from './colorTwinkle';
 import { PacificaEffect } from './pacifica';
 import { SkippingRockEffect } from './skippingRock';
 import { ShockwaveDualEffect } from './shockwaveDual';
+import { ChromaticVortexEffect } from './chromaticVortex';
+import { EtherealMatrixEffect } from './etherealMatrix';
+import { FlareBurstWavesEffect } from './flareBurst';
+import { PatternGeneratorEffect } from './patternGenerator';
 
 export class EffectEngine {
   private time: number = 0;
@@ -50,10 +54,12 @@ export class EffectEngine {
       case 'cylon': return new CylonEffect();
       case 'color-twinkle': return new ColorTwinkleEffect();
       case 'pacifica': return new PacificaEffect();
-      // @ts-ignore - optional effects that may be added
-      case 'skipping-rock': return new (require('./skippingRock').SkippingRockEffect)();
-      // @ts-ignore - optional effects that may be added
-      case 'shockwave-dual': return new (require('./shockwaveDual').ShockwaveDualEffect)();
+      case 'skipping-rock': return new SkippingRockEffect();
+      case 'shockwave-dual': return new ShockwaveDualEffect();
+      case 'chromatic-vortex': return new ChromaticVortexEffect();
+      case 'ethereal-matrix': return new EtherealMatrixEffect();
+      case 'flare-burst': return new FlareBurstWavesEffect();
+      case 'pattern-generator': return new PatternGeneratorEffect();
       default:
         return undefined;
     }
@@ -80,6 +86,10 @@ export class EffectEngine {
     this.effects.set('pacifica', new PacificaEffect());
     this.effects.set('skipping-rock', new SkippingRockEffect());
     this.effects.set('shockwave-dual', new ShockwaveDualEffect());
+    this.effects.set('chromatic-vortex', new ChromaticVortexEffect());
+    this.effects.set('ethereal-matrix', new EtherealMatrixEffect());
+    this.effects.set('flare-burst', new FlareBurstWavesEffect());
+    this.effects.set('pattern-generator', new PatternGeneratorEffect());
   }
 
   updateTime(deltaTime: number): void {
@@ -91,6 +101,9 @@ export class EffectEngine {
     const instance = this.createEffect(type);
     if (instance) {
       this.effects.set(type, instance);
+      // Reset time for fresh start
+      this.time = 0;
+      this.frameCount = 0;
     }
   }
 
@@ -99,14 +112,23 @@ export class EffectEngine {
     const effectInstance = this.effects.get(effect.type);
     
     if (!effectInstance) {
-      console.warn(`Effect type '${effect.type}' not found`);
+      console.warn(`Effect type '${effect.type}' not found. Available types:`, Array.from(this.effects.keys()));
       return Buffer.alloc(ledCount * 3);
     }
     
     try {
-      return effectInstance.generate(params, ledCount, this.time, width, height);
+      const result = effectInstance.generate(params, ledCount, this.time, width, height);
+      // Validate buffer
+      if (!Buffer.isBuffer(result) || result.length !== ledCount * 3) {
+        console.error(`Effect '${effect.type}' returned invalid buffer. Expected length: ${ledCount * 3}, got: ${result?.length}`);
+        return Buffer.alloc(ledCount * 3);
+      }
+      return result;
     } catch (error) {
       console.error(`Error generating effect '${effect.type}':`, error);
+      if (error instanceof Error) {
+        console.error('Error stack:', error.stack);
+      }
       return Buffer.alloc(ledCount * 3);
     }
   }

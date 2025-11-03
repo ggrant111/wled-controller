@@ -7,6 +7,10 @@ const nextConfig = {
     return [
       // Rewrite all API routes except schedules to Express server
       {
+        source: "/api/devices",
+        destination: "http://localhost:3001/api/devices",
+      },
+      {
         source: "/api/devices/:path*",
         destination: "http://localhost:3001/api/devices/:path*",
       },
@@ -37,6 +41,14 @@ const nextConfig = {
       {
         source: "/api/brightness",
         destination: "http://localhost:3001/api/brightness",
+      },
+      {
+        source: "/api/playlists/active",
+        destination: "http://localhost:3001/api/playlists/active",
+      },
+      {
+        source: "/api/playlists/stop",
+        destination: "http://localhost:3001/api/playlists/stop",
       },
       // Schedules (except /active), presets, and palettes are handled by Next.js API routes
     ];

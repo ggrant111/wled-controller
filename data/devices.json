@@ -7,36 +7,72 @@
     "ledCount": 480,
     "segments": [
       {
-        "id": "ebea118b-e0cd-41ac-acde-8dfdd9d66cf1",
+        "id": "824a68ba-cbef-450f-8037-a75a11f09e31",
         "start": 0,
-        "length": 120,
+        "length": 60,
         "color": "#ffffff",
-        "brightness": 1
+        "brightness": 1,
+        "name": "Segment 1"
       },
       {
-        "id": "26067dac-4ae7-4850-a23d-c2c43762920b",
+        "id": "a0f49886-1081-48a9-bbed-36596cfdc7a4",
+        "start": 60,
+        "length": 60,
+        "color": "#ffffff",
+        "brightness": 0.03,
+        "name": "Segment 2"
+      },
+      {
+        "id": "48effdd2-2377-4405-ba58-cf16dda660a1",
         "start": 120,
-        "length": 120,
+        "length": 60,
         "color": "#ffffff",
-        "brightness": 1
+        "brightness": 0.03,
+        "name": "Segment 3"
       },
       {
-        "id": "14e63742-0d8c-43ff-8088-a8a3180dd89a",
+        "id": "95b45bf5-d6b4-41bf-8b34-039a8de5a042",
+        "start": 180,
+        "length": 60,
+        "color": "#ffffff",
+        "brightness": 0.03,
+        "name": "Segment 4"
+      },
+      {
+        "id": "a5de3dce-dc9e-49f3-879f-5b4e5fbad51f",
         "start": 240,
-        "length": 120,
+        "length": 60,
         "color": "#ffffff",
-        "brightness": 1
+        "brightness": 0.03,
+        "name": "Segment 5"
       },
       {
-        "id": "3ee77e6e-8802-4cf6-8ae4-abfaed5cb1a9",
-        "start": 360,
-        "length": 120,
+        "id": "c662c705-b165-4ce4-95b3-21fc95b7d789",
+        "start": 300,
+        "length": 60,
         "color": "#ffffff",
-        "brightness": 1
+        "brightness": 0.03,
+        "name": "Segment 6"
+      },
+      {
+        "id": "c0417451-e8c0-4ed9-b990-391954acd7a4",
+        "start": 360,
+        "length": 60,
+        "color": "#ffffff",
+        "brightness": 0.03,
+        "name": "Segment 7"
+      },
+      {
+        "id": "4107fdc7-bda4-47e7-b90e-864ba2410a8c",
+        "start": 420,
+        "length": 60,
+        "color": "#ffffff",
+        "brightness": 0.03,
+        "name": "Segment 8"
       }
     ],
-    "isOnline": false,
-    "lastSeen": "2025-10-31T20:06:46.959Z"
+    "isOnline": true,
+    "lastSeen": "2025-11-03T03:30:49.207Z"
   },
   {
     "id": "a42964d6-5f3d-4384-8d75-dc81a07311d7",
@@ -138,7 +174,7 @@
         "start": 154,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance12"
       },
       {
@@ -146,7 +182,7 @@
         "start": 168,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance13"
       },
       {
@@ -154,7 +190,7 @@
         "start": 182,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance14"
       },
       {
@@ -162,7 +198,7 @@
         "start": 196,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance15"
       },
       {
@@ -170,7 +206,7 @@
         "start": 210,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance16"
       },
       {
@@ -178,7 +214,7 @@
         "start": 224,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance17"
       },
       {
@@ -186,7 +222,7 @@
         "start": 238,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance18"
       },
       {
@@ -194,7 +230,7 @@
         "start": 252,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance19"
       },
       {
@@ -202,7 +238,7 @@
         "start": 266,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance20"
       },
       {
@@ -210,7 +246,7 @@
         "start": 280,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance21"
       },
       {
@@ -218,7 +254,7 @@
         "start": 294,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance22"
       },
       {
@@ -226,7 +262,7 @@
         "start": 308,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance23"
       },
       {
@@ -234,7 +270,7 @@
         "start": 322,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance24"
       },
       {
@@ -242,7 +278,7 @@
         "start": 336,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance25"
       },
       {
@@ -250,7 +286,7 @@
         "start": 350,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance26"
       },
       {
@@ -258,7 +294,7 @@
         "start": 364,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance27"
       },
       {
@@ -266,7 +302,7 @@
         "start": 378,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance28"
       },
       {
@@ -274,7 +310,7 @@
         "start": 392,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance29"
       },
       {
@@ -282,7 +318,7 @@
         "start": 406,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance30"
       },
       {
@@ -290,7 +326,7 @@
         "start": 420,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance31"
       },
       {
@@ -298,7 +334,7 @@
         "start": 434,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance32"
       },
       {
@@ -306,7 +342,7 @@
         "start": 448,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance33"
       },
       {
@@ -314,7 +350,7 @@
         "start": 462,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance34"
       },
       {
@@ -322,7 +358,7 @@
         "start": 476,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance35"
       },
       {
@@ -330,7 +366,7 @@
         "start": 490,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance36"
       },
       {
@@ -338,7 +374,7 @@
         "start": 504,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance37"
       },
       {
@@ -346,7 +382,7 @@
         "start": 518,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance38"
       },
       {
@@ -354,7 +390,7 @@
         "start": 532,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance39"
       },
       {
@@ -362,30 +398,30 @@
         "start": 546,
         "length": 14,
         "color": "#ffffff",
-        "brightness": 1,
+        "brightness": 0.51,
         "name": "Chromance40"
       }
     ],
-    "isOnline": false,
-    "lastSeen": "2025-10-31T20:06:47.414Z"
+    "isOnline": true,
+    "lastSeen": "2025-11-03T03:26:29.056Z"
   },
   {
     "id": "55364947-fba5-4ee0-9bd2-afc276eaf9fc",
     "name": "House ",
     "ip": "192.168.1.223",
     "port": 4048,
-    "ledCount": 400,
+    "ledCount": 500,
     "segments": [
       {
         "id": "79310cbb-ae5d-414d-beb3-d4398081f15a",
         "start": 0,
-        "length": 400,
+        "length": 500,
         "color": "#ffffff",
         "brightness": 1
       }
     ],
-    "isOnline": false,
-    "lastSeen": "2025-10-31T20:06:47.513Z"
+    "isOnline": true,
+    "lastSeen": "2025-11-03T03:17:23.693Z"
   },
   {
     "id": "1eb40f87-ea9c-4142-a9c0-8344a314f132",
@@ -399,7 +435,7 @@
         "start": 0,
         "length": 150,
         "color": "#ffffff",
-        "brightness": 1
+        "brightness": 0.5
       }
     ],
     "isOnline": false,
@@ -420,7 +456,7 @@
         "brightness": 1
       }
     ],
-    "isOnline": false,
-    "lastSeen": "2025-10-31T20:06:47.582Z"
+    "isOnline": true,
+    "lastSeen": "2025-11-03T02:47:49.870Z"
   }
 ]

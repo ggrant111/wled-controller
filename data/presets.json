@@ -1,459 +1,5 @@
 [
   {
-    "id": "preset-1761781221122-gfeb1a2l6",
-    "name": "Test Chase",
-    "description": "",
-    "createdAt": "2025-10-29T23:40:21.122Z",
-    "updatedAt": "2025-10-29T23:40:21.122Z",
-    "useLayers": false,
-    "effect": {
-      "id": "chase",
-      "name": "Chase",
-      "type": "chase",
-      "parameters": [
-        {
-          "name": "speed",
-          "type": "range",
-          "value": 0.1,
-          "min": 0.01,
-          "max": 1,
-          "step": 0.01
-        },
-        {
-          "name": "length",
-          "type": "range",
-          "value": 5,
-          "min": 1,
-          "max": 50,
-          "step": 1
-        },
-        {
-          "name": "count",
-          "type": "range",
-          "value": 1,
-          "min": 1,
-          "max": 10,
-          "step": 1
-        },
-        {
-          "name": "colors",
-          "type": "array",
-          "value": [
-            "#ff0000"
-          ],
-          "isColorArray": true
-        },
-        {
-          "name": "colorMode",
-          "type": "options",
-          "value": "palette",
-          "options": [
-            "palette",
-            "cycle"
-          ]
-        },
-        {
-          "name": "palette",
-          "type": "palette",
-          "value": "rainbow"
-        },
-        {
-          "name": "backgroundColor",
-          "type": "color",
-          "value": "#000000"
-        },
-        {
-          "name": "reverse",
-          "type": "boolean",
-          "value": false
-        },
-        {
-          "name": "mirror",
-          "type": "boolean",
-          "value": false
-        }
-      ]
-    },
-    "parameters": {
-      "speed": 0.44,
-      "length": 5,
-      "count": 3,
-      "colors": [
-        "#ff0000"
-      ],
-      "colorMode": "palette",
-      "palette": "rainbow",
-      "backgroundColor": "#000000",
-      "reverse": false,
-      "mirror": false
-    }
-  },
-  {
-    "id": "preset-1761784904982-kacplp4zw",
-    "name": "test2 2 layers",
-    "description": "",
-    "createdAt": "2025-10-30T00:41:44.982Z",
-    "updatedAt": "2025-10-30T00:41:44.982Z",
-    "useLayers": true,
-    "layers": [
-      {
-        "id": "e1ef9d96-ccee-400d-b692-e822d733dc29",
-        "effect": {
-          "id": "chase",
-          "name": "Chase",
-          "type": "chase",
-          "parameters": [
-            {
-              "name": "speed",
-              "type": "range",
-              "value": 0.44,
-              "min": 0.01,
-              "max": 1,
-              "step": 0.01
-            },
-            {
-              "name": "length",
-              "type": "range",
-              "value": 5,
-              "min": 1,
-              "max": 50,
-              "step": 1
-            },
-            {
-              "name": "count",
-              "type": "range",
-              "value": 3,
-              "min": 1,
-              "max": 10,
-              "step": 1
-            },
-            {
-              "name": "colors",
-              "type": "array",
-              "value": [
-                "#ff0000"
-              ],
-              "isColorArray": true
-            },
-            {
-              "name": "colorMode",
-              "type": "options",
-              "value": "palette",
-              "options": [
-                "palette",
-                "cycle"
-              ]
-            },
-            {
-              "name": "palette",
-              "type": "palette",
-              "value": "rainbow"
-            },
-            {
-              "name": "backgroundColor",
-              "type": "color",
-              "value": "#000000"
-            },
-            {
-              "name": "reverse",
-              "type": "boolean",
-              "value": false
-            },
-            {
-              "name": "mirror",
-              "type": "boolean",
-              "value": false
-            }
-          ]
-        },
-        "blendMode": "normal",
-        "opacity": 0.47,
-        "enabled": true,
-        "name": "Chase Layer"
-      },
-      {
-        "id": "231a1119-f28d-4c51-bb42-2a0c362112e8",
-        "effect": {
-          "id": "comet",
-          "name": "Comet",
-          "type": "comet",
-          "parameters": [
-            {
-              "name": "speed",
-              "type": "range",
-              "value": 0.49,
-              "min": 0.01,
-              "max": 1,
-              "step": 0.01
-            },
-            {
-              "name": "length",
-              "type": "range",
-              "value": 20,
-              "min": 1,
-              "max": 100,
-              "step": 1
-            },
-            {
-              "name": "colors",
-              "type": "array",
-              "value": [
-                "#ff0000"
-              ],
-              "isColorArray": true
-            },
-            {
-              "name": "tail",
-              "type": "range",
-              "value": 0.3,
-              "min": 0,
-              "max": 1,
-              "step": 0.1
-            },
-            {
-              "name": "reverse",
-              "type": "boolean",
-              "value": false
-            },
-            {
-              "name": "mirror",
-              "type": "boolean",
-              "value": false
-            }
-          ]
-        },
-        "blendMode": "normal",
-        "opacity": 0.48,
-        "enabled": true,
-        "name": "Comet Layer"
-      }
-    ],
-    "layerParameters": {
-      "chase": {
-        "speed": 0.44,
-        "length": 5,
-        "count": 3,
-        "colors": [
-          "#ff0000"
-        ],
-        "colorMode": "palette",
-        "palette": "rainbow",
-        "backgroundColor": "#000000",
-        "reverse": false,
-        "mirror": false
-      },
-      "e1ef9d96-ccee-400d-b692-e822d733dc29-chase": {
-        "speed": 0.44,
-        "length": 5,
-        "count": 3,
-        "colors": [
-          "#ff0000"
-        ],
-        "colorMode": "palette",
-        "palette": "rainbow",
-        "backgroundColor": "#000000",
-        "reverse": false,
-        "mirror": false
-      },
-      "231a1119-f28d-4c51-bb42-2a0c362112e8-comet": {
-        "speed": 0.49,
-        "length": 20,
-        "colors": [
-          "#ff0000"
-        ],
-        "tail": 0.3,
-        "reverse": false,
-        "mirror": false
-      }
-    }
-  },
-  {
-    "id": "preset-1761806699226-q6n15ld4y",
-    "name": "RWB Skipping Rock",
-    "description": "",
-    "createdAt": "2025-10-30T06:44:59.226Z",
-    "updatedAt": "2025-10-30T06:44:59.226Z",
-    "useLayers": false,
-    "effect": {
-      "id": "skipping-rock",
-      "name": "Skipping Rock (Ripples + Bounces)",
-      "type": "skipping-rock",
-      "parameters": [
-        {
-          "name": "rockWidth",
-          "type": "range",
-          "value": 6,
-          "min": 1,
-          "max": 20,
-          "step": 1
-        },
-        {
-          "name": "rockSpeed",
-          "type": "range",
-          "value": 180,
-          "min": 10,
-          "max": 600,
-          "step": 10
-        },
-        {
-          "name": "rockTrail",
-          "type": "range",
-          "value": 0.85,
-          "min": 0,
-          "max": 1,
-          "step": 0.01
-        },
-        {
-          "name": "rockHue",
-          "type": "number"
-        },
-        {
-          "name": "rockBrightness",
-          "type": "range",
-          "value": 1,
-          "min": 0.1,
-          "max": 1,
-          "step": 0.05
-        },
-        {
-          "name": "minSkipDist",
-          "type": "range",
-          "value": 40,
-          "min": 5,
-          "max": 300,
-          "step": 5
-        },
-        {
-          "name": "maxSkipDist",
-          "type": "range",
-          "value": 120,
-          "min": 10,
-          "max": 600,
-          "step": 10
-        },
-        {
-          "name": "skipHoldMs",
-          "type": "range",
-          "value": 35,
-          "min": 0,
-          "max": 300,
-          "step": 5
-        },
-        {
-          "name": "spawnAtRock",
-          "type": "boolean",
-          "value": true
-        },
-        {
-          "name": "rippleSpeed",
-          "type": "range",
-          "value": 260,
-          "min": 10,
-          "max": 1000,
-          "step": 10
-        },
-        {
-          "name": "rippleSigma",
-          "type": "range",
-          "value": 1.6,
-          "min": 0.6,
-          "max": 4,
-          "step": 0.1
-        },
-        {
-          "name": "rippleDampPerSec",
-          "type": "range",
-          "value": 0.6,
-          "min": 0.3,
-          "max": 0.99,
-          "step": 0.01
-        },
-        {
-          "name": "reflectLoss",
-          "type": "range",
-          "value": 0.65,
-          "min": 0.3,
-          "max": 0.95,
-          "step": 0.01
-        },
-        {
-          "name": "maxRipples",
-          "type": "range",
-          "value": 12,
-          "min": 1,
-          "max": 50,
-          "step": 1
-        },
-        {
-          "name": "additive",
-          "type": "boolean",
-          "value": true
-        },
-        {
-          "name": "palette",
-          "type": "palette",
-          "value": "rainbow"
-        },
-        {
-          "name": "usePaletteCycle",
-          "type": "boolean",
-          "value": true
-        },
-        {
-          "name": "paletteShiftPerSkip",
-          "type": "range",
-          "value": 0.18,
-          "min": 0,
-          "max": 1,
-          "step": 0.01
-        },
-        {
-          "name": "backgroundFade",
-          "type": "range",
-          "value": 0.92,
-          "min": 0.5,
-          "max": 0.999,
-          "step": 0.001
-        },
-        {
-          "name": "gamma",
-          "type": "range",
-          "value": 2.2,
-          "min": 1,
-          "max": 3,
-          "step": 0.1
-        },
-        {
-          "name": "clamp",
-          "type": "boolean",
-          "value": true
-        }
-      ]
-    },
-    "parameters": {
-      "rockWidth": 2,
-      "rockSpeed": 40,
-      "rockTrail": 0,
-      "rockBrightness": 1,
-      "minSkipDist": 125,
-      "maxSkipDist": 390,
-      "skipHoldMs": 35,
-      "spawnAtRock": true,
-      "rippleSpeed": 30,
-      "rippleSigma": 1.6,
-      "rippleDampPerSec": 0.6,
-      "reflectLoss": 0.65,
-      "maxRipples": 12,
-      "additive": true,
-      "palette": "red-white-blue",
-      "usePaletteCycle": true,
-      "paletteShiftPerSkip": 0.9,
-      "backgroundFade": 0.92,
-      "gamma": 2.2,
-      "clamp": true
-    }
-  },
-  {
     "id": "preset-1761807711894-5ihg78i31",
     "name": "Shockwave1",
     "description": "",
@@ -1579,6 +1125,6136 @@
       "backgroundFade": 0.92,
       "gamma": 2.2,
       "clamp": true
+    }
+  },
+  {
+    "id": "preset-wave-liquid-ribbons",
+    "name": "Wave: Liquid Ribbons",
+    "description": "Smooth flowing waves with amplitude and frequency modulation",
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "wave",
+      "name": "Wave",
+      "type": "wave",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 6,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "spatialFreq",
+          "type": "range",
+          "value": 1.5,
+          "min": 0.01,
+          "max": 10,
+          "step": 0.01
+        },
+        {
+          "name": "waves",
+          "type": "range",
+          "value": 3,
+          "min": 1,
+          "max": 10,
+          "step": 1
+        },
+        {
+          "name": "waveform",
+          "type": "options",
+          "value": "sine",
+          "options": [
+            "sine",
+            "triangle",
+            "square",
+            "saw",
+            "abs_sine",
+            "noise"
+          ]
+        },
+        {
+          "name": "amDepth",
+          "type": "range",
+          "value": 0.25,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "amRate",
+          "type": "range",
+          "value": 0.15,
+          "min": 0,
+          "max": 5,
+          "step": 0.01
+        },
+        {
+          "name": "fmDepth",
+          "type": "range",
+          "value": 0.15,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "fmRate",
+          "type": "range",
+          "value": 0.1,
+          "min": 0,
+          "max": 5,
+          "step": 0.01
+        },
+        {
+          "name": "dispersion",
+          "type": "range",
+          "value": 0.2,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "jitter",
+          "type": "range",
+          "value": 0.2,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "screen",
+          "options": [
+            "max",
+            "add",
+            "screen",
+            "alpha"
+          ]
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 1.8,
+          "min": 0.5,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "colorSample",
+          "type": "options",
+          "value": "position",
+          "options": [
+            "position",
+            "phase"
+          ]
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00ff00"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "colorMode",
+          "type": "options",
+          "value": "palette",
+          "options": [
+            "palette",
+            "cycle"
+          ]
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "backgroundColor",
+          "type": "color",
+          "value": "#000000"
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 6,
+      "spatialFreq": 1.5,
+      "waves": 3,
+      "waveform": "sine",
+      "amDepth": 0.25,
+      "amRate": 0.15,
+      "fmDepth": 0.15,
+      "fmRate": 0.1,
+      "dispersion": 0.2,
+      "jitter": 0.2,
+      "blend": "screen",
+      "gamma": 1.8,
+      "colorSample": "position",
+      "colors": [
+        "#00ff00"
+      ],
+      "colorMode": "palette",
+      "palette": "rainbow",
+      "backgroundColor": "#000000",
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-wave-choppy-surf",
+    "name": "Wave: Choppy Surf",
+    "description": "Edgy triangle waves with amplitude modulation",
+    "createdAt": "2025-01-01T00:00:01.000Z",
+    "updatedAt": "2025-01-01T00:00:01.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "wave",
+      "name": "Wave",
+      "type": "wave",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 7,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "spatialFreq",
+          "type": "range",
+          "value": 2.5,
+          "min": 0.01,
+          "max": 10,
+          "step": 0.01
+        },
+        {
+          "name": "waves",
+          "type": "range",
+          "value": 2,
+          "min": 1,
+          "max": 10,
+          "step": 1
+        },
+        {
+          "name": "waveform",
+          "type": "options",
+          "value": "triangle",
+          "options": [
+            "sine",
+            "triangle",
+            "square",
+            "saw",
+            "abs_sine",
+            "noise"
+          ]
+        },
+        {
+          "name": "amDepth",
+          "type": "range",
+          "value": 0.4,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "fmDepth",
+          "type": "range",
+          "value": 0.25,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "add",
+          "options": [
+            "max",
+            "add",
+            "screen",
+            "alpha"
+          ]
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 1.6,
+          "min": 0.5,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "colorSample",
+          "type": "options",
+          "value": "phase",
+          "options": [
+            "position",
+            "phase"
+          ]
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00ff00"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "colorMode",
+          "type": "options",
+          "value": "palette",
+          "options": [
+            "palette",
+            "cycle"
+          ]
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "backgroundColor",
+          "type": "color",
+          "value": "#000000"
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 7,
+      "spatialFreq": 2.5,
+      "waves": 2,
+      "waveform": "triangle",
+      "amDepth": 0.4,
+      "fmDepth": 0.25,
+      "blend": "add",
+      "gamma": 1.6,
+      "colorSample": "phase",
+      "colors": [
+        "#00ff00"
+      ],
+      "colorMode": "palette",
+      "palette": "rainbow",
+      "backgroundColor": "#000000",
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-wave-neon-scanner",
+    "name": "Wave: Neon Scanner",
+    "description": "Hard square wave lines with high contrast",
+    "createdAt": "2025-01-01T00:00:02.000Z",
+    "updatedAt": "2025-01-01T00:00:02.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "wave",
+      "name": "Wave",
+      "type": "wave",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 5,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "spatialFreq",
+          "type": "range",
+          "value": 0.8,
+          "min": 0.01,
+          "max": 10,
+          "step": 0.01
+        },
+        {
+          "name": "waves",
+          "type": "range",
+          "value": 1,
+          "min": 1,
+          "max": 10,
+          "step": 1
+        },
+        {
+          "name": "waveform",
+          "type": "options",
+          "value": "square",
+          "options": [
+            "sine",
+            "triangle",
+            "square",
+            "saw",
+            "abs_sine",
+            "noise"
+          ]
+        },
+        {
+          "name": "amDepth",
+          "type": "range",
+          "value": 0.15,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "max",
+          "options": [
+            "max",
+            "add",
+            "screen",
+            "alpha"
+          ]
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.5,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "backgroundDim",
+          "type": "range",
+          "value": 0.1,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00ff00"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "colorMode",
+          "type": "options",
+          "value": "palette",
+          "options": [
+            "palette",
+            "cycle"
+          ]
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "backgroundColor",
+          "type": "color",
+          "value": "#000000"
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 5,
+      "spatialFreq": 0.8,
+      "waves": 1,
+      "waveform": "square",
+      "amDepth": 0.15,
+      "blend": "max",
+      "gamma": 2.2,
+      "backgroundDim": 0.1,
+      "colors": [
+        "#00ff00"
+      ],
+      "colorMode": "palette",
+      "palette": "rainbow",
+      "backgroundColor": "#000000",
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-wave-stormy-noise",
+    "name": "Wave: Stormy Noise",
+    "description": "Turbulent noise waves with frequency modulation",
+    "createdAt": "2025-01-01T00:00:03.000Z",
+    "updatedAt": "2025-01-01T00:00:03.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "wave",
+      "name": "Wave",
+      "type": "wave",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 8,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "spatialFreq",
+          "type": "range",
+          "value": 1.2,
+          "min": 0.01,
+          "max": 10,
+          "step": 0.01
+        },
+        {
+          "name": "waves",
+          "type": "range",
+          "value": 4,
+          "min": 1,
+          "max": 10,
+          "step": 1
+        },
+        {
+          "name": "waveform",
+          "type": "options",
+          "value": "noise",
+          "options": [
+            "sine",
+            "triangle",
+            "square",
+            "saw",
+            "abs_sine",
+            "noise"
+          ]
+        },
+        {
+          "name": "fmDepth",
+          "type": "range",
+          "value": 0.35,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "fmRate",
+          "type": "range",
+          "value": 0.35,
+          "min": 0,
+          "max": 5,
+          "step": 0.01
+        },
+        {
+          "name": "jitter",
+          "type": "range",
+          "value": 0.5,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "dispersion",
+          "type": "range",
+          "value": 0.35,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "screen",
+          "options": [
+            "max",
+            "add",
+            "screen",
+            "alpha"
+          ]
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00ff00"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "colorMode",
+          "type": "options",
+          "value": "palette",
+          "options": [
+            "palette",
+            "cycle"
+          ]
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "backgroundColor",
+          "type": "color",
+          "value": "#000000"
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 8,
+      "spatialFreq": 1.2,
+      "waves": 4,
+      "waveform": "noise",
+      "fmDepth": 0.35,
+      "fmRate": 0.35,
+      "jitter": 0.5,
+      "dispersion": 0.35,
+      "blend": "screen",
+      "colors": [
+        "#00ff00"
+      ],
+      "colorMode": "palette",
+      "palette": "rainbow",
+      "backgroundColor": "#000000",
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-vu-bars-chill",
+    "name": "VU Bars: Chill",
+    "description": "Calm and smooth VU bars with gentle decay",
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "vu-bars",
+      "name": "VU Bars",
+      "type": "vu-bars",
+      "parameters": [
+        {
+          "name": "sensitivity",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00ff00"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "bars",
+          "type": "range",
+          "value": 8,
+          "min": 1,
+          "max": 16,
+          "step": 1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "sensitivity": 0.7,
+      "attackMs": 80,
+      "releaseMs": 320,
+      "noiseFloor": 0.05,
+      "compKnee": 0.75,
+      "spatialBlur": 0.25,
+      "trailDecayMs": 600,
+      "trailMix": 0.45,
+      "heightGamma": 0.8,
+      "bars": 8,
+      "colors": [
+        "#00ff00"
+      ],
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-vu-bars-studio",
+    "name": "VU Bars: Studio",
+    "description": "Balanced studio monitor-style VU bars",
+    "createdAt": "2025-01-01T00:00:01.000Z",
+    "updatedAt": "2025-01-01T00:00:01.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "vu-bars",
+      "name": "VU Bars",
+      "type": "vu-bars",
+      "parameters": [
+        {
+          "name": "sensitivity",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00ff00"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "bars",
+          "type": "range",
+          "value": 8,
+          "min": 1,
+          "max": 16,
+          "step": 1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "sensitivity": 0.8,
+      "attackMs": 50,
+      "releaseMs": 240,
+      "noiseFloor": 0.03,
+      "compKnee": 0.65,
+      "spatialBlur": 0.2,
+      "trailDecayMs": 450,
+      "trailMix": 0.3,
+      "heightGamma": 0.9,
+      "bars": 8,
+      "colors": [
+        "#00ff00"
+      ],
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-vu-bars-stage",
+    "name": "VU Bars: Stage",
+    "description": "Smooth but responsive stage monitor-style VU bars",
+    "createdAt": "2025-01-01T00:00:02.000Z",
+    "updatedAt": "2025-01-01T00:00:02.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "vu-bars",
+      "name": "VU Bars",
+      "type": "vu-bars",
+      "parameters": [
+        {
+          "name": "sensitivity",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00ff00"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "bars",
+          "type": "range",
+          "value": 8,
+          "min": 1,
+          "max": 16,
+          "step": 1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "sensitivity": 0.95,
+      "attackMs": 40,
+      "releaseMs": 200,
+      "compKnee": 0.55,
+      "spatialBlur": 0.15,
+      "trailDecayMs": 380,
+      "trailMix": 0.25,
+      "heightGamma": 1,
+      "bars": 8,
+      "colors": [
+        "#00ff00"
+      ],
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-pacifica-serene",
+    "name": "Pacifica: Serene",
+    "description": "Calm and peaceful ocean waves",
+    "createdAt": "2025-01-01T00:00:10.000Z",
+    "updatedAt": "2025-01-01T00:00:10.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pacifica",
+      "name": "Pacifica",
+      "type": "pacifica",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "intensity",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.8,
+      "warp": 0.45,
+      "foam": 0.45,
+      "fog": 0.25,
+      "exposure": 1,
+      "gamma": 1,
+      "whitecapBias": 0.7,
+      "detail": 1,
+      "mirror": false,
+      "intensity": 1
+    }
+  },
+  {
+    "id": "preset-pacifica-dawn-glass",
+    "name": "Pacifica: Dawn Glass",
+    "description": "Gentle morning light on glassy water",
+    "createdAt": "2025-01-01T00:00:11.000Z",
+    "updatedAt": "2025-01-01T00:00:11.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pacifica",
+      "name": "Pacifica",
+      "type": "pacifica",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "intensity",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.6,
+      "warp": 0.35,
+      "foam": 0.25,
+      "fog": 0.35,
+      "exposure": 0.9,
+      "gamma": 1.1,
+      "whitecapBias": 0.76,
+      "detail": 0.9,
+      "mirror": false,
+      "intensity": 1
+    }
+  },
+  {
+    "id": "preset-pacifica-stormy",
+    "name": "Pacifica: Stormy",
+    "description": "Dynamic stormy ocean waves",
+    "createdAt": "2025-01-01T00:00:12.000Z",
+    "updatedAt": "2025-01-01T00:00:12.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pacifica",
+      "name": "Pacifica",
+      "type": "pacifica",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "intensity",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 1.3,
+      "warp": 0.75,
+      "foam": 0.9,
+      "fog": 0.15,
+      "exposure": 1.1,
+      "gamma": 1,
+      "whitecapBias": 0.6,
+      "detail": 1.2,
+      "mirror": false,
+      "intensity": 1
+    }
+  },
+  {
+    "id": "preset-pacifica-lagoon",
+    "name": "Pacifica: Lagoon (Mirrored)",
+    "description": "Serene mirrored lagoon waters",
+    "createdAt": "2025-01-01T00:00:13.000Z",
+    "updatedAt": "2025-01-01T00:00:13.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pacifica",
+      "name": "Pacifica",
+      "type": "pacifica",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "intensity",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.9,
+      "warp": 0.55,
+      "foam": 0.6,
+      "fog": 0.2,
+      "exposure": 1,
+      "gamma": 1.05,
+      "mirror": true,
+      "intensity": 1
+    }
+  },
+  {
+    "id": "preset-cylon-classic-kitt",
+    "name": "Cylon: Classic KITT (Smooth)",
+    "description": "Smooth Knight Rider KITT scanner with impact effects",
+    "createdAt": "2025-01-01T00:00:20.000Z",
+    "updatedAt": "2025-01-01T00:00:20.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "cylon",
+      "name": "Cylon",
+      "type": "cylon",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "width",
+          "type": "range",
+          "value": 3,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "tail",
+          "type": "range",
+          "value": 0.3,
+          "min": 0,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "colorMode",
+          "type": "options",
+          "value": "palette",
+          "options": [
+            "palette",
+            "cycle"
+          ]
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.22,
+      "width": 4,
+      "eyes": 1,
+      "tailMs": 420,
+      "tailGain": 1,
+      "trailGamma": 0.95,
+      "impactMs": 120,
+      "bloom": 0.4,
+      "colors": [
+        "#ff0000"
+      ],
+      "colorMode": "palette",
+      "palette": "rainbow",
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-cylon-dual-scanner",
+    "name": "Cylon: Dual Scanner",
+    "description": "Two synchronized scanning eyes",
+    "createdAt": "2025-01-01T00:00:21.000Z",
+    "updatedAt": "2025-01-01T00:00:21.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "cylon",
+      "name": "Cylon",
+      "type": "cylon",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "width",
+          "type": "range",
+          "value": 3,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "tail",
+          "type": "range",
+          "value": 0.3,
+          "min": 0,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "colorMode",
+          "type": "options",
+          "value": "palette",
+          "options": [
+            "palette",
+            "cycle"
+          ]
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.28,
+      "width": 3.5,
+      "eyes": 2,
+      "eyeGap": 18,
+      "tailMs": 360,
+      "mirror": false,
+      "colors": [
+        "#ff0000"
+      ],
+      "colorMode": "palette",
+      "palette": "rainbow",
+      "reverse": false
+    }
+  },
+  {
+    "id": "preset-cylon-center-mirror",
+    "name": "Cylon: Center Mirror (Showpiece)",
+    "description": "Mirrored scanner effect from center outward",
+    "createdAt": "2025-01-01T00:00:22.000Z",
+    "updatedAt": "2025-01-01T00:00:22.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "cylon",
+      "name": "Cylon",
+      "type": "cylon",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "width",
+          "type": "range",
+          "value": 3,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "tail",
+          "type": "range",
+          "value": 0.3,
+          "min": 0,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "colorMode",
+          "type": "options",
+          "value": "palette",
+          "options": [
+            "palette",
+            "cycle"
+          ]
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.2,
+      "width": 5,
+      "eyes": 1,
+      "mirror": true,
+      "tailMs": 520,
+      "trailGamma": 0.9,
+      "impactExpand": 1.7,
+      "colors": [
+        "#ff0000"
+      ],
+      "colorMode": "palette",
+      "palette": "rainbow",
+      "reverse": false
+    }
+  },
+  {
+    "id": "preset-cylon-palette-glide",
+    "name": "Cylon: Palette Glide",
+    "description": "Smooth color cycling scanner with temporal blending",
+    "createdAt": "2025-01-01T00:00:23.000Z",
+    "updatedAt": "2025-01-01T00:00:23.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "cylon",
+      "name": "Cylon",
+      "type": "cylon",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "width",
+          "type": "range",
+          "value": 3,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "tail",
+          "type": "range",
+          "value": 0.3,
+          "min": 0,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "colorMode",
+          "type": "options",
+          "value": "palette",
+          "options": [
+            "palette",
+            "cycle"
+          ]
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.18,
+      "width": 4,
+      "tailMs": 480,
+      "colorMode": "cycle",
+      "temporalBlend": 0.12,
+      "colors": [
+        "#ff0000"
+      ],
+      "palette": "rainbow",
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-color-twinkle-calm-cozy",
+    "name": "Color Twinkle: Calm Cozy (Incandescent)",
+    "description": "Warm incandescent-style twinkles with cozy ambiance",
+    "createdAt": "2025-01-01T00:00:30.000Z",
+    "updatedAt": "2025-01-01T00:00:30.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "color-twinkle",
+      "name": "Color Twinkle",
+      "type": "color-twinkle",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "density",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000",
+            "#00ff00",
+            "#0000ff",
+            "#ffff00",
+            "#ff00ff",
+            "#00ffff"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "backgroundColor",
+          "type": "color",
+          "value": "#000000"
+        },
+        {
+          "name": "paletteMode",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "paletteSpeed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "coolLikeIncandescent",
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    },
+    "parameters": {
+      "density": 0.22,
+      "fadeInMs": 220,
+      "holdMs": 120,
+      "fadeOutMs": 520,
+      "neighborGlow": 0.22,
+      "coolLikeIncandescent": true,
+      "backgroundColor": "#0b0a08",
+      "backgroundDim": 0.8,
+      "colors": [
+        "#ff0000",
+        "#00ff00",
+        "#0000ff",
+        "#ffff00",
+        "#ff00ff",
+        "#00ffff"
+      ],
+      "paletteMode": false,
+      "palette": "rainbow",
+      "speed": 0.5
+    }
+  },
+  {
+    "id": "preset-color-twinkle-sparkle-lagoon",
+    "name": "Color Twinkle: Sparkle Lagoon (Palette Drift)",
+    "description": "Aqua-blue palette drifting twinkles",
+    "createdAt": "2025-01-01T00:00:31.000Z",
+    "updatedAt": "2025-01-01T00:00:31.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "color-twinkle",
+      "name": "Color Twinkle",
+      "type": "color-twinkle",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "density",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000",
+            "#00ff00",
+            "#0000ff",
+            "#ffff00",
+            "#ff00ff",
+            "#00ffff"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "backgroundColor",
+          "type": "color",
+          "value": "#000000"
+        },
+        {
+          "name": "paletteMode",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "paletteSpeed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "coolLikeIncandescent",
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    },
+    "parameters": {
+      "density": 0.28,
+      "paletteMode": true,
+      "paletteSpeed": 0.12,
+      "fadeInMs": 160,
+      "holdMs": 90,
+      "fadeOutMs": 420,
+      "neighborGlow": 0.16,
+      "backgroundColor": "#001014",
+      "colors": [
+        "#ff0000",
+        "#00ff00",
+        "#0000ff",
+        "#ffff00",
+        "#ff00ff",
+        "#00ffff"
+      ],
+      "palette": "rainbow",
+      "speed": 0.5,
+      "coolLikeIncandescent": true
+    }
+  },
+  {
+    "id": "preset-color-twinkle-snowfield",
+    "name": "Color Twinkle: Snowfield (Bright but Gentle)",
+    "description": "Soft white and blue twinkles like a winter night",
+    "createdAt": "2025-01-01T00:00:32.000Z",
+    "updatedAt": "2025-01-01T00:00:32.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "color-twinkle",
+      "name": "Color Twinkle",
+      "type": "color-twinkle",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "density",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000",
+            "#00ff00",
+            "#0000ff",
+            "#ffff00",
+            "#ff00ff",
+            "#00ffff"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "backgroundColor",
+          "type": "color",
+          "value": "#000000"
+        },
+        {
+          "name": "paletteMode",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "paletteSpeed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "coolLikeIncandescent",
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    },
+    "parameters": {
+      "density": 0.35,
+      "fadeInMs": 140,
+      "holdMs": 140,
+      "fadeOutMs": 480,
+      "neighborGlow": 0.12,
+      "backgroundColor": "#060606",
+      "backgroundDim": 0.7,
+      "colors": [
+        "#cfe7ff",
+        "#ffffff",
+        "#dbefff"
+      ],
+      "paletteMode": false,
+      "palette": "rainbow",
+      "speed": 0.5,
+      "coolLikeIncandescent": true
+    }
+  },
+  {
+    "id": "preset-plasma-liquid-glass",
+    "name": "Plasma: Liquid Glass (Smooth)",
+    "description": "Smooth flowing plasma with soft blur and balanced exposure",
+    "createdAt": "2025-01-01T00:00:40.000Z",
+    "updatedAt": "2025-01-01T00:00:40.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "plasma",
+      "name": "Plasma",
+      "type": "plasma",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "intensity",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.16,
+      "warp": 0.45,
+      "blur": 0.18,
+      "saturation": 0.9,
+      "contrast": 0.9,
+      "exposure": 1,
+      "gamma": 1.05,
+      "noise": 0.05,
+      "intensity": 0.85,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-plasma-neon-storm",
+    "name": "Plasma: Neon Storm (Punchy)",
+    "description": "High-contrast vibrant plasma with bold colors",
+    "createdAt": "2025-01-01T00:00:41.000Z",
+    "updatedAt": "2025-01-01T00:00:41.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "plasma",
+      "name": "Plasma",
+      "type": "plasma",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "intensity",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.28,
+      "warp": 0.7,
+      "blur": 0.06,
+      "saturation": 1,
+      "contrast": 1.15,
+      "exposure": 1.1,
+      "gamma": 1,
+      "hueRange": 320,
+      "layerOffset": 120,
+      "intensity": 0.85,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-plasma-deep-space",
+    "name": "Plasma: Deep Space (Moody)",
+    "description": "Dark atmospheric plasma with blue-purple tones",
+    "createdAt": "2025-01-01T00:00:42.000Z",
+    "updatedAt": "2025-01-01T00:00:42.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "plasma",
+      "name": "Plasma",
+      "type": "plasma",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "intensity",
+          "type": "range",
+          "value": 0.5,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 0.12,
+      "warp": 0.6,
+      "blur": 0.22,
+      "saturation": 0.75,
+      "contrast": 0.8,
+      "exposure": 0.9,
+      "gamma": 1.1,
+      "hueBase": 210,
+      "hueRange": 140,
+      "intensity": 0.85,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-matrix-classic",
+    "name": "Matrix: Classic Matrix (Bright & Smooth)",
+    "description": "Classic bright Matrix rain with smooth trails",
+    "createdAt": "2025-01-01T00:00:50.000Z",
+    "updatedAt": "2025-01-01T00:00:50.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "matrix",
+      "name": "Matrix",
+      "type": "matrix",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "density",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00ff00"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speedPx": 90,
+      "density": 0.28,
+      "lenMin": 6,
+      "lenMax": 16,
+      "headBoost": 1.7,
+      "trailDecayMs": 520,
+      "neighborGlow": 0.14,
+      "colors": [
+        "#00ff00",
+        "#17ff6a"
+      ],
+      "paletteMode": false,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-matrix-cyber-rain",
+    "name": "Matrix: Cyber Rain (Palette Drift)",
+    "description": "Color-shifting matrix rain with palette cycling",
+    "createdAt": "2025-01-01T00:00:51.000Z",
+    "updatedAt": "2025-01-01T00:00:51.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "matrix",
+      "name": "Matrix",
+      "type": "matrix",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "density",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00ff00"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speedPx": 110,
+      "density": 0.22,
+      "lenMin": 8,
+      "lenMax": 22,
+      "paletteMode": true,
+      "paletteSpeed": 0.12,
+      "trailDecayMs": 600,
+      "neighborGlow": 0.18,
+      "colors": [
+        "#00ffd5",
+        "#44ff44",
+        "#00a2ff"
+      ],
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-matrix-slow-code",
+    "name": "Matrix: Slow Code (Moody, Long Trails)",
+    "description": "Slow-moving matrix with long persistent trails",
+    "createdAt": "2025-01-01T00:00:52.000Z",
+    "updatedAt": "2025-01-01T00:00:52.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "matrix",
+      "name": "Matrix",
+      "type": "matrix",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "density",
+          "type": "range",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00ff00"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "speedPx": 60,
+      "density": 0.18,
+      "lenMin": 10,
+      "lenMax": 28,
+      "headBoost": 1.4,
+      "trailDecayMs": 800,
+      "neighborGlow": 0.2,
+      "colors": [
+        "#00ff00"
+      ],
+      "paletteMode": false,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-shockwave-dual-crisp-smooth",
+    "name": "Shockwave Dual: Crisp & Smooth (Default Vibe)",
+    "description": "Default crisp and smooth dual shockwave with balanced settings",
+    "createdAt": "2025-01-01T00:01:00.000Z",
+    "updatedAt": "2025-01-01T00:01:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "shockwave-dual",
+      "name": "Shockwave (Dual, Random Meet)",
+      "type": "shockwave-dual",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 180,
+          "min": 20,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "hue",
+          "type": "range",
+          "value": 32,
+          "min": 0,
+          "max": 360,
+          "step": 1
+        },
+        {
+          "name": "bright",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "fade",
+          "type": "range",
+          "value": 0.96,
+          "min": 0.5,
+          "max": 0.999,
+          "step": 0.001
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 180,
+      "hue": 32,
+      "bright": 1,
+      "fade": 0.965,
+      "minMeet": 0.2,
+      "maxMeet": 0.8,
+      "restMin": 0.3,
+      "restMax": 1.2,
+      "holdMin": 0.06,
+      "holdMax": 0.14,
+      "rings": 3,
+      "sigma": 1.8,
+      "dispersion": 0.12,
+      "chromaShift": 165,
+      "trailFrac": 0.18,
+      "trailPersist": 0.86,
+      "temporalBlend": 0
+    }
+  },
+  {
+    "id": "preset-shockwave-dual-cinematic",
+    "name": "Shockwave Dual: Cinematic (Longer Trails, Softer Explosion)",
+    "description": "Cinematic shockwave with longer trails and softer explosion",
+    "createdAt": "2025-01-01T00:01:01.000Z",
+    "updatedAt": "2025-01-01T00:01:01.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "shockwave-dual",
+      "name": "Shockwave (Dual, Random Meet)",
+      "type": "shockwave-dual",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 180,
+          "min": 20,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "hue",
+          "type": "range",
+          "value": 32,
+          "min": 0,
+          "max": 360,
+          "step": 1
+        },
+        {
+          "name": "bright",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "fade",
+          "type": "range",
+          "value": 0.96,
+          "min": 0.5,
+          "max": 0.999,
+          "step": 0.001
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 150,
+      "hue": 210,
+      "bright": 0.95,
+      "fade": 0.97,
+      "minMeet": 0.25,
+      "maxMeet": 0.75,
+      "restMin": 0.35,
+      "restMax": 1.1,
+      "holdMin": 0.08,
+      "holdMax": 0.16,
+      "rings": 4,
+      "sigma": 2.2,
+      "dispersion": 0.1,
+      "chromaShift": 120,
+      "trailFrac": 0.22,
+      "trailPersist": 0.88,
+      "temporalBlend": 0.12
+    }
+  },
+  {
+    "id": "preset-shockwave-dual-hyperwave",
+    "name": "Shockwave Dual: Hyperwave (Energetic, Neon)",
+    "description": "Energetic neon shockwave with fast speed and vibrant colors",
+    "createdAt": "2025-01-01T00:01:02.000Z",
+    "updatedAt": "2025-01-01T00:01:02.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "shockwave-dual",
+      "name": "Shockwave (Dual, Random Meet)",
+      "type": "shockwave-dual",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 180,
+          "min": 20,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "hue",
+          "type": "range",
+          "value": 32,
+          "min": 0,
+          "max": 360,
+          "step": 1
+        },
+        {
+          "name": "bright",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "fade",
+          "type": "range",
+          "value": 0.96,
+          "min": 0.5,
+          "max": 0.999,
+          "step": 0.001
+        }
+      ]
+    },
+    "parameters": {
+      "speed": 240,
+      "hue": 320,
+      "bright": 1,
+      "fade": 0.96,
+      "minMeet": 0.15,
+      "maxMeet": 0.85,
+      "restMin": 0.2,
+      "restMax": 0.8,
+      "holdMin": 0.04,
+      "holdMax": 0.1,
+      "rings": 5,
+      "sigma": 1.5,
+      "dispersion": 0.16,
+      "chromaShift": 200,
+      "trailFrac": 0.14,
+      "trailPersist": 0.84,
+      "temporalBlend": 0.08,
+      "powerLimit": 0.9
+    }
+  },
+  {
+    "id": "preset-skipping-rock-natural-pond",
+    "name": "Skipping Rock: Natural Pond",
+    "description": "Natural pond ripples with balanced physics and soft glow",
+    "createdAt": "2025-01-01T00:01:10.000Z",
+    "updatedAt": "2025-01-01T00:01:10.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "skipping-rock",
+      "name": "Skipping Rock (Ripples + Bounces)",
+      "type": "skipping-rock",
+      "parameters": [
+        {
+          "name": "rockWidth",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "rockSpeed",
+          "type": "range",
+          "value": 180,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "rockTrail",
+          "type": "range",
+          "value": 0.85,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "rockHue",
+          "type": "number",
+          "value": null
+        },
+        {
+          "name": "rockBrightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "minSkipDist",
+          "type": "range",
+          "value": 40,
+          "min": 5,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "maxSkipDist",
+          "type": "range",
+          "value": 120,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "skipHoldMs",
+          "type": "range",
+          "value": 35,
+          "min": 0,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "spawnAtRock",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "rippleSpeed",
+          "type": "range",
+          "value": 260,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "rippleSigma",
+          "type": "range",
+          "value": 1.6,
+          "min": 0.6,
+          "max": 4,
+          "step": 0.1
+        },
+        {
+          "name": "rippleDampPerSec",
+          "type": "range",
+          "value": 0.6,
+          "min": 0.3,
+          "max": 0.99,
+          "step": 0.01
+        },
+        {
+          "name": "reflectLoss",
+          "type": "range",
+          "value": 0.65,
+          "min": 0.3,
+          "max": 0.95,
+          "step": 0.01
+        },
+        {
+          "name": "maxRipples",
+          "type": "range",
+          "value": 12,
+          "min": 1,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "name": "additive",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "usePaletteCycle",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "paletteShiftPerSkip",
+          "type": "range",
+          "value": 0.18,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "backgroundFade",
+          "type": "range",
+          "value": 0.92,
+          "min": 0.5,
+          "max": 0.999,
+          "step": 0.001
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "clamp",
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    },
+    "parameters": {
+      "rockSpeed": 170,
+      "meanSkipDist": 80,
+      "elasticity": 0.78,
+      "rippleSpeed": 260,
+      "rippleSigma": 1.3,
+      "dispersion": 0.012,
+      "rangeFalloff": 0.2,
+      "reflectLoss": 0.62,
+      "reflectRandom": 0.05,
+      "rockWidth": 6,
+      "rockTrail": 0.86,
+      "rockBrightness": 1,
+      "backgroundFade": 0.94,
+      "neighborGlow": 0.12,
+      "temporalBlend": 0.1,
+      "powerLimit": 0.95,
+      "palette": "rainbow",
+      "usePaletteCycle": true,
+      "additive": true
+    }
+  },
+  {
+    "id": "preset-skipping-rock-neon-skips",
+    "name": "Skipping Rock: Neon Skips (Fast & Crisp)",
+    "description": "Fast energetic skips with crisp ripples and minimal glow",
+    "createdAt": "2025-01-01T00:01:11.000Z",
+    "updatedAt": "2025-01-01T00:01:11.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "skipping-rock",
+      "name": "Skipping Rock (Ripples + Bounces)",
+      "type": "skipping-rock",
+      "parameters": [
+        {
+          "name": "rockWidth",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "rockSpeed",
+          "type": "range",
+          "value": 180,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "rockTrail",
+          "type": "range",
+          "value": 0.85,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "rockHue",
+          "type": "number",
+          "value": null
+        },
+        {
+          "name": "rockBrightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "minSkipDist",
+          "type": "range",
+          "value": 40,
+          "min": 5,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "maxSkipDist",
+          "type": "range",
+          "value": 120,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "skipHoldMs",
+          "type": "range",
+          "value": 35,
+          "min": 0,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "spawnAtRock",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "rippleSpeed",
+          "type": "range",
+          "value": 260,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "rippleSigma",
+          "type": "range",
+          "value": 1.6,
+          "min": 0.6,
+          "max": 4,
+          "step": 0.1
+        },
+        {
+          "name": "rippleDampPerSec",
+          "type": "range",
+          "value": 0.6,
+          "min": 0.3,
+          "max": 0.99,
+          "step": 0.01
+        },
+        {
+          "name": "reflectLoss",
+          "type": "range",
+          "value": 0.65,
+          "min": 0.3,
+          "max": 0.95,
+          "step": 0.01
+        },
+        {
+          "name": "maxRipples",
+          "type": "range",
+          "value": 12,
+          "min": 1,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "name": "additive",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "usePaletteCycle",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "paletteShiftPerSkip",
+          "type": "range",
+          "value": 0.18,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "backgroundFade",
+          "type": "range",
+          "value": 0.92,
+          "min": 0.5,
+          "max": 0.999,
+          "step": 0.001
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "clamp",
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    },
+    "parameters": {
+      "rockSpeed": 240,
+      "meanSkipDist": 65,
+      "elasticity": 0.82,
+      "rippleSpeed": 320,
+      "rippleSigma": 1.2,
+      "dispersion": 0.016,
+      "rangeFalloff": 0.18,
+      "reflectLoss": 0.66,
+      "reflectRandom": 0.08,
+      "rockWidth": 5,
+      "rockTrail": 0.82,
+      "backgroundFade": 0.92,
+      "neighborGlow": 0.06,
+      "temporalBlend": 0.06,
+      "palette": "rainbow",
+      "usePaletteCycle": true,
+      "additive": true,
+      "rockBrightness": 1
+    }
+  },
+  {
+    "id": "preset-skipping-rock-slow-sunset",
+    "name": "Skipping Rock: Slow Sunset (Long Ripples, Soft)",
+    "description": "Slow peaceful skips with long soft ripples and warm glow",
+    "createdAt": "2025-01-01T00:01:12.000Z",
+    "updatedAt": "2025-01-01T00:01:12.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "skipping-rock",
+      "name": "Skipping Rock (Ripples + Bounces)",
+      "type": "skipping-rock",
+      "parameters": [
+        {
+          "name": "rockWidth",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "rockSpeed",
+          "type": "range",
+          "value": 180,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "rockTrail",
+          "type": "range",
+          "value": 0.85,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "rockHue",
+          "type": "number",
+          "value": null
+        },
+        {
+          "name": "rockBrightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "minSkipDist",
+          "type": "range",
+          "value": 40,
+          "min": 5,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "maxSkipDist",
+          "type": "range",
+          "value": 120,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "skipHoldMs",
+          "type": "range",
+          "value": 35,
+          "min": 0,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "spawnAtRock",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "rippleSpeed",
+          "type": "range",
+          "value": 260,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "rippleSigma",
+          "type": "range",
+          "value": 1.6,
+          "min": 0.6,
+          "max": 4,
+          "step": 0.1
+        },
+        {
+          "name": "rippleDampPerSec",
+          "type": "range",
+          "value": 0.6,
+          "min": 0.3,
+          "max": 0.99,
+          "step": 0.01
+        },
+        {
+          "name": "reflectLoss",
+          "type": "range",
+          "value": 0.65,
+          "min": 0.3,
+          "max": 0.95,
+          "step": 0.01
+        },
+        {
+          "name": "maxRipples",
+          "type": "range",
+          "value": 12,
+          "min": 1,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "name": "additive",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "usePaletteCycle",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "paletteShiftPerSkip",
+          "type": "range",
+          "value": 0.18,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "backgroundFade",
+          "type": "range",
+          "value": 0.92,
+          "min": 0.5,
+          "max": 0.999,
+          "step": 0.001
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "clamp",
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    },
+    "parameters": {
+      "rockSpeed": 120,
+      "meanSkipDist": 90,
+      "elasticity": 0.75,
+      "rippleSpeed": 220,
+      "rippleSigma": 1.8,
+      "dispersion": 0.02,
+      "rangeFalloff": 0.26,
+      "reflectLoss": 0.58,
+      "reflectRandom": 0.03,
+      "rockWidth": 7,
+      "rockTrail": 0.9,
+      "backgroundFade": 0.96,
+      "neighborGlow": 0.18,
+      "temporalBlend": 0.14,
+      "gamma": 2.1,
+      "palette": "rainbow",
+      "usePaletteCycle": true,
+      "additive": true,
+      "rockBrightness": 1
+    }
+  },
+  {
+    "id": "preset-skipping-rock-cinematic-small",
+    "name": "Skipping Rock: Cinematic (Smooth, Readable) [Small Strips]",
+    "description": "Smooth and readable cinematic effect optimized for smaller LED strips (~60 LEDs)",
+    "createdAt": "2025-01-01T00:02:00.000Z",
+    "updatedAt": "2025-01-01T00:02:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "skipping-rock",
+      "name": "Skipping Rock (Ripples + Bounces)",
+      "type": "skipping-rock",
+      "parameters": [
+        {
+          "name": "rockWidth",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "rockSpeed",
+          "type": "range",
+          "value": 180,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "rockTrail",
+          "type": "range",
+          "value": 0.85,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "rockHue",
+          "type": "number",
+          "value": null
+        },
+        {
+          "name": "rockBrightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "minSkipDist",
+          "type": "range",
+          "value": 40,
+          "min": 5,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "maxSkipDist",
+          "type": "range",
+          "value": 120,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "skipHoldMs",
+          "type": "range",
+          "value": 35,
+          "min": 0,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "spawnAtRock",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "rippleSpeed",
+          "type": "range",
+          "value": 260,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "rippleSigma",
+          "type": "range",
+          "value": 1.6,
+          "min": 0.6,
+          "max": 4,
+          "step": 0.1
+        },
+        {
+          "name": "rippleDampPerSec",
+          "type": "range",
+          "value": 0.6,
+          "min": 0.3,
+          "max": 0.99,
+          "step": 0.01
+        },
+        {
+          "name": "reflectLoss",
+          "type": "range",
+          "value": 0.65,
+          "min": 0.3,
+          "max": 0.95,
+          "step": 0.01
+        },
+        {
+          "name": "maxRipples",
+          "type": "range",
+          "value": 12,
+          "min": 1,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "name": "additive",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "usePaletteCycle",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "paletteShiftPerSkip",
+          "type": "range",
+          "value": 0.18,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "backgroundFade",
+          "type": "range",
+          "value": 0.92,
+          "min": 0.5,
+          "max": 0.999,
+          "step": 0.001
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "clamp",
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    },
+    "parameters": {
+      "rockSpeed": 80,
+      "meanSkipDist": 22,
+      "rockWidth": 5,
+      "rockTrail": 0.88,
+      "rockBrightness": 1,
+      "rippleSpeed": 150,
+      "rippleSigma": 1.2,
+      "dispersion": 0.01,
+      "rangeFalloff": 0.2,
+      "rippleBrightness": 1,
+      "rippleDampPerSec": 0.88,
+      "rippleDeathThreshold": 0.03,
+      "softLimit": 210,
+      "softK": 1.1,
+      "backgroundFade": 0.94,
+      "neighborGlow": 0.1,
+      "temporalBlend": 0.06,
+      "powerLimit": 1,
+      "gamma": 2.2,
+      "elasticity": 0.78,
+      "skipHoldMs": 45,
+      "maxRipples": 8,
+      "usePaletteCycle": true,
+      "paletteShiftPerSkip": 0.16,
+      "palette": "rainbow",
+      "additive": true
+    }
+  },
+  {
+    "id": "preset-skipping-rock-balanced-default-small",
+    "name": "Skipping Rock: Balanced Default (Crisp, Livelier) [Small Strips]",
+    "description": "Crisp and lively balanced default effect optimized for smaller LED strips (~60 LEDs)",
+    "createdAt": "2025-01-01T00:02:01.000Z",
+    "updatedAt": "2025-01-01T00:02:01.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "skipping-rock",
+      "name": "Skipping Rock (Ripples + Bounces)",
+      "type": "skipping-rock",
+      "parameters": [
+        {
+          "name": "rockWidth",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "rockSpeed",
+          "type": "range",
+          "value": 180,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "rockTrail",
+          "type": "range",
+          "value": 0.85,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "rockHue",
+          "type": "number",
+          "value": null
+        },
+        {
+          "name": "rockBrightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "minSkipDist",
+          "type": "range",
+          "value": 40,
+          "min": 5,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "maxSkipDist",
+          "type": "range",
+          "value": 120,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "skipHoldMs",
+          "type": "range",
+          "value": 35,
+          "min": 0,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "spawnAtRock",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "rippleSpeed",
+          "type": "range",
+          "value": 260,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "rippleSigma",
+          "type": "range",
+          "value": 1.6,
+          "min": 0.6,
+          "max": 4,
+          "step": 0.1
+        },
+        {
+          "name": "rippleDampPerSec",
+          "type": "range",
+          "value": 0.6,
+          "min": 0.3,
+          "max": 0.99,
+          "step": 0.01
+        },
+        {
+          "name": "reflectLoss",
+          "type": "range",
+          "value": 0.65,
+          "min": 0.3,
+          "max": 0.95,
+          "step": 0.01
+        },
+        {
+          "name": "maxRipples",
+          "type": "range",
+          "value": 12,
+          "min": 1,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "name": "additive",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "usePaletteCycle",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "paletteShiftPerSkip",
+          "type": "range",
+          "value": 0.18,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "backgroundFade",
+          "type": "range",
+          "value": 0.92,
+          "min": 0.5,
+          "max": 0.999,
+          "step": 0.001
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "clamp",
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    },
+    "parameters": {
+      "rockSpeed": 120,
+      "meanSkipDist": 26,
+      "rockWidth": 4,
+      "rockTrail": 0.86,
+      "rockBrightness": 1,
+      "rippleSpeed": 190,
+      "rippleSigma": 1.3,
+      "dispersion": 0.012,
+      "rangeFalloff": 0.18,
+      "rippleBrightness": 1,
+      "rippleDampPerSec": 0.86,
+      "softLimit": 220,
+      "softK": 1,
+      "backgroundFade": 0.94,
+      "neighborGlow": 0.1,
+      "temporalBlend": 0.05,
+      "powerLimit": 1,
+      "gamma": 2.2,
+      "elasticity": 0.78,
+      "skipHoldMs": 45,
+      "maxRipples": 8,
+      "usePaletteCycle": true,
+      "paletteShiftPerSkip": 0.18,
+      "palette": "rainbow",
+      "additive": true
+    }
+  },
+  {
+    "id": "preset-skipping-rock-arcade-small",
+    "name": "Skipping Rock: Arcade (Snappy, Showy) [Small Strips]",
+    "description": "Snappy and showy arcade-style effect optimized for smaller LED strips (~60 LEDs)",
+    "createdAt": "2025-01-01T00:02:02.000Z",
+    "updatedAt": "2025-01-01T00:02:02.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "skipping-rock",
+      "name": "Skipping Rock (Ripples + Bounces)",
+      "type": "skipping-rock",
+      "parameters": [
+        {
+          "name": "rockWidth",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "rockSpeed",
+          "type": "range",
+          "value": 180,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "rockTrail",
+          "type": "range",
+          "value": 0.85,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "rockHue",
+          "type": "number",
+          "value": null
+        },
+        {
+          "name": "rockBrightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "minSkipDist",
+          "type": "range",
+          "value": 40,
+          "min": 5,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "maxSkipDist",
+          "type": "range",
+          "value": 120,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "skipHoldMs",
+          "type": "range",
+          "value": 35,
+          "min": 0,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "name": "spawnAtRock",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "rippleSpeed",
+          "type": "range",
+          "value": 260,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "rippleSigma",
+          "type": "range",
+          "value": 1.6,
+          "min": 0.6,
+          "max": 4,
+          "step": 0.1
+        },
+        {
+          "name": "rippleDampPerSec",
+          "type": "range",
+          "value": 0.6,
+          "min": 0.3,
+          "max": 0.99,
+          "step": 0.01
+        },
+        {
+          "name": "reflectLoss",
+          "type": "range",
+          "value": 0.65,
+          "min": 0.3,
+          "max": 0.95,
+          "step": 0.01
+        },
+        {
+          "name": "maxRipples",
+          "type": "range",
+          "value": 12,
+          "min": 1,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "name": "additive",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "usePaletteCycle",
+          "type": "boolean",
+          "value": true
+        },
+        {
+          "name": "paletteShiftPerSkip",
+          "type": "range",
+          "value": 0.18,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "backgroundFade",
+          "type": "range",
+          "value": 0.92,
+          "min": 0.5,
+          "max": 0.999,
+          "step": 0.001
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "clamp",
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    },
+    "parameters": {
+      "rockSpeed": 200,
+      "meanSkipDist": 30,
+      "rockWidth": 3,
+      "rockTrail": 0.84,
+      "rockBrightness": 1,
+      "rippleSpeed": 240,
+      "rippleSigma": 1.1,
+      "dispersion": 0.014,
+      "rangeFalloff": 0.22,
+      "rippleBrightness": 0.95,
+      "rippleDampPerSec": 0.84,
+      "softLimit": 200,
+      "softK": 1.2,
+      "backgroundFade": 0.93,
+      "neighborGlow": 0.08,
+      "temporalBlend": 0.04,
+      "powerLimit": 1,
+      "gamma": 2.2,
+      "elasticity": 0.78,
+      "skipHoldMs": 40,
+      "maxRipples": 6,
+      "usePaletteCycle": true,
+      "paletteShiftPerSkip": 0.2,
+      "palette": "rainbow",
+      "additive": true
+    }
+  },
+  {
+    "id": "preset-1762102559396-hhseba8b4",
+    "name": "Flare Burst RWB",
+    "description": "",
+    "createdAt": "2025-11-02T16:55:59.396Z",
+    "updatedAt": "2025-11-02T16:55:59.396Z",
+    "useLayers": false,
+    "effect": {
+      "id": "flare-burst",
+      "name": "Flare Burst Waves",
+      "type": "flare-burst",
+      "parameters": [
+        {
+          "name": "flareSpeed",
+          "type": "range",
+          "value": 220,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "flareWidth",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "flareHue",
+          "type": "number"
+        },
+        {
+          "name": "flareTrail",
+          "type": "range",
+          "value": 0.86,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "targetMin",
+          "type": "range",
+          "value": 0.3,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "targetMax",
+          "type": "range",
+          "value": 0.7,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveCount",
+          "type": "range",
+          "value": 5,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "waveInterval",
+          "type": "range",
+          "value": 0.085,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.005
+        },
+        {
+          "name": "waveSpeed",
+          "type": "range",
+          "value": 260,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "waveSigma",
+          "type": "range",
+          "value": 1.5,
+          "min": 0.4,
+          "max": 5,
+          "step": 0.1
+        },
+        {
+          "name": "waveAmp",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "ampDecayPerWave",
+          "type": "range",
+          "value": 0.75,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveDampPerSec",
+          "type": "range",
+          "value": 0.86,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "dispersion",
+          "type": "range",
+          "value": 0.012,
+          "min": 0,
+          "max": 0.1,
+          "step": 0.001
+        },
+        {
+          "name": "rangeFalloff",
+          "type": "range",
+          "value": 0.18,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveBrightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "popBrightness",
+          "type": "range",
+          "value": 120,
+          "min": 0,
+          "max": 255,
+          "step": 5
+        },
+        {
+          "name": "popHold",
+          "type": "range",
+          "value": 0.04,
+          "min": 0.01,
+          "max": 0.2,
+          "step": 0.01
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000",
+            "#ffffff",
+            "#0000ff"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "backgroundFade",
+          "type": "range",
+          "value": 0.94,
+          "min": 0,
+          "max": 1,
+          "step": 0.001
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "temporalBlend",
+          "type": "range",
+          "value": 0.06,
+          "min": 0,
+          "max": 0.4,
+          "step": 0.01
+        },
+        {
+          "name": "neighborGlow",
+          "type": "range",
+          "value": 0.1,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "powerLimit",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "softLimit",
+          "type": "range",
+          "value": 220,
+          "min": 32,
+          "max": 255,
+          "step": 1
+        },
+        {
+          "name": "softK",
+          "type": "range",
+          "value": 1,
+          "min": 0.2,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "restSec",
+          "type": "range",
+          "value": 0.25,
+          "min": 0,
+          "max": 2,
+          "step": 0.05
+        }
+      ]
+    },
+    "parameters": {
+      "flareSpeed": 220,
+      "flareWidth": 1,
+      "flareHue": 2,
+      "flareTrail": 0,
+      "targetMin": 0.3,
+      "targetMax": 0.7,
+      "waveCount": 3,
+      "waveInterval": 0.12,
+      "waveSpeed": 380,
+      "waveSigma": 1.5,
+      "waveAmp": 1.2,
+      "ampDecayPerWave": 0.89,
+      "waveDampPerSec": 0.39,
+      "dispersion": 0.004,
+      "rangeFalloff": 0.18,
+      "waveBrightness": 1.6,
+      "popBrightness": 120,
+      "popHold": 0.04,
+      "colors": [
+        "#ff0000",
+        "#c0c0c0",
+        "#0000ff"
+      ],
+      "usePalette": false,
+      "palette": "red-white-blue",
+      "backgroundFade": 0.174,
+      "gamma": 1.5,
+      "temporalBlend": 0.06,
+      "neighborGlow": 0.1,
+      "powerLimit": 1,
+      "softLimit": 220,
+      "softK": 1,
+      "restSec": 0.25
+    }
+  },
+  {
+    "id": "preset-1762104143499-t93476a58",
+    "name": "Flare Burst Default",
+    "description": "",
+    "createdAt": "2025-11-02T17:22:23.499Z",
+    "updatedAt": "2025-11-02T17:22:23.499Z",
+    "useLayers": false,
+    "effect": {
+      "id": "flare-burst",
+      "name": "Flare Burst Waves",
+      "type": "flare-burst",
+      "parameters": [
+        {
+          "name": "flareSpeed",
+          "type": "range",
+          "value": 220,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "flareWidth",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "flareHue",
+          "type": "number"
+        },
+        {
+          "name": "flareTrail",
+          "type": "range",
+          "value": 0.86,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "targetMin",
+          "type": "range",
+          "value": 0.3,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "targetMax",
+          "type": "range",
+          "value": 0.7,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveCount",
+          "type": "range",
+          "value": 5,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "waveInterval",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.005
+        },
+        {
+          "name": "waveSpeed",
+          "type": "range",
+          "value": 260,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "waveSigma",
+          "type": "range",
+          "value": 1.5,
+          "min": 0.4,
+          "max": 5,
+          "step": 0.1
+        },
+        {
+          "name": "waveAmp",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "ampDecayPerWave",
+          "type": "range",
+          "value": 0.9,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "minWaveAmp",
+          "type": "range",
+          "value": 0.4,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveSeparationFrac",
+          "type": "range",
+          "value": 0.12,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "waveSeparationPx",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 300,
+          "step": 1
+        },
+        {
+          "name": "sepGuardPx",
+          "type": "range",
+          "value": 8,
+          "min": 0,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "name": "waveDampPerSec",
+          "type": "range",
+          "value": 0.86,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "dispersion",
+          "type": "range",
+          "value": 0.006,
+          "min": 0,
+          "max": 0.1,
+          "step": 0.001
+        },
+        {
+          "name": "rangeFalloff",
+          "type": "range",
+          "value": 0.22,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveBrightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "frontWidthPx",
+          "type": "range",
+          "value": 0.55,
+          "min": 0.4,
+          "max": 5,
+          "step": 0.05
+        },
+        {
+          "name": "trailLenPx",
+          "type": "range",
+          "value": 2,
+          "min": 0,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "trailPersist",
+          "type": "range",
+          "value": 0.55,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "popBrightness",
+          "type": "range",
+          "value": 120,
+          "min": 0,
+          "max": 255,
+          "step": 5
+        },
+        {
+          "name": "popHold",
+          "type": "range",
+          "value": 0.04,
+          "min": 0.01,
+          "max": 0.2,
+          "step": 0.01
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000",
+            "#ffffff",
+            "#0000ff"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "fadePerSec",
+          "type": "range",
+          "value": 0.88,
+          "min": 0,
+          "max": 1,
+          "step": 0.001
+        },
+        {
+          "name": "blackClip",
+          "type": "range",
+          "value": 3,
+          "min": 0,
+          "max": 10,
+          "step": 1
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "temporalBlend",
+          "type": "range",
+          "value": 0.04,
+          "min": 0,
+          "max": 0.4,
+          "step": 0.01
+        },
+        {
+          "name": "neighborGlow",
+          "type": "range",
+          "value": 0.02,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "powerLimit",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "softLimit",
+          "type": "range",
+          "value": 200,
+          "min": 32,
+          "max": 255,
+          "step": 1
+        },
+        {
+          "name": "softK",
+          "type": "range",
+          "value": 1,
+          "min": 0.2,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "restSec",
+          "type": "range",
+          "value": 0.25,
+          "min": 0,
+          "max": 2,
+          "step": 0.05
+        }
+      ]
+    },
+    "parameters": {
+      "flareSpeed": 220,
+      "flareWidth": 6,
+      "flareTrail": 0.86,
+      "targetMin": 0.3,
+      "targetMax": 0.7,
+      "waveCount": 5,
+      "waveInterval": 0,
+      "waveSpeed": 260,
+      "waveSigma": 1.5,
+      "waveAmp": 1,
+      "ampDecayPerWave": 0.9,
+      "minWaveAmp": 0.4,
+      "waveSeparationFrac": 0.12,
+      "waveSeparationPx": 0,
+      "sepGuardPx": 8,
+      "waveDampPerSec": 0.86,
+      "dispersion": 0.006,
+      "rangeFalloff": 0.22,
+      "waveBrightness": 1,
+      "frontWidthPx": 0.55,
+      "trailLenPx": 2,
+      "trailPersist": 0.55,
+      "popBrightness": 120,
+      "popHold": 0.04,
+      "colors": [
+        "#ff0000",
+        "#ffffff",
+        "#0000ff"
+      ],
+      "usePalette": false,
+      "palette": "rainbow",
+      "fadePerSec": 0.88,
+      "blackClip": 3,
+      "gamma": 2.2,
+      "temporalBlend": 0.04,
+      "neighborGlow": 0.02,
+      "powerLimit": 1,
+      "softLimit": 200,
+      "softK": 1,
+      "restSec": 0.25
+    }
+  },
+  {
+    "id": "preset-1762104966111-pb2rxgnzz",
+    "name": "Flare Burst (Small Strips)",
+    "description": "",
+    "createdAt": "2025-11-02T17:36:06.111Z",
+    "updatedAt": "2025-11-02T17:36:06.111Z",
+    "useLayers": false,
+    "effect": {
+      "id": "flare-burst",
+      "name": "Flare Burst Waves",
+      "type": "flare-burst",
+      "parameters": [
+        {
+          "name": "flareSpeed",
+          "type": "range",
+          "value": 220,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "flareWidth",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "flareHue",
+          "type": "number"
+        },
+        {
+          "name": "flareTrail",
+          "type": "range",
+          "value": 0.86,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "targetMin",
+          "type": "range",
+          "value": 0.3,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "targetMax",
+          "type": "range",
+          "value": 0.7,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveCount",
+          "type": "range",
+          "value": 5,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "waveInterval",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.005
+        },
+        {
+          "name": "waveSpeed",
+          "type": "range",
+          "value": 260,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "waveSigma",
+          "type": "range",
+          "value": 1.5,
+          "min": 0.4,
+          "max": 5,
+          "step": 0.1
+        },
+        {
+          "name": "waveAmp",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "ampDecayPerWave",
+          "type": "range",
+          "value": 0.9,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "minWaveAmp",
+          "type": "range",
+          "value": 0.4,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveSeparationFrac",
+          "type": "range",
+          "value": 0.12,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "waveSeparationPx",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 300,
+          "step": 1
+        },
+        {
+          "name": "sepGuardPx",
+          "type": "range",
+          "value": 8,
+          "min": 0,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "name": "waveDampPerSec",
+          "type": "range",
+          "value": 0.86,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "dispersion",
+          "type": "range",
+          "value": 0.006,
+          "min": 0,
+          "max": 0.1,
+          "step": 0.001
+        },
+        {
+          "name": "rangeFalloff",
+          "type": "range",
+          "value": 0.22,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveBrightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "frontWidthPx",
+          "type": "range",
+          "value": 0.55,
+          "min": 0.4,
+          "max": 5,
+          "step": 0.05
+        },
+        {
+          "name": "trailLenPx",
+          "type": "range",
+          "value": 2,
+          "min": 0,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "trailPersist",
+          "type": "range",
+          "value": 0.55,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "popBrightness",
+          "type": "range",
+          "value": 120,
+          "min": 0,
+          "max": 255,
+          "step": 5
+        },
+        {
+          "name": "popHold",
+          "type": "range",
+          "value": 0.04,
+          "min": 0.01,
+          "max": 0.2,
+          "step": 0.01
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000",
+            "#ffffff",
+            "#0000ff"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "fadePerSec",
+          "type": "range",
+          "value": 0.88,
+          "min": 0,
+          "max": 1,
+          "step": 0.001
+        },
+        {
+          "name": "blackClip",
+          "type": "range",
+          "value": 3,
+          "min": 0,
+          "max": 10,
+          "step": 1
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "temporalBlend",
+          "type": "range",
+          "value": 0.04,
+          "min": 0,
+          "max": 0.4,
+          "step": 0.01
+        },
+        {
+          "name": "neighborGlow",
+          "type": "range",
+          "value": 0.02,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "powerLimit",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "softLimit",
+          "type": "range",
+          "value": 200,
+          "min": 32,
+          "max": 255,
+          "step": 1
+        },
+        {
+          "name": "softK",
+          "type": "range",
+          "value": 1,
+          "min": 0.2,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "restSec",
+          "type": "range",
+          "value": 0.25,
+          "min": 0,
+          "max": 2,
+          "step": 0.05
+        }
+      ]
+    },
+    "parameters": {
+      "flareSpeed": 90,
+      "flareWidth": 6,
+      "flareTrail": 0.01,
+      "targetMin": 0.3,
+      "targetMax": 0.7,
+      "waveCount": 6,
+      "waveInterval": 0,
+      "waveSpeed": 50,
+      "waveSigma": 1.5,
+      "waveAmp": 1,
+      "ampDecayPerWave": 0.9,
+      "minWaveAmp": 0.4,
+      "waveSeparationFrac": 0.23,
+      "waveSeparationPx": 0,
+      "sepGuardPx": 8,
+      "waveDampPerSec": 0.86,
+      "dispersion": 0.006,
+      "rangeFalloff": 0.22,
+      "waveBrightness": 1,
+      "frontWidthPx": 0.45,
+      "trailLenPx": 0,
+      "trailPersist": 0.47,
+      "popBrightness": 120,
+      "popHold": 0.04,
+      "colors": [
+        "#ff0000",
+        "#ffffff",
+        "#0000ff"
+      ],
+      "usePalette": false,
+      "palette": "rainbow",
+      "fadePerSec": 0.88,
+      "blackClip": 3,
+      "gamma": 1.2,
+      "temporalBlend": 0.04,
+      "neighborGlow": 0,
+      "powerLimit": 1,
+      "softLimit": 200,
+      "softK": 1,
+      "restSec": 0.25
+    }
+  },
+  {
+    "id": "preset-1762106146749-o9r01l0th",
+    "name": "Flare Burst - Halloween",
+    "description": "",
+    "createdAt": "2025-11-02T17:55:46.749Z",
+    "updatedAt": "2025-11-02T17:55:46.749Z",
+    "useLayers": false,
+    "effect": {
+      "id": "flare-burst",
+      "name": "Flare Burst Waves",
+      "type": "flare-burst",
+      "parameters": [
+        {
+          "name": "flareSpeed",
+          "type": "range",
+          "value": 220,
+          "min": 10,
+          "max": 600,
+          "step": 10
+        },
+        {
+          "name": "flareWidth",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "flareHue",
+          "type": "number"
+        },
+        {
+          "name": "flareTrail",
+          "type": "range",
+          "value": 0.86,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "targetMin",
+          "type": "range",
+          "value": 0.3,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "targetMax",
+          "type": "range",
+          "value": 0.7,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveCount",
+          "type": "range",
+          "value": 5,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "waveInterval",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.005
+        },
+        {
+          "name": "waveSpeed",
+          "type": "range",
+          "value": 260,
+          "min": 10,
+          "max": 1000,
+          "step": 10
+        },
+        {
+          "name": "waveSigma",
+          "type": "range",
+          "value": 1.5,
+          "min": 0.4,
+          "max": 5,
+          "step": 0.1
+        },
+        {
+          "name": "waveAmp",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "ampDecayPerWave",
+          "type": "range",
+          "value": 0.9,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "minWaveAmp",
+          "type": "range",
+          "value": 0.4,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveSeparationFrac",
+          "type": "range",
+          "value": 0.12,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "waveSeparationPx",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 300,
+          "step": 1
+        },
+        {
+          "name": "sepGuardPx",
+          "type": "range",
+          "value": 8,
+          "min": 0,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "name": "waveDampPerSec",
+          "type": "range",
+          "value": 0.86,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "dispersion",
+          "type": "range",
+          "value": 0.006,
+          "min": 0,
+          "max": 0.1,
+          "step": 0.001
+        },
+        {
+          "name": "rangeFalloff",
+          "type": "range",
+          "value": 0.22,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "waveBrightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "frontWidthPx",
+          "type": "range",
+          "value": 0.55,
+          "min": 0.4,
+          "max": 5,
+          "step": 0.05
+        },
+        {
+          "name": "trailLenPx",
+          "type": "range",
+          "value": 2,
+          "min": 0,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "trailPersist",
+          "type": "range",
+          "value": 0.55,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "popBrightness",
+          "type": "range",
+          "value": 120,
+          "min": 0,
+          "max": 255,
+          "step": 5
+        },
+        {
+          "name": "popHold",
+          "type": "range",
+          "value": 0.04,
+          "min": 0.01,
+          "max": 0.2,
+          "step": 0.01
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#ff0000",
+            "#ffffff",
+            "#0000ff"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "fadePerSec",
+          "type": "range",
+          "value": 0.88,
+          "min": 0,
+          "max": 1,
+          "step": 0.001
+        },
+        {
+          "name": "blackClip",
+          "type": "range",
+          "value": 3,
+          "min": 0,
+          "max": 10,
+          "step": 1
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "temporalBlend",
+          "type": "range",
+          "value": 0.04,
+          "min": 0,
+          "max": 0.4,
+          "step": 0.01
+        },
+        {
+          "name": "neighborGlow",
+          "type": "range",
+          "value": 0.02,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "powerLimit",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "name": "softLimit",
+          "type": "range",
+          "value": 200,
+          "min": 32,
+          "max": 255,
+          "step": 1
+        },
+        {
+          "name": "softK",
+          "type": "range",
+          "value": 1,
+          "min": 0.2,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "restSec",
+          "type": "range",
+          "value": 0.25,
+          "min": 0,
+          "max": 2,
+          "step": 0.05
+        }
+      ]
+    },
+    "parameters": {
+      "flareSpeed": 360,
+      "flareWidth": 1,
+      "flareHue": -2,
+      "flareTrail": 0.1,
+      "targetMin": 0.3,
+      "targetMax": 0.7,
+      "waveCount": 4,
+      "waveInterval": 0,
+      "waveSpeed": 210,
+      "waveSigma": 1.5,
+      "waveAmp": 1,
+      "ampDecayPerWave": 0.18,
+      "minWaveAmp": 0.4,
+      "waveSeparationFrac": 0.23,
+      "waveSeparationPx": 91,
+      "sepGuardPx": 8,
+      "waveDampPerSec": 0.86,
+      "dispersion": 0.006,
+      "rangeFalloff": 0.22,
+      "waveBrightness": 1.7,
+      "frontWidthPx": 0.45,
+      "trailLenPx": 0,
+      "trailPersist": 0.47,
+      "popBrightness": 20,
+      "popHold": 0.16,
+      "colors": [
+        "#6A0DAD",
+        "#39FF14",
+        "#ff8000"
+      ],
+      "usePalette": false,
+      "palette": "custom-1761945919915-3lenc7c4r",
+      "fadePerSec": 0.92,
+      "blackClip": 3,
+      "gamma": 0.9,
+      "temporalBlend": 0.02,
+      "neighborGlow": 0.09,
+      "powerLimit": 1,
+      "softLimit": 200,
+      "softK": 1,
+      "restSec": 0.25
+    }
+  },
+  {
+    "id": "preset-pattern-melted-scroll-usa",
+    "name": "Melted scroll (USA stripes)",
+    "description": "",
+    "createdAt": "2025-01-27T00:00:00.000Z",
+    "updatedAt": "2025-01-27T00:00:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pattern-generator",
+      "name": "Pattern Generator",
+      "type": "pattern-generator",
+      "parameters": [
+        {
+          "name": "patternLen",
+          "type": "range",
+          "value": 12,
+          "min": 1,
+          "max": 64,
+          "step": 1
+        },
+        {
+          "name": "mode",
+          "type": "options",
+          "value": "scroll",
+          "options": [
+            "static",
+            "scroll",
+            "pingpong",
+            "jitter"
+          ]
+        },
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 6,
+          "min": 0,
+          "max": 50,
+          "step": 0.5
+        },
+        {
+          "name": "offset",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#FF0000",
+            "#FFFFFF",
+            "#0000FF"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "background",
+          "type": "color",
+          "value": "#000000"
+        },
+        {
+          "name": "brightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "melt",
+          "options": [
+            "none",
+            "linear",
+            "dither",
+            "melt"
+          ]
+        },
+        {
+          "name": "blendWidth",
+          "type": "range",
+          "value": 0.6,
+          "min": 0,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "ditherAmount",
+          "type": "range",
+          "value": 0.5,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "meltRate",
+          "type": "range",
+          "value": 6,
+          "min": 0,
+          "max": 20,
+          "step": 0.5
+        },
+        {
+          "name": "meltEverywhere",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "jitterAmp",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "jitterHz",
+          "type": "range",
+          "value": 0.7,
+          "min": 0.1,
+          "max": 5,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "preset-pattern-pingpong-candy-cane",
+    "name": "Pingpong candy-cane with strong melt",
+    "description": "",
+    "createdAt": "2025-01-27T00:00:00.000Z",
+    "updatedAt": "2025-01-27T00:00:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pattern-generator",
+      "name": "Pattern Generator",
+      "type": "pattern-generator",
+      "parameters": [
+        {
+          "name": "patternLen",
+          "type": "range",
+          "value": 10,
+          "min": 1,
+          "max": 64,
+          "step": 1
+        },
+        {
+          "name": "mode",
+          "type": "options",
+          "value": "pingpong",
+          "options": [
+            "static",
+            "scroll",
+            "pingpong",
+            "jitter"
+          ]
+        },
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 5,
+          "min": 0,
+          "max": 50,
+          "step": 0.5
+        },
+        {
+          "name": "offset",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#DD0000",
+            "#FFFFFF"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "background",
+          "type": "color",
+          "value": "#000000"
+        },
+        {
+          "name": "brightness",
+          "type": "range",
+          "value": 0.95,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "melt",
+          "options": [
+            "none",
+            "linear",
+            "dither",
+            "melt"
+          ]
+        },
+        {
+          "name": "blendWidth",
+          "type": "range",
+          "value": 0.6,
+          "min": 0,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "ditherAmount",
+          "type": "range",
+          "value": 0.5,
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "meltRate",
+          "type": "range",
+          "value": 10,
+          "min": 0,
+          "max": 20,
+          "step": 0.5
+        },
+        {
+          "name": "meltEverywhere",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "jitterAmp",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "jitterHz",
+          "type": "range",
+          "value": 0.7,
+          "min": 0.1,
+          "max": 5,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "preset-1762112075849-891ijuzml",
+    "name": "fade red green",
+    "description": "",
+    "createdAt": "2025-11-02T19:34:35.849Z",
+    "updatedAt": "2025-11-02T19:34:35.849Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pattern-generator",
+      "name": "Pattern Generator",
+      "type": "pattern-generator",
+      "parameters": [
+        {
+          "name": "mode",
+          "type": "options",
+          "value": "scroll",
+          "options": [
+            "static",
+            "scroll",
+            "pingpong"
+          ]
+        },
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 6,
+          "min": 0,
+          "max": 50,
+          "step": 0.5
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#FF7518",
+            "#6A0DAD",
+            "#39FF14"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "ledfade",
+          "options": [
+            "none",
+            "ledfade"
+          ]
+        },
+        {
+          "name": "fadeSpan",
+          "type": "range",
+          "value": 0.35,
+          "min": 0,
+          "max": 2,
+          "step": 0.01
+        },
+        {
+          "name": "fadeSpanPx",
+          "type": "number"
+        },
+        {
+          "name": "brightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "mode": "scroll",
+      "speed": 0.5,
+      "colors": [
+        "#ff0000",
+        "#000000",
+        "#39FF14",
+        "#000000"
+      ],
+      "usePalette": false,
+      "palette": "rainbow",
+      "blend": "ledfade",
+      "fadeSpan": 0.84,
+      "fadeSpanPx": 100,
+      "brightness": 1,
+      "gamma": 0.8,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-christmas-cheer",
+    "name": "xmas",
+    "description": "🎄 Christmas theme with red, green, and white scrolling colors",
+    "createdAt": "2025-01-27T00:00:00.000Z",
+    "updatedAt": "2025-11-02T21:30:33.973Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pattern-generator",
+      "name": "Pattern Generator",
+      "type": "pattern-generator",
+      "parameters": [
+        {
+          "name": "mode",
+          "type": "options",
+          "value": "scroll",
+          "options": [
+            "static",
+            "scroll",
+            "pingpong"
+          ]
+        },
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 4,
+          "min": 0,
+          "max": 50,
+          "step": 0.1
+        },
+        {
+          "name": "pingpongDistance",
+          "type": "range",
+          "value": 1,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#FF0000",
+            "#FF0000",
+            "#FF0000",
+            "#000000",
+            "#000000",
+            "#00FF00",
+            "#00FF00",
+            "#00FF00",
+            "#000000",
+            "#000000",
+            "#FFFFFF",
+            "#FFFFFF",
+            "#FFFFFF"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "ledfade",
+          "options": [
+            "none",
+            "ledfade"
+          ]
+        },
+        {
+          "name": "fadeSpan",
+          "type": "range",
+          "value": 0.35,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "fadeSpanPx",
+          "type": "number",
+          "min": 0,
+          "max": 100,
+          "step": 1
+        },
+        {
+          "name": "fadeTime",
+          "type": "range",
+          "value": 0.033,
+          "min": 0,
+          "max": 0.2,
+          "step": 0.001
+        },
+        {
+          "name": "hold",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "motionBlurMaxSamples",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 8,
+          "step": 1
+        },
+        {
+          "name": "motionBlurThreshold",
+          "type": "range",
+          "value": 0.9,
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "name": "brightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "mode": "scroll",
+      "speed": 1.1,
+      "pingpongDistance": 1,
+      "colors": [
+        "#FF0000",
+        "#FF0000",
+        "#FF0000",
+        "#000000",
+        "#000000",
+        "#00FF00",
+        "#00FF00",
+        "#00FF00",
+        "#000000",
+        "#000000",
+        "#FFFFFF",
+        "#FFFFFF",
+        "#FFFFFF",
+        "#000",
+        "#000"
+      ],
+      "usePalette": false,
+      "palette": "rainbow",
+      "blend": "ledfade",
+      "fadeSpan": 0.35,
+      "fadeSpanPx": 1,
+      "fadeTime": 0.2,
+      "hold": 0,
+      "motionBlurMaxSamples": 6,
+      "motionBlurThreshold": 0.9,
+      "brightness": 1,
+      "gamma": 2.2,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-halloween-glow",
+    "name": "Halloween Glow",
+    "description": "🎃 Halloween theme with orange, black, and purple scrolling colors",
+    "createdAt": "2025-01-27T00:00:00.000Z",
+    "updatedAt": "2025-01-27T00:00:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pattern-generator",
+      "name": "Pattern Generator",
+      "type": "pattern-generator",
+      "parameters": [
+        {
+          "name": "mode",
+          "type": "options",
+          "value": "scroll",
+          "options": [
+            "static",
+            "scroll",
+            "pingpong"
+          ]
+        },
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 3,
+          "min": 0,
+          "max": 50,
+          "step": 0.1
+        },
+        {
+          "name": "pingpongDistance",
+          "type": "range",
+          "value": 1,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#FF6A00",
+            "#000000",
+            "#9B00FF"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "ledfade",
+          "options": [
+            "none",
+            "ledfade"
+          ]
+        },
+        {
+          "name": "fadeSpan",
+          "type": "range",
+          "value": 0.4,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "hold",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "brightness",
+          "type": "range",
+          "value": 0.9,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "mode": "scroll",
+      "speed": 3,
+      "colors": [
+        "#FF6A00",
+        "#000000",
+        "#9B00FF"
+      ],
+      "usePalette": false,
+      "palette": "rainbow",
+      "blend": "ledfade",
+      "fadeSpan": 0.4,
+      "brightness": 0.9,
+      "gamma": 2.2,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-valentine-hearts",
+    "name": "Valentine Hearts",
+    "description": "❤️ Valentine's Day theme with deep red, pink, and white scrolling colors",
+    "createdAt": "2025-01-27T00:00:00.000Z",
+    "updatedAt": "2025-01-27T00:00:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pattern-generator",
+      "name": "Pattern Generator",
+      "type": "pattern-generator",
+      "parameters": [
+        {
+          "name": "mode",
+          "type": "options",
+          "value": "scroll",
+          "options": [
+            "static",
+            "scroll",
+            "pingpong"
+          ]
+        },
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 5,
+          "min": 0,
+          "max": 50,
+          "step": 0.1
+        },
+        {
+          "name": "pingpongDistance",
+          "type": "range",
+          "value": 1,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#FF0040",
+            "#FF77AA",
+            "#FFFFFF"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "ledfade",
+          "options": [
+            "none",
+            "ledfade"
+          ]
+        },
+        {
+          "name": "fadeSpan",
+          "type": "range",
+          "value": 0.25,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "hold",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "brightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.1,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "mode": "scroll",
+      "speed": 5,
+      "colors": [
+        "#FF0040",
+        "#FF77AA",
+        "#FFFFFF"
+      ],
+      "usePalette": false,
+      "palette": "rainbow",
+      "blend": "ledfade",
+      "fadeSpan": 0.25,
+      "brightness": 1,
+      "gamma": 2.1,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-stars-stripes",
+    "name": "Stars & Stripes",
+    "description": "🇺🇸 Fourth of July / Independence Day theme with red, white, and blue pingpong motion",
+    "createdAt": "2025-01-27T00:00:00.000Z",
+    "updatedAt": "2025-01-27T00:00:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pattern-generator",
+      "name": "Pattern Generator",
+      "type": "pattern-generator",
+      "parameters": [
+        {
+          "name": "mode",
+          "type": "options",
+          "value": "pingpong",
+          "options": [
+            "static",
+            "scroll",
+            "pingpong"
+          ]
+        },
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 6,
+          "min": 0,
+          "max": 50,
+          "step": 0.1
+        },
+        {
+          "name": "pingpongDistance",
+          "type": "range",
+          "value": 6,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#FF0000",
+            "#FFFFFF",
+            "#0000FF"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "ledfade",
+          "options": [
+            "none",
+            "ledfade"
+          ]
+        },
+        {
+          "name": "fadeSpan",
+          "type": "range",
+          "value": 0.3,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "hold",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "brightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "mode": "pingpong",
+      "speed": 6,
+      "pingpongDistance": 6,
+      "colors": [
+        "#FF0000",
+        "#FFFFFF",
+        "#0000FF"
+      ],
+      "usePalette": false,
+      "palette": "rainbow",
+      "blend": "ledfade",
+      "fadeSpan": 0.3,
+      "brightness": 1,
+      "gamma": 2.2,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-lucky-green",
+    "name": "Lucky Green",
+    "description": "☘️ St. Patrick's Day theme with light green, dark green, and gold scrolling colors",
+    "createdAt": "2025-01-27T00:00:00.000Z",
+    "updatedAt": "2025-01-27T00:00:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pattern-generator",
+      "name": "Pattern Generator",
+      "type": "pattern-generator",
+      "parameters": [
+        {
+          "name": "mode",
+          "type": "options",
+          "value": "scroll",
+          "options": [
+            "static",
+            "scroll",
+            "pingpong"
+          ]
+        },
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 3,
+          "min": 0,
+          "max": 50,
+          "step": 0.1
+        },
+        {
+          "name": "pingpongDistance",
+          "type": "range",
+          "value": 1,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00FF00",
+            "#006600",
+            "#FFD700"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "ledfade",
+          "options": [
+            "none",
+            "ledfade"
+          ]
+        },
+        {
+          "name": "fadeSpan",
+          "type": "range",
+          "value": 0.4,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "hold",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "brightness",
+          "type": "range",
+          "value": 0.9,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "mode": "scroll",
+      "speed": 3,
+      "colors": [
+        "#00FF00",
+        "#006600",
+        "#FFD700"
+      ],
+      "usePalette": false,
+      "palette": "rainbow",
+      "blend": "ledfade",
+      "fadeSpan": 0.4,
+      "brightness": 0.9,
+      "gamma": 2.2,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-icy-flow",
+    "name": "Icy Flow",
+    "description": "❄️ Winter / Snow theme with aqua, blue, and white scrolling colors",
+    "createdAt": "2025-01-27T00:00:00.000Z",
+    "updatedAt": "2025-01-27T00:00:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pattern-generator",
+      "name": "Pattern Generator",
+      "type": "pattern-generator",
+      "parameters": [
+        {
+          "name": "mode",
+          "type": "options",
+          "value": "scroll",
+          "options": [
+            "static",
+            "scroll",
+            "pingpong"
+          ]
+        },
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 2,
+          "min": 0,
+          "max": 50,
+          "step": 0.1
+        },
+        {
+          "name": "pingpongDistance",
+          "type": "range",
+          "value": 1,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#00FFFF",
+            "#0033FF",
+            "#FFFFFF"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "ledfade",
+          "options": [
+            "none",
+            "ledfade"
+          ]
+        },
+        {
+          "name": "fadeSpan",
+          "type": "range",
+          "value": 0.5,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "hold",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "brightness",
+          "type": "range",
+          "value": 0.85,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.3,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "mode": "scroll",
+      "speed": 2,
+      "colors": [
+        "#00FFFF",
+        "#0033FF",
+        "#FFFFFF"
+      ],
+      "usePalette": false,
+      "palette": "rainbow",
+      "blend": "ledfade",
+      "fadeSpan": 0.5,
+      "brightness": 0.85,
+      "gamma": 2.3,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-firework-burst",
+    "name": "Firework Burst",
+    "description": "🎆 New Year's Eve theme with vibrant firework colors and pingpong motion",
+    "createdAt": "2025-01-27T00:00:00.000Z",
+    "updatedAt": "2025-01-27T00:00:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pattern-generator",
+      "name": "Pattern Generator",
+      "type": "pattern-generator",
+      "parameters": [
+        {
+          "name": "mode",
+          "type": "options",
+          "value": "pingpong",
+          "options": [
+            "static",
+            "scroll",
+            "pingpong"
+          ]
+        },
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 8,
+          "min": 0,
+          "max": 50,
+          "step": 0.1
+        },
+        {
+          "name": "pingpongDistance",
+          "type": "range",
+          "value": 1,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#FF0000",
+            "#FFFF00",
+            "#00FFFF",
+            "#FF00FF",
+            "#000000"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "ledfade",
+          "options": [
+            "none",
+            "ledfade"
+          ]
+        },
+        {
+          "name": "fadeSpan",
+          "type": "range",
+          "value": 0.3,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "hold",
+          "type": "range",
+          "value": 0.1,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "brightness",
+          "type": "range",
+          "value": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.1,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "mode": "pingpong",
+      "speed": 8,
+      "colors": [
+        "#FF0000",
+        "#FFFF00",
+        "#00FFFF",
+        "#FF00FF",
+        "#000000"
+      ],
+      "usePalette": false,
+      "palette": "rainbow",
+      "blend": "ledfade",
+      "fadeSpan": 0.3,
+      "hold": 0.1,
+      "brightness": 1,
+      "gamma": 2.1,
+      "reverse": false,
+      "mirror": false
+    }
+  },
+  {
+    "id": "preset-harvest-glow",
+    "name": "Harvest Glow",
+    "description": "🧡 Thanksgiving theme with orange, gold, and brown scrolling colors",
+    "createdAt": "2025-01-27T00:00:00.000Z",
+    "updatedAt": "2025-01-27T00:00:00.000Z",
+    "useLayers": false,
+    "effect": {
+      "id": "pattern-generator",
+      "name": "Pattern Generator",
+      "type": "pattern-generator",
+      "parameters": [
+        {
+          "name": "mode",
+          "type": "options",
+          "value": "scroll",
+          "options": [
+            "static",
+            "scroll",
+            "pingpong"
+          ]
+        },
+        {
+          "name": "speed",
+          "type": "range",
+          "value": 2.5,
+          "min": 0,
+          "max": 50,
+          "step": 0.1
+        },
+        {
+          "name": "pingpongDistance",
+          "type": "range",
+          "value": 1,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "name": "colors",
+          "type": "array",
+          "value": [
+            "#FF8C00",
+            "#FFD700",
+            "#8B4513"
+          ],
+          "isColorArray": true
+        },
+        {
+          "name": "usePalette",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "palette",
+          "type": "palette",
+          "value": "rainbow"
+        },
+        {
+          "name": "blend",
+          "type": "options",
+          "value": "ledfade",
+          "options": [
+            "none",
+            "ledfade"
+          ]
+        },
+        {
+          "name": "fadeSpan",
+          "type": "range",
+          "value": 0.4,
+          "min": 0,
+          "max": 0.5,
+          "step": 0.01
+        },
+        {
+          "name": "hold",
+          "type": "range",
+          "value": 0,
+          "min": 0,
+          "max": 10,
+          "step": 0.1
+        },
+        {
+          "name": "brightness",
+          "type": "range",
+          "value": 0.95,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "name": "gamma",
+          "type": "range",
+          "value": 2.2,
+          "min": 0.8,
+          "max": 3,
+          "step": 0.1
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "value": false
+        },
+        {
+          "name": "mirror",
+          "type": "boolean",
+          "value": false
+        }
+      ]
+    },
+    "parameters": {
+      "mode": "scroll",
+      "speed": 2.5,
+      "colors": [
+        "#FF8C00",
+        "#FFD700",
+        "#8B4513"
+      ],
+      "usePalette": false,
+      "palette": "rainbow",
+      "blend": "ledfade",
+      "fadeSpan": 0.4,
+      "brightness": 0.95,
+      "gamma": 2.2,
+      "reverse": false,
+      "mirror": false
     }
   }
 ]
